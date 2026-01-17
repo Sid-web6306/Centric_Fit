@@ -482,11 +482,7 @@ export async function proxy(request: NextRequest) {
       return response
     }
 
-    // Handle root path redirect
-    if (pathname === '/') {
-      const redirectPath = hasGym ? '/dashboard' : '/onboarding'
-      return createRedirect(redirectPath, request, inviteToken || undefined)
-    }
+    
 
     // Cache successful response
     requestCache.set(cacheKey, {

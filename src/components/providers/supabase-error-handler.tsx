@@ -39,7 +39,8 @@ export function SupabaseErrorHandler() {
               // Clear cookie for current path
               document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
               // Clear cookie for root path
-              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${window.location.hostname}`
+              const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
+              document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${hostname}`
             })
             
             logger.info('Cleared corrupted Supabase cookies')
@@ -53,12 +54,15 @@ export function SupabaseErrorHandler() {
     }
     
     // Add event listener
-    window.addEventListener('unhandledrejection', handleUnhandledRejection)
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('unhandledrejection', handleUnhandledRejection)
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+      }
     }
+    return () => {}
   }, [])
   
   // This component doesn't render anything

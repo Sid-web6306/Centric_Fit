@@ -118,8 +118,8 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
       setTotalRows(result.totalRows)
       setErrors(result.errors)
       
-      // Count members with email addresses
-      const withEmail = result.validMembers.filter(m => m.email && m.email.trim() !== '').length
+      // Count members with email addresses (now required for all)
+      const withEmail = result.validMembers.length // All valid members will have email
       setMembersWithEmail(withEmail)
 
       if (result.success) {
@@ -236,10 +236,11 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
       let invitationsFailed = 0
 
       if (sendInvitations && createdMembers.length > 0) {
-        const membersWithEmail = createdMembers.filter(m => m.email && m.email.trim() !== '')
+        // All members now have email addresses since it's required
+        const membersToInvite = createdMembers
         
-        for (let i = 0; i < membersWithEmail.length; i++) {
-          const member = membersWithEmail[i]
+        for (let i = 0; i < membersToInvite.length; i++) {
+          const member = membersToInvite[i]
           try {
             const result = await MemberService.enablePortalAccess(member.id)
             if (result.success) {
@@ -253,7 +254,7 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
           }
 
           // Update progress (50-100% for invitation phase)
-          const progress = 50 + Math.round(((i + 1) / membersWithEmail.length) * 50)
+          const progress = 50 + Math.round(((i + 1) / membersToInvite.length) * 50)
           setImportProgress(progress)
         }
       } else {
@@ -385,8 +386,8 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
                   <div className="flex-1">
                     <h4 className="font-semibold text-sm mb-1">Format Requirements</h4>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p>✓ <strong>Required:</strong> First Name, Last Name</p>
-                      <p>✓ <strong>Optional:</strong> Email, Phone, Status, Join Date</p>
+                      <p>✓ <strong>Required:</strong> First Name, Last Name, Email</p>
+                      <p>✓ <strong>Optional:</strong> Phone, Status, Join Date</p>
                       <p>✓ <strong>Status:</strong> active, inactive, or pending</p>
                     </div>
                   </div>
@@ -415,7 +416,7 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
                     Auto-send portal invitations after import
                   </Label>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    Members with valid email addresses will automatically receive an invitation 
+                    All members have required email addresses and will automatically receive an invitation 
                     to access their member portal. They can view their profile, attendance, and payments.
                   </p>
                 </div>
@@ -565,7 +566,7 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
             )}
 
             {/* Portal Invitations Option */}
-            {membersWithEmail > 0 && (
+            {validMembers > 0 && (
               <div className="relative overflow-hidden p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
                 <div className="absolute top-2 right-2">
                   <Sparkles className="h-5 w-5 text-blue-600 opacity-50" />
@@ -586,8 +587,8 @@ export function BulkImportDialog({ open, onOpenChange, onSuccess }: BulkImportDi
                       Send portal invitations after import
                     </Label>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      We&apos;ll automatically send invitations to <strong>{membersWithEmail} member{membersWithEmail !== 1 ? 's' : ''}</strong> who have email addresses.
-                      They&apos;ll receive an email with instructions to access their member portal.
+                      We&apos;ll automatically send invitations to <strong>{validMembers} member{validMembers !== 1 ? 's' : ''}</strong>.
+                      All members have required email addresses and will receive an email to access their member portal.
                     </p>
                   </div>
                 </div>

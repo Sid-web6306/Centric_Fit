@@ -181,9 +181,16 @@ export function parseCSVFile(file: File): Promise<ImportResult> {
             })
           }
 
-          // Validate email (optional but must be valid if provided)
+          // Validate email (required)
           const email = row['Email']?.trim()
-          if (email && !isValidEmail(email)) {
+          if (!email) {
+            rowErrors.push({
+              row: rowNumber,
+              field: 'Email',
+              message: 'Email is required',
+              value: email,
+            })
+          } else if (!isValidEmail(email)) {
             rowErrors.push({
               row: rowNumber,
               field: 'Email',
@@ -230,7 +237,7 @@ export function parseCSVFile(file: File): Promise<ImportResult> {
             validMembers.push({
               first_name: row['First Name'].trim(),
               last_name: row['Last Name'].trim(),
-              email: email || null,
+              email: email,
               phone_number: phoneNumber || null,
               status: status as 'active' | 'inactive' | 'pending',
               join_date: joinDate || new Date().toISOString(),

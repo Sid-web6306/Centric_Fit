@@ -55,7 +55,7 @@ export const ThemeSelector = () => {
         theme,
         resolvedTheme,
         availableThemes,
-        htmlClass: document.documentElement.className
+        htmlClass: typeof document !== 'undefined' ? document.documentElement.className : ''
       })
     }
   }, [theme, resolvedTheme, availableThemes, mounted])
@@ -68,7 +68,7 @@ export const ThemeSelector = () => {
       logger.debug('Theme update applied', {
         theme,
         resolvedTheme,
-        htmlClass: document.documentElement.className
+        htmlClass: typeof document !== 'undefined' ? document.documentElement.className : ''
       })
     }, 100)
   }

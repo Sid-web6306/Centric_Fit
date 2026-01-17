@@ -68,11 +68,15 @@ export class InvitationErrorBoundary extends Component<Props, State> {
   }
 
   handleGoHome = () => {
-    window.location.href = '/dashboard'
+    if (typeof window !== 'undefined') {
+      window.location.href = '/dashboard'
+    }
   }
 
   handleReportError = () => {
     const { error, errorId } = this.state
+    if (typeof window === 'undefined') return
+    
     const emailSubject = encodeURIComponent(`Invitation Error Report - ${errorId}`)
     const emailBody = encodeURIComponent(`
 Error ID: ${errorId}

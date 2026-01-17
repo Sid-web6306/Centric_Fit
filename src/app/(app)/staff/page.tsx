@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/utils/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,15 +37,14 @@ export default function StaffPage() {
     enabled: !!gymId,
     queryFn: async (): Promise<StaffProfile[]> => {
       if (!gymId) return []
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, avatar_url, default_role')
-        .eq('gym_id', gymId)
-        .in('default_role', ['staff', 'manager','trainer', 'owner'])
-        .order('full_name', { ascending: true })
-      if (error) throw error
-      return (data || []) as StaffProfile[];
+      const response = await fetch(`/api/staff?gym_id=${gymId}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch staff')
+      }
+      
+      return (data.staff || []) as StaffProfile[];
     },
   })
 

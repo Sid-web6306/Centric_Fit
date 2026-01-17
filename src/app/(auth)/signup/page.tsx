@@ -138,10 +138,10 @@ const SignUpPageComponent = () => {
     setSocialLoading(prev => ({ ...prev, [provider]: true }));
     
     try {
-      toastActions.info(
-        'Redirecting...', 
-        `Redirecting to ${provider === 'google' ? 'Google' : 'Facebook'} for authentication.`
-      );
+      // toastActions.info(
+      //   'Redirecting...', 
+      //   `Redirecting to ${provider === 'google' ? 'Google' : 'Facebook'} for authentication.`
+      // );
       
       // Call the bound server action
       if (provider === 'google') {
@@ -157,17 +157,17 @@ const SignUpPageComponent = () => {
       logger.error(`${provider} OAuth error:`, {error});
       
       // Provide more specific error messages
-      let errorMessage = `Failed to connect with ${provider === 'google' ? 'Google' : 'Facebook'}. Please try again.`;
+      // let errorMessage = `Failed to connect with ${provider === 'google' ? 'Google' : 'Facebook'}. Please try again.`;
       
-      if (error instanceof Error) {
-        if (error.message.includes('popup_blocked')) {
-          errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site and try again.';
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection and try again.';
-        }
-      }
+      // if (error instanceof Error) {
+      //   if (error.message.includes('popup_blocked')) {
+      //     errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site and try again.';
+      //   } else if (error.message.includes('network')) {
+      //     errorMessage = 'Network error. Please check your connection and try again.';
+      //   }
+      // }
       
-      toastActions.error('Authentication Error', errorMessage);
+      // toastActions.error('Authentication Error', errorMessage);
       setSocialLoading(prev => ({ ...prev, [provider]: false }));
     }
   };
@@ -251,10 +251,10 @@ const SignUpPageComponent = () => {
                 </p>
               </div>
               <div className="flex flex-col gap-2">
-                <Button onClick={() => window.location.href = '/signup'} className="w-full">
+                <Button onClick={() => typeof window !== 'undefined' && (window.location.href = '/signup')} className="w-full">
                   Continue with Regular Signup
                 </Button>
-                <Button variant="outline" onClick={() => window.location.href = '/'} className="w-full">
+                <Button variant="outline" onClick={() => typeof window !== 'undefined' && (window.location.href = '/')} className="w-full">
                   Go to Homepage
                 </Button>
               </div>

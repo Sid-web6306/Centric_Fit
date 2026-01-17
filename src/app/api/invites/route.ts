@@ -18,9 +18,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const gym_id = searchParams.get('gym_id')
-    const rawStatus = searchParams.get('status') || 'pending'
+    const rawStatus = searchParams.get('status') || 'all'
+    const role = searchParams.get('role')
+    const search = searchParams.get('search')
     const allowedStatuses = ['pending', 'accepted', 'expired', 'revoked', 'all'] as const
-    const status = (allowedStatuses as readonly string[]).includes(rawStatus) ? rawStatus : 'pending'
+    const status = (allowedStatuses as readonly string[]).includes(rawStatus) ? rawStatus : 'all'
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -64,6 +66,16 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', status)
     }
 
+    // Apply role filter
+    if (role && ['owner', 'manager', 'staff', 'trainer', 'member'].includes(role)) {
+      query = query.eq('role', role)
+    }
+
+    // Apply search filter
+    if (search) {
+      query = query.or(`email.ilike.%${search}%,role.ilike.%${search}%`)
+    }
+
     const { data: invitations, error: fetchError } = await query
 
     if (fetchError) {
@@ -74,6 +86,8 @@ export async function GET(request: NextRequest) {
     // Get count
     let countQuery = supabase.from('gym_invitations').select('*', { count: 'exact', head: true }).eq('gym_id', targetGymId)
     if (status !== 'all') countQuery = countQuery.eq('status', status)
+    if (role && ['owner', 'manager', 'staff', 'trainer', 'member'].includes(role)) countQuery = countQuery.eq('role', role)
+    if (search) countQuery = countQuery.or(`email.ilike.%${search}%,role.ilike.%${search}%`)
     const { count } = await countQuery
 
     return NextResponse.json({

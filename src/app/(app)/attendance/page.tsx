@@ -97,12 +97,6 @@ export default function AttendancePage() {
     offset: (currentPage - 1) * pageSize
   }), [deferredStaffSearch, deferredFromDate, deferredToDate, currentPage, pageSize])
 
-  // For present counts, we need all current check-ins without date filters
-  const presentFilters = useMemo(() => ({
-    limit: 1000,
-    offset: 0
-  }), [])
-
   // Attendance data queries for history view
   const {
     data: memberAttendance,
@@ -164,7 +158,7 @@ export default function AttendancePage() {
         notes: undefined
       })
     } catch (error) {
-      
+      logger.error("Staff check-in failed", {error})
     }
   }, [staffCheckinMutation])
 
@@ -172,7 +166,7 @@ export default function AttendancePage() {
     try {
       await staffCheckoutMutation.mutateAsync({})
     } catch (error) {
-      
+      logger.error("Staff check-out failed", {error})
     }
   }, [staffCheckoutMutation])
 
@@ -317,7 +311,7 @@ export default function AttendancePage() {
                 </div>
 
                 {/* Current Session Duration */}
-                {staffStatus?.is_checked_in && staffStatus.total_seconds && (
+                {staffStatus?.is_checked_in && (
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="flex items-center gap-2 text-green-700">
                       <Clock className="h-4 w-4" />
