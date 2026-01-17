@@ -381,7 +381,7 @@ function HomeComponent() {
                 <div className="text-slate-300 text-xs sm:text-sm lg:text-base">Members (Enterprise)</div>
               </div>
               <div className="bg-slate-800/50 p-4 sm:p-6 lg:p-8 rounded-lg backdrop-blur text-center hover:bg-slate-800/70 transition-all duration-200">
-                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">2025</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">2026</div>
                 <div className="text-slate-300 text-xs sm:text-sm lg:text-base">Launching Soon</div>
               </div>
             </div>

@@ -25,6 +25,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { useGymAnalytics } from '@/hooks/use-gym-analytics'
 import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { AnalyticsGuard, AccessDenied } from '@/components/rbac/rbac-guards'
 
 export default function AnalyticsPage() {
   const { user, profile } = useAuth()
@@ -73,7 +74,11 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 md:p-8">
+    <AnalyticsGuard
+      action="read"
+      fallback={<AccessDenied message="You don't have permission to view analytics. This feature requires manager-level access or higher." />}
+    >
+      <div className="space-y-6 p-6 md:p-8">
       <PageHeader
         title="Business Analytics"
         description="Key metrics and insights to grow your gym"
@@ -427,5 +432,6 @@ export default function AnalyticsPage() {
         <p>Analytics update every 5 minutes • Last updated: {new Date().toLocaleTimeString()}</p>
       </div>
     </div>
+    </AnalyticsGuard>
   )
 }

@@ -48,7 +48,28 @@ export const useInvitations = (
     queryFn: async () => {
       if (!targetGymId) return { success: false, invitations: [] }
       
-      const response = await fetch(`/api/invites?gym_id=${targetGymId}`)
+      // Build query parameters from filters
+      const params = new URLSearchParams()
+      params.set('gym_id', targetGymId)
+      
+      // Add status filter (default to 'all' if not specified)
+      if (filters?.status && filters.status !== 'all') {
+        params.set('status', filters.status)
+      } else {
+        params.set('status', 'all')
+      }
+      
+      // Add role filter
+      if (filters?.role && filters.role !== 'all') {
+        params.set('role', filters.role)
+      }
+      
+      // Add search filter
+      if (filters?.search) {
+        params.set('search', filters.search)
+      }
+      
+      const response = await fetch(`/api/invites?${params.toString()}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -64,26 +85,10 @@ export const useInvitations = (
   const invitations = useMemo(() => {
     const data = (invitationsData?.invitations || []) as InvitationWithDetails[]
     
-    if (!filters) return data
+    // Only apply client-side filters for date ranges since API doesn't handle them
+    if (!filters || (!filters.date_from && !filters.date_to)) return data
 
     return data.filter(invitation => {
-      // Status filter
-      if (filters.status && filters.status !== 'all' && invitation.status !== filters.status) {
-        return false
-      }
-
-      // Role filter
-      if (filters.role && filters.role !== 'all' && invitation.role !== filters.role) {
-        return false
-      }
-
-      // Search filter
-      if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
-        return invitation.email.toLowerCase().includes(searchLower) ||
-               invitation.role.toLowerCase().includes(searchLower)
-      }
-
       // Date filters (guard against missing created_at)
       if (filters.date_from && invitation.created_at) {
         const inviteDate = new Date(invitation.created_at)

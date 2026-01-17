@@ -47,6 +47,8 @@ export function ResponsiveTable({ children, className }: ResponsiveTableProps) {
   const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768) // md breakpoint
     }
@@ -206,6 +208,8 @@ export function ResponsiveTableSkeleton({
   const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }

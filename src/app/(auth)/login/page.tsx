@@ -157,10 +157,10 @@ const LoginPageComponent = () => {
     
     try {
 
-      toastActions.info(
-        'Redirecting...', 
-        `Redirecting to ${provider === 'google' ? 'Google' : 'Facebook'} for authentication.`
-      )
+      // toastActions.info(
+      //   'Redirecting...', 
+      //   `Redirecting to ${provider === 'google' ? 'Google' : 'Facebook'} for authentication.`
+      // )
       if (provider === 'google') {
         await loginWithSocialProvider('google', {});
       } else {
@@ -174,17 +174,17 @@ const LoginPageComponent = () => {
       logger.error(`${provider} OAuth error:`, {error})
       
       // Provide more specific error messages
-      let errorMessage = `Failed to connect with ${provider === 'google' ? 'Google' : 'Facebook'}. Please try again.`
+      // let errorMessage = `Failed to connect with ${provider === 'google' ? 'Google' : 'Facebook'}. Please try again.`
       
-      if (error instanceof Error) {
-        if (error.message.includes('popup_blocked')) {
-          errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site and try again.'
-        } else if (error.message.includes('network')) {
-          errorMessage = 'Network error. Please check your connection and try again.'
-        }
-      }
+      // if (error instanceof Error) {
+      //   if (error.message.includes('popup_blocked')) {
+      //     errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site and try again.'
+      //   } else if (error.message.includes('network')) {
+      //     errorMessage = 'Network error. Please check your connection and try again.'
+      //   }
+      // }
       
-      toastActions.error('Authentication Error', errorMessage)
+      // toastActions.error('Authentication Error', errorMessage)
       setSocialLoading(prev => ({ ...prev, [provider]: false }))
     }
   }

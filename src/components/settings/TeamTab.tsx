@@ -135,7 +135,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ className }) => {
         toastActions.error('Failed to Revoke', result.error || 'Unknown error')
       }
     } catch (error) {
-      
+      logger.error('Error revoking invitation:', {error})
       toastActions.error('Error', 'Failed to revoke invitation')
     }
   }
@@ -149,7 +149,7 @@ export const TeamTab: React.FC<TeamTabProps> = ({ className }) => {
         toastActions.error('Failed to Resend', result.error || 'Unknown error')
       }
     } catch (error) {
-      
+      logger.error('Error resending invitation:', {error})
       toastActions.error('Error', 'Failed to resend invitation')
     }
   }
@@ -157,12 +157,14 @@ export const TeamTab: React.FC<TeamTabProps> = ({ className }) => {
   const copyInviteLink = async (invitation: InvitationWithDetails) => {
     
     // Note: In production, you'd generate the actual invite URL
-    const inviteUrl = `${window.location.origin}/onboarding?invite=${invitation.id}`
+    const inviteUrl = typeof window !== 'undefined' 
+      ? `${window.location.origin}/onboarding?invite=${invitation.id}`
+      : `/onboarding?invite=${invitation.id}`
     try {
       await navigator.clipboard.writeText(inviteUrl)
       toastActions.success('Link Copied', 'Invitation link copied to clipboard')
     } catch (error) {
-      
+      logger.error("Error copying invitation link:", {error})
       toastActions.error('Failed to Copy', 'Could not copy link to clipboard')
     }
   }
@@ -543,6 +545,12 @@ export const TeamTab: React.FC<TeamTabProps> = ({ className }) => {
                               <DropdownMenuItem onClick={() => handleResendInvite(invitation.id, invitation.email)}>
                                 <Send className="h-4 w-4 mr-2" />
                                 Resend
+                              </DropdownMenuItem>
+                            )}
+                            {invitation.status === 'revoked' && (
+                              <DropdownMenuItem disabled>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Invitation Revoked
                               </DropdownMenuItem>
                             )}
                             {invitation.status === 'accepted' && (
