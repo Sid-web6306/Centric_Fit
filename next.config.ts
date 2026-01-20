@@ -1,6 +1,20 @@
 import type { NextConfig } from "next";
 
+// Use Vercel's deployment ID or git commit SHA for version checking
+// Falls back to timestamp for local development
+const buildId = process.env.VERCEL_DEPLOYMENT_ID 
+  || process.env.VERCEL_GIT_COMMIT_SHA 
+  || process.env.NEXT_PUBLIC_BUILD_ID 
+  || Date.now().toString();
+
 const nextConfig: NextConfig = {
+  // Expose build ID for version checking
+  generateBuildId: async () => buildId,
+  env: {
+    NEXT_PUBLIC_BUILD_ID: buildId,
+    // Also expose the Vercel deployment URL if available
+    NEXT_PUBLIC_VERCEL_URL: process.env.VERCEL_URL || '',
+  },
   images: {
     remotePatterns: [
       // Google OAuth profile pictures
