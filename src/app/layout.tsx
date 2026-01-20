@@ -12,7 +12,6 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import { SupabaseErrorHandler } from "@/components/providers/supabase-error-handler";
-import { UpdateAvailable } from "@/components/UpdateAvailable";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -72,7 +71,6 @@ export default function RootLayout({
                 {children}
                 <PWAWrapper />
                 <ServiceWorkerRegister />
-                <UpdateAvailable />
               </SessionProvider>
               <Toaster />
             </QueryProvider>
