@@ -133,7 +133,7 @@ export async function getGymInvitations(gym_id?: string) {
     // Resolve gym ID
     let targetGymId = gym_id
     if (!targetGymId) {
-      const { data: profile } = await supabase.from('profiles').select('gym_id').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('gym_id').or(`auth_user_id.eq.${user.id},id.eq.${user.id}`).single()
       targetGymId = profile?.gym_id ?? undefined
     }
 

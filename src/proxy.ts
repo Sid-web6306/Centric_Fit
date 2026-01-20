@@ -96,6 +96,7 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
   profileData: UserProfile | null
 }> => {
   try {
+    // Support both auth_user_id (new pattern) and id (legacy pattern)
     const { data: profile, error } = await supabase
       .from('profiles')
       .select(`
@@ -106,7 +107,7 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
           roles(name)
         )
       `)
-      .eq('id', userId)
+      .or(`auth_user_id.eq.${userId},id.eq.${userId}`)
       .single()
 
     if (error) {

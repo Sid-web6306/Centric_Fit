@@ -431,7 +431,6 @@ export const TeamTab: React.FC<TeamTabProps> = ({ className }) => {
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="staff">Staff</SelectItem>
                   <SelectItem value="trainer">Trainer</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
                 </SelectContent>
               </Select>
 

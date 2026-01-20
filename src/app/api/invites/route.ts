@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Resolve gym ID
     let targetGymId = gym_id ?? undefined
     if (!targetGymId) {
-      const { data: profile } = await supabase.from('profiles').select('gym_id').eq('id', user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('gym_id').or(`auth_user_id.eq.${user.id},id.eq.${user.id}`).single()
       targetGymId = profile?.gym_id ?? undefined
     }
 
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Build query
+    // Build query - exclude member invitations (members are managed separately)
     let query = supabase
       .from('gym_invitations')
       .select(`
@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
         accepted_by:profiles!gym_invitations_accepted_by_fkey(id, full_name, email)
       `)
       .eq('gym_id', targetGymId)
+      .neq('role', 'member')
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
@@ -66,8 +67,8 @@ export async function GET(request: NextRequest) {
       query = query.eq('status', status)
     }
 
-    // Apply role filter
-    if (role && ['owner', 'manager', 'staff', 'trainer', 'member'].includes(role)) {
+    // Apply role filter (member excluded from team page)
+    if (role && ['owner', 'manager', 'staff', 'trainer'].includes(role)) {
       query = query.eq('role', role)
     }
 
@@ -83,10 +84,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch invitations' }, { status: 500 })
     }
 
-    // Get count
-    let countQuery = supabase.from('gym_invitations').select('*', { count: 'exact', head: true }).eq('gym_id', targetGymId)
+    // Get count - exclude member invitations
+    let countQuery = supabase.from('gym_invitations').select('*', { count: 'exact', head: true }).eq('gym_id', targetGymId).neq('role', 'member')
     if (status !== 'all') countQuery = countQuery.eq('status', status)
-    if (role && ['owner', 'manager', 'staff', 'trainer', 'member'].includes(role)) countQuery = countQuery.eq('role', role)
+    if (role && ['owner', 'manager', 'staff', 'trainer'].includes(role)) countQuery = countQuery.eq('role', role)
     if (search) countQuery = countQuery.or(`email.ilike.%${search}%,role.ilike.%${search}%`)
     const { count } = await countQuery
 

@@ -185,9 +185,9 @@ export async function POST(request: NextRequest) {
     // Handle single member portal enable
     const validatedData = enablePortalSchema.parse(body)
 
-    // Get member details
+    // Get member details with profile info
     const { data: member, error: memberError } = await supabase
-      .from('members')
+      .from('members_with_profile')
       .select('*')
       .eq('id', validatedData.member_id)
       .single()
@@ -202,6 +202,10 @@ export async function POST(request: NextRequest) {
 
     if (member.user_id) {
       return NextResponse.json({ error: 'Member already has portal access' }, { status: 400 })
+    }
+
+    if (!member.gym_id) {
+      return NextResponse.json({ error: 'Member has no gym association' }, { status: 400 })
     }
 
     // Check permissions
@@ -220,7 +224,7 @@ export async function POST(request: NextRequest) {
       notify_user: true,
       metadata: {
         member_id: validatedData.member_id,
-        member_name: `${member.first_name} ${member.last_name}`.trim(),
+        member_name: member.full_name || `${member.first_name || ''} ${member.last_name || ''}`.trim(),
         portal_invitation: true,
         custom_message: validatedData.message,
         send_welcome_message: validatedData.send_welcome_message

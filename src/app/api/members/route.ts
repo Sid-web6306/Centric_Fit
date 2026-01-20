@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
+import { getMemberErrorResponse } from '@/lib/member-error-messages'
 
 // Validation schemas
 const createMemberSchema = z.object({
@@ -24,12 +25,13 @@ const updateMemberSchema = z.object({
   join_date: z.string().optional()
 })
 
-// Helper to get user's gym_id
+// Helper to get user's gym_id (supports both id and auth_user_id patterns)
 async function getUserGymId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
+  // Try auth_user_id first (new pattern), then fall back to id (legacy pattern)
   const { data: profile } = await supabase
     .from('profiles')
     .select('gym_id')
-    .eq('id', userId)
+    .or(`auth_user_id.eq.${userId},id.eq.${userId}`)
     .single()
   
   return profile?.gym_id || null
@@ -108,10 +110,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Single member lookup
+    // Single member lookup - use view for contact info
     if (memberId) {
       const { data: member, error: memberError } = await supabase
-        .from('members')
+        .from('members_with_profile')
         .select('*')
         .eq('id', memberId)
         .eq('gym_id', targetGymId)
@@ -128,9 +130,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ member })
     }
 
-    // List members with optional filters
+    // List members with optional filters - use view for contact info
     let query = supabase
-      .from('members')
+      .from('members_with_profile')
       .select('*', { count: 'exact' })
       .eq('gym_id', targetGymId)
       .order('created_at', { ascending: false })
@@ -141,6 +143,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      // Search in profile fields via view
       query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
     }
 
@@ -186,27 +189,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Create member
-    const { data: member, error: createError } = await supabase
-      .from('members')
-      .insert({
-        gym_id: validatedData.gym_id,
-        first_name: validatedData.first_name,
-        last_name: validatedData.last_name,
-        email: validatedData.email || null,
-        phone_number: validatedData.phone_number || null,
-        status: validatedData.status,
-        join_date: validatedData.join_date || new Date().toISOString()
+    // Create member with profile using the new dual-write function
+    const { data: result, error: createError } = await supabase
+      .rpc('create_member_with_profile', {
+        p_gym_id: validatedData.gym_id,
+        p_first_name: validatedData.first_name,
+        p_last_name: validatedData.last_name,
+        p_email: validatedData.email || undefined,
+        p_phone_number: validatedData.phone_number || undefined,
+        p_status: validatedData.status,
+        p_join_date: validatedData.join_date || new Date().toISOString().split('T')[0]
       })
-      .select('*')
       .single()
 
     if (createError) {
       logger.error('Error creating member:', { createError })
-      return NextResponse.json({ error: `Failed to create member: ${createError.message}` }, { status: 500 })
+      return getMemberErrorResponse(createError)
     }
 
-    return NextResponse.json({ member }, { status: 201 })
+    // Fetch the full member record with profile data
+    const { data: member, error: fetchError } = await supabase
+      .from('members_with_profile')
+      .select('*')
+      .eq('id', result.member_id)
+      .single()
+
+    if (fetchError) {
+      logger.error('Error fetching created member:', { fetchError })
+      return NextResponse.json({ error: 'Member created but failed to fetch details' }, { status: 500 })
+    }
+
+    return NextResponse.json({ member, profile_id: result.profile_id }, { status: 201 })
 
   } catch (error) {
     logger.error('Members POST error:', { error })
@@ -254,23 +267,36 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Update member
-    const { data: member, error: updateError } = await supabase
-      .from('members')
-      .update({
-        ...validatedData,
-        updated_at: new Date().toISOString()
+    // Update member with profile sync using the new dual-write function
+    const { data: result, error: updateError } = await supabase
+      .rpc('update_member_with_profile', {
+        p_member_id: memberId,
+        p_first_name: validatedData.first_name,
+        p_last_name: validatedData.last_name,
+        p_email: validatedData.email ?? undefined,
+        p_phone_number: validatedData.phone_number ?? undefined,
+        p_status: validatedData.status
       })
-      .eq('id', memberId)
-      .select('*')
       .single()
 
     if (updateError) {
       logger.error('Error updating member:', { updateError })
-      return NextResponse.json({ error: 'Failed to update member' }, { status: 500 })
+      return getMemberErrorResponse(updateError)
     }
 
-    return NextResponse.json({ member })
+    // Fetch the full member record with profile data
+    const { data: member, error: memberFetchError } = await supabase
+      .from('members_with_profile')
+      .select('*')
+      .eq('id', memberId)
+      .single()
+
+    if (memberFetchError) {
+      logger.error('Error fetching updated member:', { memberFetchError })
+      return NextResponse.json({ error: 'Member updated but failed to fetch details' }, { status: 500 })
+    }
+
+    return NextResponse.json({ member, updated_fields: (result as { updated_fields?: string[] })?.updated_fields })
 
   } catch (error) {
     logger.error('Members PUT error:', { error })

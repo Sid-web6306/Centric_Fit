@@ -3,5 +3,5 @@
 import { FullPageLoading } from '@/components/ui/loading-spinner'
 
 export default function Loading() {
-  return <FullPageLoading text="Loading your gym management system..." />
+  return <FullPageLoading text="Loading your fitness management system..." />
 }

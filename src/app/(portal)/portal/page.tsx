@@ -21,9 +21,11 @@ import {
   useMemberCheckin, 
   useMemberCheckout 
 } from '@/hooks/use-member-portal'
+import { formatDurationFromSeconds } from '@/hooks/use-attendance'
 import { usePortalData } from '@/components/providers/portal-data-provider'
 import { useOfflineQueue } from '@/hooks/use-offline-queue'
 import { format } from 'date-fns'
+import { logger } from '@/lib/logger'
 
 export default function MemberPortalDashboard() {
   const [checkinNotes, setCheckinNotes] = useState('')
@@ -50,7 +52,7 @@ export default function MemberPortalDashboard() {
       })
       setCheckinNotes('')
     } catch (error) {
-      
+      logger.error('Checkin error:', { error })
     }
   }
 
@@ -58,17 +60,12 @@ export default function MemberPortalDashboard() {
     try {
       await checkoutMutation.mutateAsync({})
     } catch (error) {
-      
+      logger.error('Checkout error:', { error })
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`
-    }
-    return `${minutes}m`
+  const formatTime = (seconds: number | null | undefined) => {
+    return formatDurationFromSeconds(seconds)
   }
 
   if (hasError) {

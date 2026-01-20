@@ -114,7 +114,8 @@ export function useAttendanceStats(gymId: string | null) {
 }
 
 export function formatDurationFromSeconds(totalSeconds: number | null | undefined) {
-  if (!totalSeconds || totalSeconds <= 0) return '—'
+  if (totalSeconds === null || totalSeconds === undefined) return '—'
+  if (totalSeconds < 0) return '0h 0m'
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   return `${hours}h ${minutes}m`
