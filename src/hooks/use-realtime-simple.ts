@@ -534,8 +534,9 @@ export function useRealtimeSync(gymId: string | null) {
     }
     
     // Set up user-specific subscriptions with error handling
+    // Note: For profiles, we need to watch both id and auth_user_id patterns
     try {
-      setupSubscription('profiles', `id=eq.${user.id}`)
+      setupSubscription('profiles', `or=(id.eq.${user.id},auth_user_id.eq.${user.id})`)
       setupSubscription('subscriptions', `user_id=eq.${user.id}`)
     } catch (error) {
       logger.realtime.error('Error setting up user subscriptions', { 

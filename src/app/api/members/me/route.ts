@@ -15,9 +15,9 @@ export async function GET() {
 
     logger.info('Fetching member profile for user', { userId: user.id })
 
-    // Get member profile for authenticated user
+    // Get member profile for authenticated user (use view for contact info from profiles)
     const { data: member, error: memberError } = await supabase
-      .from('members')
+      .from('members_with_profile')
       .select('*')
       .eq('user_id', user.id)
       .single()

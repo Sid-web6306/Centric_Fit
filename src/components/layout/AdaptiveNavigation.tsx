@@ -36,6 +36,9 @@ interface AdaptiveNavigationProps {
 export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
   const { isAuthenticated, hasGym, isLoading, user, profile } = useAuth()
   const rbac = useRBAC()
+  
+  // Check if user is a member (from RBAC or profile default_role)
+  const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -163,26 +166,17 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                   >
                     <DropdownMenuItem asChild>
                       <Link 
-                        href={hasGym ? "/dashboard" : "/onboarding"} 
+                        href={isMember ? "/portal" : (hasGym ? "/dashboard" : "/onboarding")} 
                         className="flex items-center cursor-pointer"
                       >
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        <span>{hasGym ? "Dashboard" : "Complete Setup"}</span>
+                        {isMember ? (
+                          <Smartphone className="mr-2 h-4 w-4" />
+                        ) : (
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                        )}
+                        <span>{isMember ? "Portal" : (hasGym ? "Dashboard" : "Complete Setup")}</span>
                       </Link>
                     </DropdownMenuItem>
-                    
-                    {/* Member Portal Link */}
-                    {rbac?.role === 'member' && (
-                      <DropdownMenuItem asChild>
-                        <Link 
-                          href="/portal" 
-                          className="flex items-center cursor-pointer"
-                        >
-                          <Smartphone className="mr-2 h-4 w-4" />
-                          <span>Member Portal</span>
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
                     
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
@@ -287,10 +281,14 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                   <div className="mt-auto px-4 sm:px-6 py-6 border-t border-slate-800 safe-area-inset-bottom">
                     {isAuthenticated ? (
                       <div className="space-y-3">
-                        <Link href={hasGym ? "/dashboard" : "/onboarding"} onClick={closeMobileMenu}>
+                        <Link href={isMember ? "/portal" : (hasGym ? "/dashboard" : "/onboarding")} onClick={closeMobileMenu}>
                           <Button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:from-purple-700 active:to-pink-700 text-white min-h-[48px] text-base">
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            {hasGym ? "Dashboard" : "Complete Setup"}
+                            {isMember ? (
+                              <Smartphone className="mr-2 h-4 w-4" />
+                            ) : (
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                            )}
+                            {isMember ? "Portal" : (hasGym ? "Dashboard" : "Complete Setup")}
                           </Button>
                         </Link>
                         <Button 
@@ -332,7 +330,11 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
 
 // Hero section adaptive CTA - Enhanced touch targets
 export function AdaptiveHeroCTA({ className }: { className?: string }) {
-  const { isAuthenticated, hasGym, isLoading } = useAuth()
+  const { isAuthenticated, hasGym, isLoading, profile } = useAuth()
+  const rbac = useRBAC()
+  
+  // Check if user is a member (from RBAC or profile default_role)
+  const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
 
   // Show skeleton during loading
   if (isLoading) {
@@ -344,7 +346,21 @@ export function AdaptiveHeroCTA({ className }: { className?: string }) {
     )
   }
 
-  // Authenticated user with gym - dashboard CTA
+  // Member role - portal CTA
+  if (isAuthenticated && isMember) {
+    return (
+      <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center ${className}`}>
+        <Link href="/portal">
+          <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap">
+            Open Portal
+            <ArrowRight className="ml-2 h-4 w-4 sm:h-6 sm:w-6" />
+          </Button>
+        </Link>
+      </div>
+    )
+  }
+
+  // Authenticated user with gym (owner/staff) - dashboard CTA
   if (isAuthenticated && hasGym) {
     return (
       <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center ${className}`}>
@@ -400,7 +416,11 @@ export function AdaptiveHeroCTA({ className }: { className?: string }) {
 
 // Final CTA section adaptive content
 export function AdaptiveFinalCTA({ className }: { className?: string }) {
-  const { isAuthenticated, hasGym, isLoading } = useAuth()
+  const { isAuthenticated, hasGym, isLoading, profile } = useAuth()
+  const rbac = useRBAC()
+  
+  // Check if user is a member (from RBAC or profile default_role)
+  const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
 
   // Show skeleton during loading
   if (isLoading) {
@@ -411,6 +431,28 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Skeleton className="h-12 sm:h-14 w-[180px] sm:w-[200px] bg-white/10" />
           <Skeleton className="h-12 sm:h-14 w-[180px] sm:w-[200px] bg-white/10" />
+        </div>
+      </div>
+    )
+  }
+
+  // Member role - portal CTA
+  if (isAuthenticated && isMember) {
+    return (
+      <div className={`text-center ${className}`}>
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
+          Welcome to your Member Portal!
+        </h2>
+        <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
+          Check in, track your progress, and manage your gym membership all in one place.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+          <Link href="/portal">
+            <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap">
+              Open Portal
+              <ArrowRight className="ml-2 h-4 w-4 sm:h-6 sm:w-6" />
+            </Button>
+          </Link>
         </div>
       </div>
     )
@@ -443,7 +485,7 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
     )
   }
 
-  // Authenticated user without gym
+  // Authenticated user without gym (owner/staff needing setup)
   if (isAuthenticated && !hasGym) {
     return (
       <div className={`text-center ${className}`}>

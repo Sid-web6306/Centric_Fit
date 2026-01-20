@@ -194,7 +194,7 @@ const MembersPage = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Members</h1>
-            <p className="text-muted-foreground">Loading your gym members...</p>
+            <p className="text-muted-foreground">Loading your fitness members...</p>
           </div>
         </div>
         <Card>

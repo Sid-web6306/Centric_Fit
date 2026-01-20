@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
+import { getMemberErrorMessage } from '@/lib/member-error-messages'
 
 // Validation schema for bulk member creation
 const bulkCreateMemberSchema = z.object({
@@ -36,89 +37,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Prepare all members for insertion
-    const insertData = validatedData.members.map(data => ({
-      gym_id: validatedData.gym_id,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      email: data.email || null,
-      phone_number: data.phone_number || null,
-      status: data.status || 'active',
-      join_date: data.join_date || new Date().toISOString()
-    }))
+    // Use create_member_with_profile RPC for each member to ensure profiles are created
+    // This creates both member and profile records atomically
+    const success: Array<{ id: string; email: string | null; first_name: string; last_name: string; profile_id: string }> = []
+    const failed: Array<{ data: { first_name: string; last_name: string; email?: string | null }; error: string }> = []
 
-    // Attempt bulk insert
-    const { data: createdMembers, error: bulkError } = await supabase
-      .from('members')
-      .insert(insertData)
-      .select('id, email, first_name, last_name')
+    for (const memberData of validatedData.members) {
+      try {
+        const { data: result, error: createError } = await supabase
+          .rpc('create_member_with_profile', {
+            p_gym_id: validatedData.gym_id,
+            p_first_name: memberData.first_name,
+            p_last_name: memberData.last_name,
+            p_email: memberData.email || undefined,
+            p_phone_number: memberData.phone_number || undefined,
+            p_status: memberData.status || 'active',
+            p_join_date: memberData.join_date || new Date().toISOString().split('T')[0]
+          })
+          .single()
 
-    if (bulkError) {
-      // If bulk insert fails, try individual inserts to identify which ones failed
-      logger.warn('Bulk insert failed, falling back to individual inserts:', { error: bulkError.message })
-      
-      const success: Array<{ id: string; email: string | null; first_name: string; last_name: string }> = []
-      const failed: Array<{ data: typeof insertData[0]; error: string }> = []
-
-      for (const memberData of insertData) {
-        try {
-          const { data: createdMember, error: insertError } = await supabase
-            .from('members')
-            .insert(memberData)
-            .select('id, email, first_name, last_name')
-            .single()
-
-          if (insertError) {
-            failed.push({ data: memberData, error: insertError.message })
-          } else if (createdMember) {
-            success.push({
-              id: createdMember.id,
-              email: createdMember.email,
-              first_name: createdMember.first_name || '',
-              last_name: createdMember.last_name || ''
-            })
-          }
-        } catch (err) {
+        if (createError) {
           failed.push({ 
-            data: memberData, 
-            error: err instanceof Error ? err.message : 'Unknown error' 
+            data: { 
+              first_name: memberData.first_name, 
+              last_name: memberData.last_name, 
+              email: memberData.email 
+            }, 
+            error: getMemberErrorMessage(createError) 
+          })
+        } else if (result) {
+          success.push({
+            id: result.member_id,
+            email: memberData.email || null,
+            first_name: memberData.first_name,
+            last_name: memberData.last_name,
+            profile_id: result.profile_id
           })
         }
+      } catch (err) {
+        failed.push({ 
+          data: { 
+            first_name: memberData.first_name, 
+            last_name: memberData.last_name, 
+            email: memberData.email 
+          }, 
+          error: getMemberErrorMessage(err) 
+        })
       }
-
-      logger.info('Bulk create fallback completed:', { 
-        successCount: success.length, 
-        failedCount: failed.length 
-      })
-
-      return NextResponse.json({
-        success: success,
-        failed: failed,
-        summary: {
-          total_requested: validatedData.members.length,
-          success_count: success.length,
-          failed_count: failed.length
-        }
-      }, { status: failed.length > 0 ? 207 : 201 }) // 207 Multi-Status if some failed
     }
 
-    // Map database response to expected type
-    const mappedMembers = (createdMembers || []).map(m => ({
-      id: m.id,
-      email: m.email,
-      first_name: m.first_name || '',
-      last_name: m.last_name || ''
-    }))
+    logger.info('Bulk create with profiles completed:', { 
+      successCount: success.length, 
+      failedCount: failed.length 
+    })
 
     return NextResponse.json({
-      success: mappedMembers,
-      failed: [],
+      success: success,
+      failed: failed,
       summary: {
         total_requested: validatedData.members.length,
-        success_count: mappedMembers.length,
-        failed_count: 0
+        success_count: success.length,
+        failed_count: failed.length
       }
-    }, { status: 201 })
+    }, { status: failed.length > 0 ? 207 : 201 }) // 207 Multi-Status if some failed
 
   } catch (error) {
     logger.error('Bulk members POST error:', { error })

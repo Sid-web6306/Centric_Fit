@@ -1,36 +1,43 @@
 'use client'
 
-import { useAuth, useLogout } from '@/hooks/use-auth'
-import { LoadingSpinner } from '@/components/layout/LoadingSpinner'
-import { Button } from '@/components/ui/button'
+import { usePathname, useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Suspense, useDeferredValue, useEffect } from 'react'
 import { 
   Home, 
   History, 
   User, 
-  LogOut, 
   Dumbbell,
-  Menu,
-  X
 } from 'lucide-react'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import React from 'react'
+import { useAuth } from '@/hooks/use-auth'
+import { useSidebarState } from '@/stores/ui-store'
+import { LoadingSpinner } from '@/components/layout/LoadingSpinner'
+import { CollapsibleNavItem } from '@/components/layout/CollapsibleNavItem'
+import { SidebarToggle } from '@/components/layout/SidebarToggle'
+import { CollapsibleUserSection } from '@/components/layout/CollapsibleUserSection'
+import { useSidebarShortcuts } from '@/hooks/use-sidebar-shortcuts'
+import { cn } from '@/lib/utils'
 import { PWAWrapper } from '@/components/pwa/PWAWrapper'
 import { RealtimeProvider } from '@/components/providers/realtime-provider-simple'
 import { PortalDataProvider } from '@/components/providers/portal-data-provider'
 
-export default function PortalLayout({
-  children,
-}: {
+interface PortalLayoutProps {
   children: React.ReactNode
-}) {
-  const { user, profile, isLoading: authLoading } = useAuth()
-  const logoutMutation = useLogout()
+}
+
+function PortalLayoutContent({ children }: PortalLayoutProps) {
   const pathname = usePathname()
+  const deferredPathname = useDeferredValue(pathname)
   const router = useRouter()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { user, isLoading: authLoading } = useAuth()
+  const {
+    sidebarCollapsed,
+    sidebarCollapsedMobile,
+    toggleMobileSidebar,
+  } = useSidebarState()
   
+  // Enable keyboard shortcuts
+  useSidebarShortcuts()
 
   // Handle redirect for unauthenticated users
   useEffect(() => {
@@ -39,163 +46,188 @@ export default function PortalLayout({
     }
   }, [user, authLoading, router])
 
-  // Show loading while auth is initializing
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
-
-  // Don't render anything if user is not authenticated (redirect is in progress)
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
-
-  // Since middleware now handles portal access control, we can simplify this
-  // If we reach here, user is authenticated and middleware has allowed access
-  // This means they have the 'member' role
-
   const navigation = [
     { name: 'Dashboard', href: '/portal', icon: Home },
     { name: 'History', href: '/portal/history', icon: History },
     { name: 'Profile', href: '/portal/profile', icon: User },
   ]
 
-  const handleSignOut = () => {
-    logoutMutation.mutate()
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
+  // Don't render anything if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-screen bg-background">
+      {/* Desktop Sidebar */}
+      <motion.div
+        initial={false}
+        animate={{ 
+          width: sidebarCollapsed ? 64 : 256,
+        }}
+        transition={{ 
+          duration: 0.3, 
+          ease: 'easeOut' 
+        }}
+        className={cn(
+          'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50',
+          'bg-card shadow-lg border-r border-border'
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className={cn(
+          'flex items-center h-16 border-b border-border transition-all duration-300',
+          sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+        )}>
+          {sidebarCollapsed ? (
+            <SidebarToggle />
+          ) : (
+            <>
+              <div className="flex items-center min-w-0">
+                <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
+                <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
+                  Member Portal
+                </span>
+              </div>
+              <SidebarToggle />
+            </>
+          )}
+        </div>
+        
+        {/* Navigation */}
+        <nav className="mt-5 flex-1 px-2">
+          <div className="space-y-1">
+            {navigation.map((item) => {
+              const isActive = deferredPathname === item.href
+              return (
+                <CollapsibleNavItem
+                  key={item.name}
+                  name={item.name}
+                  href={item.href}
+                  icon={item.icon}
+                  isActive={isActive}
+                  prefetch={true}
+                />
+              )
+            })}
+          </div>
+        </nav>
+
+        {/* User Section */}
+        <CollapsibleUserSection className="mt-auto" />
+      </motion.div>
+
+      {/* Mobile Sidebar */}
+      <AnimatePresence>
+        {!sidebarCollapsedMobile && (
+          <>
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg border-r border-border"
+            >
+              {/* Mobile Header */}
+              <div className="flex items-center justify-between h-16 px-4 border-b border-border">
+                <div className="flex items-center min-w-0">
+                  <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
+                  <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
+                    Member Portal
+                  </span>
+                </div>
+                <SidebarToggle isMobile />
+              </div>
+              
+              {/* Mobile Navigation */}
+              <nav className="mt-5 px-2 flex-1">
+                <div className="space-y-1">
+                  {navigation.map((item) => {
+                    const isActive = deferredPathname === item.href
+                    return (
+                      <CollapsibleNavItem
+                        key={item.name}
+                        name={item.name}
+                        href={item.href}
+                        icon={item.icon}
+                        isActive={isActive}
+                        onClick={toggleMobileSidebar}
+                        forceExpanded={true}
+                        prefetch={true}
+                      />
+                    )
+                  })}
+                </div>
+              </nav>
+
+              {/* Mobile User Section */}
+              <CollapsibleUserSection forceExpanded />
+            </motion.div>
+
+            {/* Mobile Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="lg:hidden fixed inset-0 z-40 bg-black/50"
+              onClick={toggleMobileSidebar}
+            />
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Main content */}
+      <div
+        className={cn(
+          'flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-out',
+          'ml-0',
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+        )}
+      >
+        {/* Mobile Top bar */}
+        <div className="bg-card shadow-sm border-b border-border lg:hidden">
+          <div className="flex items-center justify-between h-16 px-4">
+            <SidebarToggle isMobile />
+            <h1 className="text-lg font-semibold text-card-foreground">
+              {navigation.find(item => item.href === pathname)?.name || 'Dashboard'}
+            </h1>
+            <div className="w-8"></div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
+          <Suspense fallback={<div className="p-6 text-muted-foreground">Loading...</div>}>
+            {children}
+          </Suspense>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+export default function PortalLayout({ children }: PortalLayoutProps) {
   return (
     <RealtimeProvider>
       <PortalDataProvider key="portal-data-provider">
         <PWAWrapper />
-        <div className="min-h-screen bg-gray-50">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white shadow-sm border-b">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Dumbbell className="h-6 w-6 text-primary" />
-              <span className="font-semibold text-lg">Member Portal</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
-          
-          {/* Mobile menu */}
-          {isMobileMenuOpen && (
-            <div className="border-t bg-white">
-              <nav className="px-4 py-2 space-y-1">
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.name}
-                    </Link>
-                  )
-                })}
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-50 w-full text-left"
-                >
-                  <LogOut className="h-5 w-5" />
-                  Sign Out
-                </button>
-              </nav>
-            </div>
-          )}
-        </div>
-
-        <div className="lg:flex">
-          {/* Desktop sidebar */}
-          <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-            <div className="flex flex-col flex-grow bg-white border-r overflow-y-auto">
-              {/* Logo */}
-              <div className="flex items-center gap-2 px-6 py-6 border-b">
-                <Dumbbell className="h-8 w-8 text-primary" />
-                <div>
-                  <h1 className="font-semibold text-lg">Member Portal</h1>
-                  <p className="text-sm text-gray-500">Welcome back!</p>
-                </div>
-              </div>
-
-              {/* Navigation */}
-              <nav className="flex-1 px-4 py-6 space-y-2">
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.name}
-                    </Link>
-                  )
-                })}
-              </nav>
-
-              {/* User info and sign out */}
-              <div className="px-4 py-4 border-t">
-                <div className="flex items-center gap-3 px-3 py-2 text-sm">
-                  <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-medium">
-                    {profile?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
-                      {profile?.full_name || user?.email}
-                    </p>
-                    <p className="text-gray-500 text-xs truncate">Member</p>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-2"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Main content */}
-          <div className="lg:pl-64 flex-1">
-            <main className="min-h-screen">
-              {children}
-            </main>
-          </div>
-        </div>
-      </div>
+        <PortalLayoutContent>
+          {children}
+        </PortalLayoutContent>
       </PortalDataProvider>
     </RealtimeProvider>
   )

@@ -89,7 +89,7 @@ export async function GET(request: Request) {
     const socialProfileData = extractSocialProfileData(user)
     
     // Wait for database trigger to create profile with retry logic
-    const profile = await waitForProfileCreation(supabase, user.id)
+    const profile = await waitForProfileCreation(supabase, user.id, user.email)
     
     if (!profile) {
       logger.error('Auth callback: Profile creation failed after retries')
@@ -134,26 +134,63 @@ export async function GET(request: Request) {
 }
 
 // Helper function to wait for profile creation with exponential backoff
-async function waitForProfileCreation(supabase: SupabaseClient<Database>, userId: string): Promise<ProfileData | null> {
+async function waitForProfileCreation(supabase: SupabaseClient<Database>, userId: string, userEmail?: string): Promise<ProfileData | null> {
   const maxRetries = 5
   const baseDelay = 100 // Start with 100ms
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     logger.info(`Auth callback: Checking for profile (attempt ${attempt + 1}/${maxRetries})`)
     
-    const { data: profile, error } = await supabase
+    // First try by id (for new users where id = auth_user_id)
+    const { data: profile, error: idError } = await supabase
       .from('profiles')
       .select('id, gym_id, full_name, email, default_role, is_gym_owner, avatar_url')
       .eq('id', userId)
       .single()
     
     if (profile) {
-      logger.info('Auth callback: Profile found after', { attempts: attempt + 1 })
+      logger.info('Auth callback: Profile found by id after', { attempts: attempt + 1 })
       return profile as ProfileData
     }
     
-    if (error && error.code !== 'PGRST116') {
-      logger.error('Auth callback: Unexpected profile error:', {error})
+    // If not found by id, try by auth_user_id (for linked profiles)
+    const { data: linkedProfile, error: linkedError } = await supabase
+      .from('profiles')
+      .select('id, gym_id, full_name, email, default_role, is_gym_owner, avatar_url')
+      .eq('auth_user_id', userId)
+      .single()
+    
+    if (linkedProfile) {
+      logger.info('Auth callback: Profile found by auth_user_id after', { attempts: attempt + 1 })
+      return linkedProfile as ProfileData
+    }
+    
+    // If still not found and we have email, try by email (for existing users re-logging in)
+    if (userEmail) {
+      const { data: emailProfile, error: emailError } = await supabase
+        .from('profiles')
+        .select('id, gym_id, full_name, email, default_role, is_gym_owner, avatar_url')
+        .eq('email', userEmail)
+        .single()
+      
+      if (emailProfile) {
+        logger.info('Auth callback: Profile found by email after', { attempts: attempt + 1 })
+        return emailProfile as ProfileData
+      }
+      
+      if (emailError && emailError.code !== 'PGRST116') {
+        logger.error('Auth callback: Unexpected profile error:', { error: emailError })
+        return null
+      }
+    }
+    
+    // Check for unexpected errors from earlier queries
+    if (idError && idError.code !== 'PGRST116') {
+      logger.error('Auth callback: Unexpected profile error:', { error: idError })
+      return null
+    }
+    if (linkedError && linkedError.code !== 'PGRST116') {
+      logger.error('Auth callback: Unexpected profile error:', { error: linkedError })
       return null
     }
     

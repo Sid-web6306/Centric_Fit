@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import type { User } from '@supabase/supabase-js'
 import type { ProfileWithRBAC } from '@/types/rbac.types'
 import type { Database } from '@/types/supabase'
@@ -90,11 +89,11 @@ async function fetchAuthSession(): Promise<AuthData> {
       }
     }
 
-    // Fetch profile for authenticated user
+    // Fetch profile for authenticated user (supports both auth_user_id and id patterns)
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .or(`auth_user_id.eq.${user.id},id.eq.${user.id}`)
       .single()
 
     logger.info('Profile fetch result:', {
@@ -183,7 +182,6 @@ async function fetchAuthSession(): Promise<AuthData> {
 
 // Main auth hook
 export function useAuth() {
-  const queryClient = useQueryClient()
 
   const authQuery = useQuery({
     queryKey: ['auth-session'],
@@ -300,10 +298,11 @@ export function useUpdateProfile() {
         throw new Error('Authentication required')
       }
 
+      // Support both auth_user_id and id patterns for profile update
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
-        .eq('id', user.id)
+        .or(`auth_user_id.eq.${user.id},id.eq.${user.id}`)
         .select()
         .single()
 

@@ -349,7 +349,7 @@ export class InvitationService {
     try {
       const [gymData, inviterProfile] = await Promise.all([
         this.supabase.from('gyms').select('name').eq('id', gymId).single(),
-        this.supabase.from('profiles').select('full_name, email').eq('id', this.user.id).single()
+        this.supabase.from('profiles').select('full_name, email').or(`auth_user_id.eq.${this.user.id},id.eq.${this.user.id}`).single()
       ])
 
       return await sendInvitationEmail({

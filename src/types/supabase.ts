@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       attendance_sessions: {
@@ -109,6 +84,13 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_sessions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_with_profile"
             referencedColumns: ["id"]
           },
           {
@@ -448,59 +430,57 @@ export type Database = {
             referencedRelation: "members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "member_activities_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_with_profile"
+            referencedColumns: ["id"]
+          },
         ]
       }
       members: {
         Row: {
           created_at: string
-          email: string | null
-          first_name: string | null
           gym_id: string
           id: string
           invitation_count: number | null
           join_date: string | null
           last_activity_at: string | null
-          last_name: string | null
           metadata: Json | null
-          phone_number: string | null
           portal_activated_at: string | null
           portal_invited_at: string | null
+          profile_id: string | null
           status: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
-          email?: string | null
-          first_name?: string | null
           gym_id: string
           id?: string
           invitation_count?: number | null
           join_date?: string | null
           last_activity_at?: string | null
-          last_name?: string | null
           metadata?: Json | null
-          phone_number?: string | null
           portal_activated_at?: string | null
           portal_invited_at?: string | null
+          profile_id?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
-          email?: string | null
-          first_name?: string | null
           gym_id?: string
           id?: string
           invitation_count?: number | null
           join_date?: string | null
           last_activity_at?: string | null
-          last_name?: string | null
           metadata?: Json | null
-          phone_number?: string | null
           portal_activated_at?: string | null
           portal_invited_at?: string | null
+          profile_id?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string | null
@@ -511,6 +491,13 @@ export type Database = {
             columns: ["gym_id"]
             isOneToOne: false
             referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -583,6 +570,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_user_id: string | null
           avatar_url: string | null
           created_at: string
           custom_permissions: Json | null
@@ -592,6 +580,7 @@ export type Database = {
           full_name: string | null
           gym_id: string | null
           id: string
+          is_authenticated: boolean | null
           is_gym_owner: boolean | null
           last_role_sync: string | null
           phone: string | null
@@ -600,6 +589,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           created_at?: string
           custom_permissions?: Json | null
@@ -609,6 +599,7 @@ export type Database = {
           full_name?: string | null
           gym_id?: string | null
           id: string
+          is_authenticated?: boolean | null
           is_gym_owner?: boolean | null
           last_role_sync?: string | null
           phone?: string | null
@@ -617,6 +608,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auth_user_id?: string | null
           avatar_url?: string | null
           created_at?: string
           custom_permissions?: Json | null
@@ -626,6 +618,7 @@ export type Database = {
           full_name?: string | null
           gym_id?: string | null
           id?: string
+          is_authenticated?: boolean | null
           is_gym_owner?: boolean | null
           last_role_sync?: string | null
           phone?: string | null
@@ -1127,52 +1120,17 @@ export type Database = {
     Views: {
       member_portal_adoption: {
         Row: {
-          activation_time_hours: number | null
-          days_since_last_activity: number | null
           email: string | null
           first_name: string | null
+          full_name: string | null
           gym_id: string | null
           invitation_count: number | null
-          last_activity_at: string | null
-          last_name: string | null
           member_created_at: string | null
           member_id: string | null
           portal_activated_at: string | null
           portal_invited_at: string | null
           portal_status: string | null
-          status: string | null
-        }
-        Insert: {
-          activation_time_hours?: never
-          days_since_last_activity?: never
-          email?: string | null
-          first_name?: string | null
-          gym_id?: string | null
-          invitation_count?: number | null
-          last_activity_at?: string | null
-          last_name?: string | null
-          member_created_at?: string | null
-          member_id?: string | null
-          portal_activated_at?: string | null
-          portal_invited_at?: string | null
-          portal_status?: never
-          status?: string | null
-        }
-        Update: {
-          activation_time_hours?: never
-          days_since_last_activity?: never
-          email?: string | null
-          first_name?: string | null
-          gym_id?: string | null
-          invitation_count?: number | null
-          last_activity_at?: string | null
-          last_name?: string | null
-          member_created_at?: string | null
-          member_id?: string | null
-          portal_activated_at?: string | null
-          portal_invited_at?: string | null
-          portal_status?: never
-          status?: string | null
+          user_id: string | null
         }
         Relationships: [
           {
@@ -1180,6 +1138,44 @@ export type Database = {
             columns: ["gym_id"]
             isOneToOne: false
             referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members_with_profile: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          first_name: string | null
+          full_name: string | null
+          gym_id: string | null
+          id: string | null
+          invitation_count: number | null
+          join_date: string | null
+          last_activity_at: string | null
+          last_name: string | null
+          metadata: Json | null
+          phone_number: string | null
+          portal_activated_at: string | null
+          portal_invited_at: string | null
+          profile_id: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1241,8 +1237,20 @@ export type Database = {
         }
         Returns: Json
       }
+      can_access_member_profile: {
+        Args: { p_member_id: string }
+        Returns: boolean
+      }
       cancel_subscription: {
         Args: { p_cancel_at_period_end?: boolean; p_subscription_id: string }
+        Returns: boolean
+      }
+      check_gym_access: {
+        Args: { p_gym_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      check_gym_role: {
+        Args: { p_gym_id: string; p_roles: string[]; p_user_id: string }
         Returns: boolean
       }
       check_subscription_access: {
@@ -1282,6 +1290,35 @@ export type Database = {
         }
         Returns: string
       }
+      create_member_with_profile:
+        | {
+            Args: {
+              p_email?: string
+              p_first_name: string
+              p_gym_id: string
+              p_join_date?: string
+              p_last_name: string
+              p_phone_number?: string
+              p_status?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_email?: string
+              p_first_name: string
+              p_gym_id: string
+              p_join_date?: string
+              p_last_name: string
+              p_phone_number?: string
+              p_status?: string
+            }
+            Returns: {
+              is_new_profile: boolean
+              member_id: string
+              profile_id: string
+            }[]
+          }
       create_subscription: {
         Args: {
           p_amount: number
@@ -1332,6 +1369,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      find_or_create_profile: {
+        Args: {
+          p_auth_user_id?: string
+          p_email?: string
+          p_full_name?: string
+          p_phone?: string
+        }
+        Returns: string
+      }
       get_gym_owner_info: {
         Args: { gym_uuid: string }
         Returns: {
@@ -1364,18 +1410,15 @@ export type Database = {
         Args: { p_gym_id?: string; p_user_id: string }
         Returns: {
           created_at: string
-          email: string | null
-          first_name: string | null
           gym_id: string
           id: string
           invitation_count: number | null
           join_date: string | null
           last_activity_at: string | null
-          last_name: string | null
           metadata: Json | null
-          phone_number: string | null
           portal_activated_at: string | null
           portal_invited_at: string | null
+          profile_id: string | null
           status: string | null
           updated_at: string
           user_id: string | null
@@ -1399,6 +1442,29 @@ export type Database = {
       get_member_portal_stats: {
         Args: { p_gym_id: string; p_period_days?: number }
         Returns: Json
+      }
+      get_member_with_profile: {
+        Args: { p_member_id: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          first_name: string
+          full_name: string
+          gym_id: string
+          is_authenticated: boolean
+          join_date: string
+          last_activity_at: string
+          last_name: string
+          member_email: string
+          member_id: string
+          phone: string
+          phone_number: string
+          portal_activated_at: string
+          portal_invited_at: string
+          profile_id: string
+          status: string
+          user_id: string
+        }[]
       }
       get_members_eligible_for_portal: {
         Args: { p_gym_id: string; p_limit?: number; p_offset?: number }
@@ -1429,6 +1495,22 @@ export type Database = {
           total_seconds: number
         }[]
       }
+      get_profile_by_auth_user: {
+        Args: { p_auth_user_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          default_role: string
+          email: string
+          full_name: string
+          gym_id: string
+          id: string
+          is_authenticated: boolean
+          is_gym_owner: boolean
+          phone: string
+          updated_at: string
+        }[]
+      }
       get_staff_attendance: {
         Args: {
           p_from?: string
@@ -1448,7 +1530,9 @@ export type Database = {
           total_seconds: number
         }[]
       }
-      get_user_gym_id: { Args: never; Returns: string }
+      get_user_gym_id:
+        | { Args: never; Returns: string }
+        | { Args: { p_user_id: string }; Returns: string }
       get_user_id_by_email: { Args: { p_email: string }; Returns: string }
       get_user_permissions: {
         Args: { gym_uuid: string; user_uuid: string }
@@ -1470,6 +1554,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      is_own_profile: { Args: { p_profile_id: string }; Returns: boolean }
       log_subscription_analytics: {
         Args: {
           p_amount?: number
@@ -1657,6 +1742,17 @@ export type Database = {
         Args: { date_param?: string; gym_id_param: string }
         Returns: undefined
       }
+      update_member_with_profile: {
+        Args: {
+          p_email?: string
+          p_first_name?: string
+          p_last_name?: string
+          p_member_id: string
+          p_phone_number?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       user_has_role_in_gym: {
         Args: { p_gym_id: string; p_role_names: string[]; p_user_id: string }
         Returns: boolean
@@ -1793,9 +1889,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
