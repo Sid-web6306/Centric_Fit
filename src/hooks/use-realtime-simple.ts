@@ -359,8 +359,30 @@ export function useRealtimeSync(gymId: string | null) {
             logger.realtime.connect('Subscribed to realtime updates', { table, channelName })
           } else if (status === 'CHANNEL_ERROR') {
             logger.realtime.error('Error subscribing to realtime updates', { table, channelName, status })
+            // Auto-reconnect on channel error after a delay
+            if (isMountedRef.current) {
+              setTimeout(() => {
+                if (isMountedRef.current && channelsRef.current.has(channelName)) {
+                  logger.realtime.connect('Attempting to reconnect after CHANNEL_ERROR', { table, channelName })
+                  channelsRef.current.delete(channelName)
+                  try {
+                    supabase.removeChannel(channel)
+                  } catch { /* ignore */ }
+                  setupSubscription(table, filter)
+                }
+              }, 5000) // Wait 5 seconds before reconnecting
+            }
           } else if (status === 'TIMED_OUT' || status === 'CLOSED') {
             logger.realtime.disconnect('Realtime subscription ended', { table, channelName, status })
+            // Auto-reconnect on timeout/close after a delay
+            if (isMountedRef.current) {
+              setTimeout(() => {
+                if (isMountedRef.current && !channelsRef.current.has(channelName)) {
+                  logger.realtime.connect('Attempting to reconnect after timeout/close', { table, channelName })
+                  setupSubscription(table, filter)
+                }
+              }, 3000) // Wait 3 seconds before reconnecting
+            }
           } else {
             // Log unexpected status but don't treat as error (only in debug mode)
             if (process.env.DEBUG_REALTIME) {

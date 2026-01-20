@@ -33,6 +33,18 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Realtime configuration for reliable subscriptions
+      realtime: {
+        params: {
+          eventsPerSecond: 10, // Rate limit to prevent overwhelming
+        },
+        heartbeatIntervalMs: 15000, // Send heartbeat every 15s to keep connection alive
+        reconnectAfterMs: (tries: number) => {
+          // Exponential backoff: 1s, 2s, 4s, 8s, max 30s
+          return Math.min(1000 * Math.pow(2, tries), 30000)
+        },
+        timeout: 30000, // Connection timeout
+      },
       cookies: {
         get(name: string) {
           // Only access document in browser environment
