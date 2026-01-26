@@ -17,10 +17,9 @@ import {
   DynamicLink
 } from '@/lib/dynamic-imports'
 import { 
-  useTrialInfo,
   hasActiveSubscription, 
   isTrialActive 
-} from '@/hooks/use-trial'
+} from '@/hooks/use-simplified-payments'
 import { useSimplifiedPaymentSystem } from '@/hooks/use-simplified-payments'
 
 interface TrialGuardProps {
@@ -42,12 +41,24 @@ export function TrialGuard({
   fallback,
   showUpgrade = true
 }: TrialGuardProps) {
-  const { data: trialInfo, isLoading: trialLoading } = useTrialInfo()
-  const { currentSubscription: subscriptionInfo, hasAccess, isLoading } = useSimplifiedPaymentSystem()
+  const { currentSubscription: subscriptionInfo, hasAccess, isLoading, trial } = useSimplifiedPaymentSystem()
   const subscriptionLoading = isLoading
   const accessLoading = isLoading
 
-  if (trialLoading || subscriptionLoading || accessLoading) {
+  // Transform trial data to match expected interface
+  const trialInfo = trial ? {
+    trial_start_date: trial.startDate,
+    trial_end_date: trial.endDate,
+    trial_status: trial.status as 'active' | 'expired' | 'converted',
+    days_remaining: trial.daysRemaining || 0
+  } : {
+    trial_start_date: null,
+    trial_end_date: null,
+    trial_status: 'expired' as const,
+    days_remaining: 0
+  }
+
+  if (subscriptionLoading || accessLoading || !trialInfo) {
     return (
       <div className="animate-pulse">
         <div className="h-32 bg-gray-200 rounded-lg"></div>
@@ -72,7 +83,7 @@ export function TrialGuard({
   }
 
   const hasSubscription = hasActiveSubscription(subscriptionInfo || null)
-  const trialActive = isTrialActive(trialInfo)
+  const trialActive = isTrialActive(trial)
 
   // Check access based on subscription status and trial
   const hasFeatureAccess = hasAccess && (hasSubscription || trialActive)

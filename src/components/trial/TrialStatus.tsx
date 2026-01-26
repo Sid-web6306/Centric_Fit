@@ -13,13 +13,12 @@ import {
   DynamicLink
 } from '@/lib/dynamic-imports'
 import { 
-  useTrialInfo,
   isTrialExpiringSoon, 
   isTrialActive, 
   hasActiveSubscription,
-  getSubscriptionStatusText,
-  getSubscriptionStatusColor
-} from '@/hooks/use-trial'
+  getSubscriptionStatusColor,
+  getSubscriptionStatusText
+} from '@/hooks/use-simplified-payments'
 import { useSimplifiedPaymentSystem } from '@/hooks/use-simplified-payments'
 
 interface TrialStatusProps {
@@ -33,10 +32,22 @@ export function TrialStatus({
   showUpgradeButton = true,
   className = '' 
 }: TrialStatusProps) {
-  const { data: trialInfo, isLoading: trialLoading } = useTrialInfo()
-  const { currentSubscription: subscriptionInfo, isLoading: subscriptionLoading } = useSimplifiedPaymentSystem()
+  const { currentSubscription: subscriptionInfo, isLoading: subscriptionLoading, trial } = useSimplifiedPaymentSystem()
 
-  if (trialLoading || subscriptionLoading || !trialInfo) {
+  // Transform trial data to match expected interface
+  const trialInfo = trial ? {
+    trial_start_date: trial.startDate,
+    trial_end_date: trial.endDate,
+    trial_status: trial.status as 'active' | 'expired' | 'converted',
+    days_remaining: trial.daysRemaining || 0
+  } : {
+    trial_start_date: null,
+    trial_end_date: null,
+    trial_status: 'expired' as const,
+    days_remaining: 0
+  }
+
+  if (subscriptionLoading || !trialInfo) {
     return null
   }
 

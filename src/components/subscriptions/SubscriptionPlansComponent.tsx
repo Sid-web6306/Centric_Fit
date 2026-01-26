@@ -18,7 +18,7 @@ import {
 } from '@/lib/dynamic-imports'
 import { useSimplifiedPaymentSystem } from '@/hooks/use-simplified-payments'
 import { OdometerNumber } from '@/components/ui/animated-number'
-import { useTrialInfo, isTrialActive, hasActiveSubscription } from '@/hooks/use-trial'
+import { isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
 import { 
@@ -74,9 +74,21 @@ export function SubscriptionPlansComponent({
   className = "",
   variant = 'default'
 }: SubscriptionPlansComponentProps) {
-  const { plans, isLoading, createPayment, currentSubscription, error, refetch } = useSimplifiedPaymentSystem()
+  const { plans, isLoading, createPayment, currentSubscription, error, refetch, trial } = useSimplifiedPaymentSystem()
   logger.debug("plans", currentSubscription);
-  const { data: trialInfo, isLoading: trialLoading } = useTrialInfo()
+
+  // Transform trial data to match expected interface
+  const trialInfo = trial ? {
+    trial_start_date: trial.startDate,
+    trial_end_date: trial.endDate,
+    trial_status: trial.status as 'active' | 'expired' | 'converted',
+    days_remaining: trial.daysRemaining || 0
+  } : {
+    trial_start_date: null,
+    trial_end_date: null,
+    trial_status: 'expired' as const,
+    days_remaining: 0
+  }
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const [paymentDialog, setPaymentDialog] = useState<{
@@ -225,7 +237,7 @@ export function SubscriptionPlansComponent({
                 )
               }
             } catch (upgradeError) {
-              
+              logger.error('Subscription upgrade failed:', {error: upgradeError})
               toastActions.error(
                 'Upgrade Failed', 
                 'Failed to complete subscription upgrade. Please contact support.'
@@ -323,7 +335,7 @@ export function SubscriptionPlansComponent({
     }
   }
 
-  if (isLoading || trialLoading) {
+  if (isLoading) {
     return (
       <div className={`flex items-center justify-center min-h-[400px] ${className}`}>
         <div className="text-center">
