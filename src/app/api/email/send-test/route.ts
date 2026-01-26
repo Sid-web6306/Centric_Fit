@@ -1,4 +1,33 @@
 import { NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/email/send-test:
+ *   get:
+ *     summary: Email endpoint
+ *     tags: [Email]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { sendInvitationEmail } from '@/lib/email-service'
 
 export const dynamic = 'force-dynamic'

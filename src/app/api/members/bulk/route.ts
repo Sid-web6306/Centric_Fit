@@ -1,4 +1,117 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/members/bulk:
+ *   post:
+ *     summary: Bulk create members
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - gym_id
+ *               - members
+ *             properties:
+ *               gym_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Gym ID to create members for
+ *               members:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - first_name
+ *                     - last_name
+ *                   properties:
+ *                     first_name:
+ *                       type: string
+ *                       minLength: 1
+ *                       example: "John"
+ *                     last_name:
+ *                       type: string
+ *                       minLength: 1
+ *                       example: "Doe"
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       nullable: true
+ *                       example: "john.doe@example.com"
+ *                     phone_number:
+ *                       type: string
+ *                       nullable: true
+ *                       example: "+1234567890"
+ *                     status:
+ *                       type: string
+ *                       enum: [active, inactive, pending]
+ *                       default: active
+ *                     join_date:
+ *                       type: string
+ *                       format: date
+ *                       example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Members bulk creation completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       first_name:
+ *                         type: string
+ *                       last_name:
+ *                         type: string
+ *                       profile_id:
+ *                         type: string
+ *                 failed:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       data:
+ *                         type: object
+ *                       error:
+ *                         type: string
+ *       400:
+ *         description: Invalid input or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkUserPermission } from '@/actions/rbac.actions'

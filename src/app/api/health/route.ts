@@ -2,6 +2,61 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { serverConfig } from '@/lib/config'
 
+/**
+ * @swagger
+ * /api/health:
+ *   get:
+ *     summary: Health check endpoint
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: System is healthy or degraded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [healthy, degraded, unhealthy]
+ *                   description: Overall system health status
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Health check timestamp
+ *                 services:
+ *                   type: object
+ *                   properties:
+ *                     database:
+ *                       $ref: '#/components/schemas/ServiceStatus'
+ *                     auth:
+ *                       $ref: '#/components/schemas/ServiceStatus'
+ *                     email:
+ *                       $ref: '#/components/schemas/ServiceStatus'
+ *                     payment:
+ *                       $ref: '#/components/schemas/ServiceStatus'
+ *                 version:
+ *                   type: string
+ *                   description: Application version
+ *       503:
+ *         description: System is unhealthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   enum: [unhealthy]
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 services:
+ *                   type: object
+ *                 version:
+ *                   type: string
+ */
+
 interface ServiceStatus {
   status: 'ok' | 'error'
   latency?: number

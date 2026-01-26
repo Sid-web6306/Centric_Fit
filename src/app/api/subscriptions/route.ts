@@ -4,6 +4,131 @@ import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
 import type { Tables } from '@/types/supabase'
 
+/**
+ * @swagger
+ * /api/subscriptions:
+ *   get:
+ *     summary: Get subscription plans and user's current subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: action
+ *         schema:
+ *           type: string
+ *           enum: [plans, current, billing-portal]
+ *         description: Specific action to perform
+ *     responses:
+ *       200:
+ *         description: Subscription data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     plans:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/SubscriptionPlan'
+ *                 - type: object
+ *                   properties:
+ *                     subscription:
+ *                       $ref: '#/components/schemas/Subscription'
+ *                 - type: object
+ *                   properties:
+ *                     billing_portal_url:
+ *                       type: string
+ *                       format: uri
+ *                 - type: object
+ *                   properties:
+ *                     plans:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/SubscriptionPlan'
+ *                     subscription:
+ *                       $ref: '#/components/schemas/Subscription'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   post:
+ *     summary: Create or manage subscription
+ *     tags: [Subscriptions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - action
+ *             properties:
+ *               action:
+ *                 type: string
+ *                 enum: [create, cancel, pause, resume]
+ *                 description: Subscription action
+ *               planId:
+ *                 type: string
+ *                 description: Plan ID (required for create action)
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, annual]
+ *                 description: Billing cycle (required for create action)
+ *               paymentMethodId:
+ *                 type: string
+ *                 description: Payment method ID (required for create action)
+ *     responses:
+ *       200:
+ *         description: Subscription action completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     subscription:
+ *                       $ref: '#/components/schemas/Subscription'
+ *                     client_secret:
+ *                       type: string
+ *                       description: Payment intent client secret
+ *                 - type: object
+ *                   properties:
+ *                     subscription:
+ *                       $ref: '#/components/schemas/Subscription'
+ *                     message:
+ *                       type: string
+ *       400:
+ *         description: Invalid request parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 
 // Helper function to get user's gym_id

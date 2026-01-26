@@ -1,4 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/gyms/stats:
+ *   get:
+ *     summary: Get gym statistics
+ *     tags: [Gyms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: gym_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Gym ID to fetch statistics for
+ *     responses:
+ *       200:
+ *         description: Gym statistics retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_members:
+ *                   type: integer
+ *                   description: Total number of members
+ *                 active_members:
+ *                   type: integer
+ *                   description: Number of active members
+ *                 new_members_this_month:
+ *                   type: integer
+ *                   description: New members added this month
+ *                 revenue_this_month:
+ *                   type: number
+ *                   description: Total revenue this month
+ *                 attendance_today:
+ *                   type: integer
+ *                   description: Number of check-ins today
+ *       400:
+ *         description: Gym ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'

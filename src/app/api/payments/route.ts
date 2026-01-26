@@ -5,6 +5,136 @@ import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
 import { serverConfig } from '@/lib/config'
 
+/**
+ * @swagger
+ * /api/payments:
+ *   post:
+ *     summary: Create or update Razorpay subscription
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - planId
+ *               - billingCycle
+ *             properties:
+ *               planId:
+ *                 type: string
+ *                 description: Subscription plan ID
+ *               billingCycle:
+ *                 type: string
+ *                 enum: [monthly, annual]
+ *                 description: Billing cycle
+ *               metadata:
+ *                 type: object
+ *                 description: Additional metadata
+ *                 example:
+ *                   gym_name: "CentricFit Downtown"
+ *     responses:
+ *       200:
+ *         description: Subscription created/updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscription:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     current_start:
+ *                       type: integer
+ *                     current_end:
+ *                       type: integer
+ *                 order:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     amount:
+ *                       type: integer
+ *                     currency:
+ *                       type: string
+ *       400:
+ *         description: Invalid request parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Razorpay not configured or server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   get:
+ *     summary: Get payment/subscription status
+ *     tags: [Payments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment status retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscription:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                       enum: [created, active, halted, cancelled, completed, expired]
+ *                     plan:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         amount:
+ *                           type: integer
+ *                         billing_cycle:
+ *                           type: string
+ *                 payments:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       amount:
+ *                         type: integer
+ *                       status:
+ *                         type: string
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 // POST /api/payments - Create or update Razorpay subscription
 export async function POST(request: NextRequest) {
   try {

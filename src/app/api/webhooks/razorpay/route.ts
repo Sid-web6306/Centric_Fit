@@ -1,4 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
+/**
+ * @swagger
+ * /api/webhooks/razorpay:
+ *   get:
+ *     summary: Webhooks endpoint
+ *     tags: [Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successful response
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { headers } from 'next/headers';
 import { createClient } from '@/utils/supabase/server';
 import { PaymentService } from '@/services/payment.service';

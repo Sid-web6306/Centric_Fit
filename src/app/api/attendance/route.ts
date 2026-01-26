@@ -3,6 +3,103 @@ import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 
+/**
+ * @swagger
+ * /api/attendance:
+ *   get:
+ *     summary: Get attendance data
+ *     tags: [Attendance]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: gym_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Gym ID
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [members, staff]
+ *           default: members
+ *         description: Attendance type
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by member/staff name
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date filter
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date filter
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of results
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Results offset
+ *       - in: query
+ *         name: summary
+ *         schema:
+ *           type: boolean
+ *         description: Return summary statistics only
+ *     responses:
+ *       200:
+ *         description: Attendance data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     attendance:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Attendance'
+ *                     total:
+ *                       type: integer
+ *                 - type: object
+ *                   properties:
+ *                     active_members:
+ *                       type: integer
+ *                     active_staff:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       400:
+ *         description: Bad request (missing gym_id)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 // GET /api/attendance - Get attendance data
 export async function GET(request: NextRequest) {
   try {

@@ -1,4 +1,66 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/gyms/owner:
+ *   get:
+ *     summary: Get gym owner information
+ *     tags: [Gyms]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: gym_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Gym ID to fetch owner information for
+ *     responses:
+ *       200:
+ *         description: Owner information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 owner:
+ *                   oneOf:
+ *                     - type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           format: uuid
+ *                         full_name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                     - type: null
+ *       400:
+ *         description: Gym ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'

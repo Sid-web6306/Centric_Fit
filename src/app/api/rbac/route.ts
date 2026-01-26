@@ -1,4 +1,187 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/rbac:
+ *   get:
+ *     summary: Role-based access control operations
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: action
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [gym-roles, user-role, user-permissions, check-permission, all-roles, all-permissions]
+ *         description: RBAC action to perform
+ *       - in: query
+ *         name: gym_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Gym ID (required for most actions)
+ *       - in: query
+ *         name: user_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID (required for user-role and user-permissions actions)
+ *       - in: query
+ *         name: permission
+ *         schema:
+ *           type: string
+ *         description: Permission to check (required for check-permission action)
+ *       - in: query
+ *         name: include_inactive
+ *         schema:
+ *           type: boolean
+ *           default: false
+ *         description: Include inactive roles (for gym-roles action)
+ *     responses:
+ *       200:
+ *         description: RBAC operation completed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     roles:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                 - type: object
+ *                   properties:
+ *                     role:
+ *                       type: object
+ *                 - type: object
+ *                   properties:
+ *                     permissions:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                 - type: object
+ *                   properties:
+ *                     hasPermission:
+ *                       type: boolean
+ *       400:
+ *         description: Missing required parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   post:
+ *     summary: Assign role to user
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id
+ *               - gym_id
+ *               - role_id
+ *             properties:
+ *               user_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: User ID to assign role to
+ *               gym_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Gym ID where role is assigned
+ *               role_id:
+ *                 type: string
+ *                 description: Role ID to assign
+ *     responses:
+ *       200:
+ *         description: Role assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   delete:
+ *     summary: Remove user from gym
+ *     tags: [RBAC]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: User ID to remove
+ *       - in: query
+ *         name: gym_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Gym ID to remove user from
+ *     responses:
+ *       200:
+ *         description: User removed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       400:
+ *         description: Missing required parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { 

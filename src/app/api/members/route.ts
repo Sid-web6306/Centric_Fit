@@ -5,6 +5,273 @@ import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 import { getMemberErrorResponse } from '@/lib/member-error-messages'
 
+/**
+ * @swagger
+ * /api/members:
+ *   get:
+ *     summary: List members or get single member by ID
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         description: Member ID (optional - if not provided, returns list)
+ *       - in: query
+ *         name: gym_id
+ *         schema:
+ *           type: string
+ *         description: Gym ID (optional - uses user's gym if not provided)
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, inactive, pending]
+ *         description: Filter by membership status
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Number of results to return
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of results to skip
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search members by name, email, or phone
+ *       - in: query
+ *         name: summary
+ *         schema:
+ *           type: boolean
+ *         description: Return summary statistics only
+ *     responses:
+ *       200:
+ *         description: Members retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     members:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Member'
+ *                     total:
+ *                       type: integer
+ *                 - type: object
+ *                   properties:
+ *                     member:
+ *                       $ref: '#/components/schemas/Member'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   post:
+ *     summary: Create new member
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - gym_id
+ *               - first_name
+ *               - last_name
+ *             properties:
+ *               gym_id:
+ *                 type: string
+ *                 format: uuid
+ *                 description: Gym ID to associate member with
+ *               first_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 example: "John"
+ *               last_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 example: "Doe"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 nullable: true
+ *                 example: "john.doe@example.com"
+ *               phone_number:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "+1234567890"
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive, pending]
+ *                 default: active
+ *               join_date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-01-15"
+ *     responses:
+ *       201:
+ *         description: Member created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 member:
+ *                   $ref: '#/components/schemas/Member'
+ *       400:
+ *         description: Invalid input or validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   put:
+ *     summary: Update member
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Member ID to update
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 example: "Jane"
+ *               last_name:
+ *                 type: string
+ *                 minLength: 1
+ *                 example: "Smith"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 nullable: true
+ *                 example: "jane.smith@example.com"
+ *               phone_number:
+ *                 type: string
+ *                 nullable: true
+ *                 example: "+1234567890"
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive, pending]
+ *               join_date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2024-01-15"
+ *     responses:
+ *       200:
+ *         description: Member updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 member:
+ *                   $ref: '#/components/schemas/Member'
+ *       400:
+ *         description: Invalid input or missing member ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Member not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *   delete:
+ *     summary: Delete member
+ *     tags: [Members]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Member ID to delete
+ *     responses:
+ *       200:
+ *         description: Member deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Success'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Member not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 // Validation schemas
 const createMemberSchema = z.object({
   gym_id: z.string().uuid(),

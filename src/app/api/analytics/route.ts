@@ -1,4 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
+/**
+ * @swagger
+ * /api/analytics:
+ *   get:
+ *     summary: Get comprehensive gym analytics
+ *     tags: [Analytics]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: gym_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Gym ID to fetch analytics for
+ *       - in: query
+ *         name: period_days
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Number of days to analyze
+ *     responses:
+ *       200:
+ *         description: Analytics data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 period:
+ *                   type: object
+ *                   properties:
+ *                     start:
+ *                       type: string
+ *                       format: date-time
+ *                     end:
+ *                       type: string
+ *                       format: date-time
+ *                     days:
+ *                       type: integer
+ *                 metrics:
+ *                   type: object
+ *                   properties:
+ *                     total_members:
+ *                       type: integer
+ *                     active_members:
+ *                       type: integer
+ *                     new_members:
+ *                       type: integer
+ *                     total_revenue:
+ *                       type: number
+ *                     average_checkins:
+ *                       type: number
+ *                 charts:
+ *                   type: object
+ *                   properties:
+ *                     membership_trend:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     revenue_trend:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     attendance_trend:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       400:
+ *         description: Gym ID is required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'

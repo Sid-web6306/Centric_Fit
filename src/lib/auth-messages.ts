@@ -223,19 +223,19 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   // ===== LOGIN ERRORS =====
   {
     pattern: /signups?.*(not|are)?\s*(allowed|disabled)/i,
-    userMessage: 'No account found with this phone number. Please sign up to create an account.',
+    userMessage: 'No account found with this email address. Please sign up to create an account.',
     redirectTo: 'signup'
   },
   {
     pattern: /user not found|not found|doesn't exist|does not exist/i,
-    userMessage: 'No account found. Please check your phone number or sign up to create an account.',
+    userMessage: 'No account found. Please check your email address or sign up to create an account.',
     redirectTo: 'signup'
   },
   
   // ===== SIGNUP ERRORS =====
   {
     pattern: /already.*registered|user.*already.*exists|email.*taken|phone.*taken/i,
-    userMessage: 'An account with this phone number already exists. Please log in instead.',
+    userMessage: 'An account with this email address already exists. Please log in instead.',
     redirectTo: 'login'
   },
   {
@@ -246,7 +246,7 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   // ===== OTP/VERIFICATION ERRORS =====
   {
     pattern: /otp.*disabled|sms.*disabled/i,
-    userMessage: 'Phone authentication is currently unavailable. Please try email or contact support.',
+    userMessage: 'Email authentication is currently unavailable. Please try again or contact support.',
   },
   {
     pattern: /invalid.*otp|otp.*invalid|incorrect.*code|wrong.*code/i,
@@ -258,7 +258,7 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   },
   {
     pattern: /failed.*to.*send.*sms|sms.*failed|sms.*error/i,
-    userMessage: 'Failed to send SMS. Please check your phone number and try again.',
+    userMessage: 'Failed to send verification email. Please check your email address and try again.',
   },
   
   // ===== RATE LIMITING =====
@@ -280,13 +280,13 @@ const ERROR_MAPPINGS: ErrorMapping[] = [
   },
   {
     pattern: /email.*not.*confirmed|phone.*not.*confirmed/i,
-    userMessage: 'Please verify your account first.',
+    userMessage: 'Please verify your email address first.',
   },
   
   // ===== VALIDATION ERRORS =====
   {
     pattern: /invalid.*phone|phone.*invalid|invalid.*format/i,
-    userMessage: 'Invalid phone number format. Please include country code (e.g., +1234567890).',
+    userMessage: 'Invalid email address format. Please check and try again.',
   },
   {
     pattern: /invalid.*email|email.*invalid/i,
