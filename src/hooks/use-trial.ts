@@ -1,5 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useAuth } from './use-auth'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
@@ -54,65 +53,7 @@ export interface SubscriptionInfo {
   plan?: SubscriptionPlan
 }
 
-// Updated trial hook - now gets trial data from subscriptions table
-export function useTrialInfo() {
-  const { user } = useAuth()
-  
-  return useQuery({
-    queryKey: ['trial-info-v2', user?.id],
-    queryFn: async (): Promise<TrialInfo> => {
-      if (!user?.id) throw new Error('User not authenticated')
-      
-      const supabase = createClient()
-      
-      // First try to get trial data from subscriptions table
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('trial_start_date, trial_end_date, trial_status, status, razorpay_subscription_id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-      
-      if (subscription) {
-        const subscriptionData = subscription as Record<string, unknown>
-        const trialEndDate = subscriptionData.trial_end_date ? new Date(subscriptionData.trial_end_date as string) : null
-        const today = new Date()
-        const days_remaining = trialEndDate ? Math.max(0, Math.ceil((trialEndDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))) : 0
-        
-        // Determine trial status based on subscription data
-        let trial_status: 'active' | 'expired' | 'converted' = 'active'
-        if (subscriptionData.status === 'canceled' || days_remaining <= 0) {
-          trial_status = 'expired'
-        } else if (subscriptionData.razorpay_subscription_id) {
-          trial_status = 'converted'
-        }
-        
-        return {
-          trial_start_date: subscriptionData.trial_start_date as string,
-          trial_end_date: subscriptionData.trial_end_date as string,
-          trial_status,
-          days_remaining
-        }
-      }
-      
-      // No trial subscription found - return default/expired trial info
-      return {
-        trial_start_date: null,
-        trial_end_date: null,
-        trial_status: 'expired',
-        days_remaining: 0
-      }
-    },
-    enabled: !!user?.id,
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMount: false,
-  })
-}
-
-// UTILITY FUNCTIONS (keeping these as they're still useful)
+// UTILITY FUNCTIONS
 
 // Helper function to format currency amount
 export function formatCurrency(amount: number, currency = 'INR'): string {
@@ -247,7 +188,7 @@ export const getPlanPrice = (plan: SubscriptionPlan, billingCycle: 'monthly' | '
   return billingCycle === 'monthly' ? plan.price_monthly_inr : plan.price_annual_inr
 }
 
-// Trial initialization mutation
+// Trial initialization mutation - still needed for new user trials
 interface TrialInitializationResponse {
   subscriptionId: string
   success: boolean
@@ -349,10 +290,8 @@ export function useTrialInitialization() {
       }
     },
     onSuccess: (data) => {
-      // Invalidate relevant queries to refresh UI
-      queryClient.invalidateQueries({ queryKey: ['trial-info'] })
-      queryClient.invalidateQueries({ queryKey: ['trial-info-v2'] })
-      queryClient.invalidateQueries({ queryKey: ['subscriptions-consolidated'] })
+      // Invalidate the consolidated subscription query to refresh UI
+      queryClient.invalidateQueries({ queryKey: ['subscription-data'] })
       queryClient.invalidateQueries({ queryKey: ['auth'] })
       
       // Show appropriate success message

@@ -19,36 +19,13 @@ import {
   DynamicTimer,
   DynamicCheckCircle
 } from '@/lib/dynamic-imports'
-import { useSimplifiedPaymentSystem } from '@/hooks/use-simplified-payments'
-import { useTrialInfo, isTrialActive, hasActiveSubscription } from '@/hooks/use-trial'
+import { useSimplifiedPaymentSystem, useTrialStatus, isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
+import { SubscriptionPlan } from '@/hooks/use-trial'
 
-interface SubscriptionPlan {
-  id: string
-  name: string
-  price_inr: number
-  billing_cycle: 'monthly' | 'annual'
-  plan_type: string
-  member_limit: number | null
-  features: string[]
-  is_active: boolean
-  razorpay_plan_id: string
-  tier_level: number
-  api_access_enabled: boolean
-  multi_gym_enabled: boolean
-  priority_support: boolean
-  advanced_analytics: boolean
-}
-
-interface CurrentSubscriptionDisplayProps {
-  className?: string
-}
-
-export function CurrentSubscriptionDisplay({ 
-  className = ""
-}: CurrentSubscriptionDisplayProps) {
+export function CurrentSubscriptionDisplay({ className = "" }) {
   const router = useRouter()
   const { currentSubscription, plans, isLoading, error } = useSimplifiedPaymentSystem()
-  const { data: trialInfo, isLoading: trialLoading } = useTrialInfo()
+  const { trial: trialInfo, isLoading: trialLoading } = useTrialStatus()
 
   // Priority logic: Trial first, then subscription
   const isOnTrial = trialInfo && isTrialActive(trialInfo)
@@ -127,7 +104,7 @@ export function CurrentSubscriptionDisplay({
             <div className="space-y-2">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-4xl font-bold text-primary">
-                  {trialInfo.days_remaining}
+                  {trialInfo?.days_remaining || 0}
                 </span>
                 <span className="text-muted-foreground">
                   days remaining

@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
           plans: plansData.plans || [],
           groupedPlans: plansData.groupedPlans || {},
           currentSubscription: currentData.subscription || null,
-          hasAccess: currentData.hasAccess || false
+          hasAccess: currentData.hasAccess || false,
+          trial: currentData.trial || null
         })
     }
 
@@ -164,10 +165,26 @@ async function handleGetCurrentSubscription(supabase: SupabaseClient, userId: st
       `)
       .eq('user_id', userId)
       .eq('gym_id', profile.gym_id)
-      .eq('status', 'active')
+      // Include both active and trialing subscriptions
+      .in('status', ['active', 'trialing'])
       .order('created_at', { ascending: false })
       .limit(1)
       .single()
+
+    logger.info('Subscription query result', {
+      userId,
+      gymId: profile.gym_id,
+      subscriptionFound: !!subscription,
+      subscriptionError: subError?.message,
+      subscriptionErrorCode: subError?.code,
+      subscriptionData: subscription ? {
+        id: subscription.id,
+        status: subscription.status,
+        trial_start_date: subscription.trial_start_date,
+        trial_end_date: subscription.trial_end_date,
+        trial_status: subscription.trial_status
+      } : null
+    })
 
     if (subError && subError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
       logger.error('Error fetching current subscription:', { error: subError.message })
@@ -175,29 +192,56 @@ async function handleGetCurrentSubscription(supabase: SupabaseClient, userId: st
 
     // Get trial info from current subscription
     let trialStatus = null
+    let trialEndDate = null
     if (subscription) {
-      if (subscription.status === 'active' && subscription.trial_end_date) {
-        const trialEndDate = new Date(subscription.trial_end_date)
+      // Handle trial subscriptions
+      if (subscription.status === 'trialing' && subscription.trial_end_date) {
+        trialEndDate = new Date(subscription.trial_end_date)
         const now = new Date()
         trialStatus = trialEndDate > now ? 'active' : 'expired'
-      } else if (subscription.trial_status) {
+      } 
+      // Handle active subscriptions with trial data
+      else if (subscription.status === 'active' && subscription.trial_end_date) {
+        trialEndDate = new Date(subscription.trial_end_date)
+        const now = new Date()
+        trialStatus = trialEndDate > now ? 'active' : 'expired'
+      } 
+      // Handle explicit trial_status field
+      else if (subscription.trial_status) {
         trialStatus = subscription.trial_status
+        // If trial_status exists but no end_date, try to calculate it
+        if (!trialEndDate && subscription.trial_start_date) {
+          const startDate = new Date(subscription.trial_start_date)
+          trialEndDate = new Date(startDate.getTime() + (14 * 24 * 60 * 60 * 1000)) // 14 days trial
+          const now = new Date()
+          trialStatus = trialEndDate > now ? 'active' : 'expired'
+        }
       }
+    }
+
+    // If no subscription found, check if user should have a trial
+    if (!subscription) {
+      logger.info('No subscription found for user', { userId, gymId: profile.gym_id })
     }
 
     logger.info('Subscription fetched', {
       userId,
       subscriptionId: subscription?.id,
-      status: subscription?.status
+      status: subscription?.status,
+      trial_start_date: subscription?.trial_start_date,
+      trial_end_date: subscription?.trial_end_date,
+      trial_status: subscription?.trial_status,
+      calculatedTrialStatus: trialStatus
     })
 
     return NextResponse.json({ 
       subscription: subscription || null,
       hasAccess: hasAccess || false,
-      trial: subscription && subscription.trial_start_date ? {
+      trial: subscription && (subscription.trial_start_date || subscription.trial_end_date || subscription.trial_status) ? {
         startDate: subscription.trial_start_date,
         endDate: subscription.trial_end_date,
-        status: trialStatus
+        status: trialStatus,
+        daysRemaining: trialEndDate ? Math.max(0, Math.ceil((trialEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0
       } : null
     })
   } catch (error) {

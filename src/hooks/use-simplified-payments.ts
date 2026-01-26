@@ -2,6 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
 
+// Re-export utility functions from use-trial for backward compatibility
+export { 
+  isTrialExpiringSoon, 
+  isTrialActive, 
+  hasActiveSubscription,
+  formatCurrency,
+  formatTimeRemaining,
+  getAnnualSavings,
+  getAnnualSavingsAmount,
+  getSubscriptionStatusColor,
+  getSubscriptionStatusText,
+  getTrialStatusColor,
+  getTrialStatusText,
+  shouldShowUpgradePrompt,
+  findPlanById,
+  getAvailableBillingCycles,
+  getPlanPrice
+} from './use-trial'
+
 // Types for the simplified APIs
 export interface PaymentRequest {
   flow: 'embedded' | 'redirect'
@@ -259,49 +278,22 @@ export function useSimplifiedPayments() {
   }
 }
 
-// Hook for consolidated subscription management
-export function useSimplifiedSubscriptions() {
+// Base hook for consolidated subscription data - SINGLE SOURCE OF TRUTH
+export function useSubscriptionData() {
   const queryClient = useQueryClient()
 
-  // Get subscription plans and current subscription
+  // Single consolidated query - ONLY ONE NETWORK REQUEST
   const {
     data: subscriptionData,
     isLoading,
     error,
     refetch
   } = useQuery({
-    queryKey: ['subscriptions-consolidated'],
+    queryKey: ['subscription-data'],
     queryFn: async () => {
       const response = await fetch('/api/subscriptions')
       if (!response.ok) {
         throw new Error('Failed to fetch subscription data')
-      }
-      return response.json()
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  })
-
-  // Get subscription plans only
-  const getPlans = useQuery({
-    queryKey: ['subscription-plans-simplified'],
-    queryFn: async (): Promise<unknown[]> => {
-      const response = await fetch('/api/subscriptions?action=plans')
-      if (!response.ok) {
-        throw new Error('Failed to fetch subscription plans')
-      }
-      const data = await response.json()
-      return data.plans || []
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  })
-
-  // Get current subscription only
-  const getCurrentSubscription = useQuery({
-    queryKey: ['current-subscription-simplified'],
-    queryFn: async () => {
-      const response = await fetch('/api/subscriptions?action=current')
-      if (!response.ok) {
-        throw new Error('Failed to fetch current subscription')
       }
       return response.json()
     },
@@ -325,8 +317,7 @@ export function useSimplifiedSubscriptions() {
       return response.json()
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions-consolidated'] })
-      queryClient.invalidateQueries({ queryKey: ['current-subscription-simplified'] })
+      queryClient.invalidateQueries({ queryKey: ['subscription-data'] })
       
       const actionMessages = {
         pause: 'Subscription paused successfully',
@@ -347,30 +338,67 @@ export function useSimplifiedSubscriptions() {
   })
 
   return {
-    // Combined data
+    // Raw data from API
     subscriptionData,
-    plans: subscriptionData ? {
-      plans: subscriptionData.plans || [],
-      groupedPlans: subscriptionData.groupedPlans || {}
-    } : { 
-      plans: getPlans.data || [], 
-      groupedPlans: {} 
-    },
-    currentSubscription: subscriptionData?.currentSubscription || getCurrentSubscription.data?.subscription,
-    hasAccess: subscriptionData?.hasAccess || getCurrentSubscription.data?.hasAccess || false,
-    trial: getCurrentSubscription.data?.trial,
-    
-    // Loading states
-    isLoading: isLoading || getPlans.isLoading || getCurrentSubscription.isLoading,
-    error: error || getPlans.error || getCurrentSubscription.error,
-    
-    // Actions
+    isLoading,
+    error,
     refetch,
     subscriptionAction,
-    
-    // Individual queries for specific use cases
-    getPlans,
-    getCurrentSubscription,
+  }
+}
+
+// Selector-based hooks that reuse the base cache
+
+// Hook for components that only need subscription plans
+export function useSubscriptionPlans() {
+  const { subscriptionData, isLoading, error, refetch } = useSubscriptionData()
+  
+  return {
+    plans: {
+      plans: subscriptionData?.plans || [],
+      groupedPlans: subscriptionData?.groupedPlans || {}
+    },
+    isLoading,
+    error,
+    refetch,
+  }
+}
+
+// Hook for components that only need current subscription
+export function useCurrentSubscription() {
+  const { subscriptionData, isLoading, error, refetch } = useSubscriptionData()
+  
+  return {
+    currentSubscription: subscriptionData?.currentSubscription || null,
+    hasAccess: subscriptionData?.hasAccess || false,
+    isLoading,
+    error,
+    refetch,
+  }
+}
+
+// Hook for components that only need trial information
+export function useTrialStatus() {
+  const { subscriptionData, isLoading, error, refetch } = useSubscriptionData()
+  
+  // Transform trial data to match existing interface
+  const trialInfo = subscriptionData?.trial ? {
+    trial_start_date: subscriptionData.trial.startDate,
+    trial_end_date: subscriptionData.trial.endDate,
+    trial_status: subscriptionData.trial.status as 'active' | 'expired' | 'converted',
+    days_remaining: subscriptionData.trial.daysRemaining || 0
+  } : {
+    trial_start_date: null,
+    trial_end_date: null,
+    trial_status: 'expired' as const,
+    days_remaining: 0
+  }
+  
+  return {
+    trial: trialInfo,
+    isLoading,
+    error,
+    refetch,
   }
 }
 
@@ -507,7 +535,7 @@ export function useDocuments() {
 export function useSimplifiedPaymentSystem() {
   const paymentMethods = usePaymentMethods()
   const payments = useSimplifiedPayments()
-  const subscriptions = useSimplifiedSubscriptions()
+  const subscriptionData = useSubscriptionData()
   const documents = useDocuments()
 
   return {
@@ -521,19 +549,22 @@ export function useSimplifiedPaymentSystem() {
     createPayment: payments.createPayment,
     
     // Subscriptions
-    plans: subscriptions.plans,
-    currentSubscription: subscriptions.currentSubscription,
-    hasAccess: subscriptions.hasAccess,
-    trial: subscriptions.trial,
-    subscriptionAction: subscriptions.subscriptionAction,
-    refetch: subscriptions.refetch,
+    plans: {
+      plans: subscriptionData.subscriptionData?.plans || [],
+      groupedPlans: subscriptionData.subscriptionData?.groupedPlans || {}
+    },
+    currentSubscription: subscriptionData.subscriptionData?.currentSubscription || null,
+    hasAccess: subscriptionData.subscriptionData?.hasAccess || false,
+    trial: subscriptionData.subscriptionData?.trial || null,
+    subscriptionAction: subscriptionData.subscriptionAction,
+    refetch: subscriptionData.refetch,
     
     // Documents
     listDocuments: documents.listDocuments,
     downloadDocument: documents.downloadDocument,
     
     // Global loading state
-    isLoading: paymentMethods.isLoading || subscriptions.isLoading,
-    error: subscriptions.error,
+    isLoading: paymentMethods.isLoading || subscriptionData.isLoading,
+    error: subscriptionData.error,
   }
 } 
