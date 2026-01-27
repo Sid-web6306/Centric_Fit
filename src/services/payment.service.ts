@@ -494,7 +494,7 @@ export class PaymentService {
   /**
    * Cancel a Razorpay subscription
    */
-  static async cancelSubscription(subscriptionId: string, cancelAtCycleEnd: boolean = false): Promise<RazorpaySubscriptionResult> {
+  static async cancelSubscription(subscriptionId: string, cancelAtCycleEnd: boolean = true): Promise<RazorpaySubscriptionResult> {
     const razorpay = this.initializeRazorpay()
     if (!razorpay) {
       throw new Error('Razorpay not configured')

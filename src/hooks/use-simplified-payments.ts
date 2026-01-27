@@ -102,7 +102,6 @@ export interface PaymentResponse {
 export interface SubscriptionAction {
   action: 'pause' | 'resume' | 'cancel' | 'change-plan'
   subscriptionId: string
-  cancelAtPeriodEnd?: boolean
   newPlanId?: string
   billingCycle?: 'monthly' | 'annual'
   feedback?: {
