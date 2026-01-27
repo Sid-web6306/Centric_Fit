@@ -267,62 +267,83 @@ export async function POST(request: NextRequest) {
           }, { status: 500 })
         }
       } else {
-        // Downgrade - update immediately without payment
-        const { error: updateError } = await supabase
-          .from('subscriptions')
-          .update({
-            subscription_plan_id: planId,
-            amount: plan.price_inr,
-            currency: plan.currency || 'INR',
-            billing_cycle: billingCycle,
-            updated_at: new Date().toISOString()
+        // Downgrade - Schedule change at cycle end
+        try {
+          if (!existingSubscription.razorpay_subscription_id) {
+            return NextResponse.json({ error: 'No Razorpay subscription found' }, { status: 400 })
+          }
+
+          // Validate plan ID
+          const razorpayPlanId = plan.razorpay_plan_id || `plan_${planId}_${billingCycle}`
+          if (!razorpayPlanId) {
+            logger.error('No Razorpay plan ID available for downgrade', {
+              planId,
+              billingCycle,
+              razorpayPlanId: plan.razorpay_plan_id
+            })
+            return NextResponse.json({ error: 'No Razorpay plan ID found for this plan' }, { status: 400 })
+          }
+
+          logger.info('Attempting to schedule downgrade in Razorpay', {
+            subscriptionId: existingSubscription.id,
+            razorpaySubscriptionId: existingSubscription.razorpay_subscription_id,
+            planId,
+            razorpayPlanId,
+            billingCycle
           })
-          .eq('id', existingSubscription.id)
 
-        if (updateError) {
-          logger.error('Error updating subscription for downgrade:', { error: updateError.message })
-          return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 })
+          // Update Razorpay subscription to change at cycle end
+          await PaymentService.updateSubscription(existingSubscription.razorpay_subscription_id, {
+            plan_id: razorpayPlanId,
+            schedule_change_at: 'cycle_end',
+            customer_notify: true
+          })
+          
+          logger.info('✅ Downgrade scheduled in Razorpay', {
+            subscriptionId: existingSubscription.id,
+            oldPlanId: existingSubscription.subscription_plan_id,
+            newPlanId: planId,
+            razorpayPlanId: plan.razorpay_plan_id,
+            effectiveDate: existingSubscription.current_period_end
+          })
+
+          // Note: DB will be updated via subscription.updated webhook at cycle end
+          return NextResponse.json({
+            success: true,
+            message: 'Downgrade scheduled for end of billing cycle',
+            effectiveDate: existingSubscription.current_period_end,
+            subscription: {
+              id: existingSubscription.id,
+              scheduled_change: {
+                type: 'downgrade',
+                effective_date: existingSubscription.current_period_end,
+                new_plan_id: planId,
+                new_plan_name: plan.name
+              }
+            }
+          })
+        } catch (razorpayError) {
+          logger.error('Failed to schedule Razorpay subscription downgrade:', {
+            error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError),
+            errorDetails: razorpayError,
+            subscriptionId: existingSubscription.id,
+            razorpaySubscriptionId: existingSubscription.razorpay_subscription_id,
+            planId: planId,
+            razorpayPlanId: plan.razorpay_plan_id
+          })
+          
+          // Check for UPI restriction
+          const errorMessage = razorpayError instanceof Error ? razorpayError.message : String(razorpayError)
+          const isUPIRestriction = errorMessage.includes('subscriptions cannot be updated when payment mode is upi')
+          
+          return NextResponse.json({ 
+            error: isUPIRestriction 
+              ? 'UPI_SUBSCRIPTION_RESTRICTION' 
+              : 'Failed to schedule downgrade with payment provider',
+            details: errorMessage,
+            isUPIRestriction
+          }, { status: 500 })
         }
-
-        // Update Razorpay subscription
-        if (existingSubscription.razorpay_subscription_id) {
-          try {
-            await PaymentService.updateSubscription(existingSubscription.razorpay_subscription_id, {
-              plan_id: plan.razorpay_plan_id || `plan_${planId}_${billingCycle}`,
-              schedule_change_at: 'now',
-              customer_notify: true
-            })
-            logger.info('Razorpay subscription updated for downgrade', {
-              razorpaySubscriptionId: existingSubscription.razorpay_subscription_id,
-              newPlanId: plan.razorpay_plan_id
-            })
-          } catch (razorpayError) {
-            logger.warn('Failed to update Razorpay subscription for downgrade', {
-              error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError),
-              subscriptionId: existingSubscription.id
-            })
-          }
-        }
-
-        logger.info('✅ Subscription downgraded successfully', {
-          subscriptionId: existingSubscription.id,
-          oldPlanId: existingSubscription.subscription_plan_id,
-          newPlanId: planId,
-          billingCycle,
-          userId: user.id
-        })
-
-        return NextResponse.json({
-          success: true,
-          message: 'Subscription downgraded successfully',
-          subscription: {
-            id: existingSubscription.id,
-            status: 'active',
-            plan_id: planId,
-            billing_cycle: billingCycle,
-            amount: plan.price_inr
-          }
-        })
       }
     }
 

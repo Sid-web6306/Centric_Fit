@@ -452,8 +452,11 @@ export class PaymentService {
     } catch (error) {
       logger.error('Failed to update Razorpay subscription', {
         error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        errorObject: error,
         subscriptionId,
-        updateData
+        updateData,
+        updateDataString: JSON.stringify(updateData, null, 2)
       })
       throw error
     }

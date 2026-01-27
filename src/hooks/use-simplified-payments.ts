@@ -253,22 +253,66 @@ export function useSimplifiedPayments() {
   // Create payment (intent or checkout session)
   const createPayment = useMutation({
     mutationFn: async (request: PaymentRequest): Promise<PaymentResponse> => {
-      const response = await fetch('/api/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      })
+      logger.info('createPayment mutation called with:', { request })
+      try {
+        const response = await fetch('/api/payments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(request),
+        })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create payment')
+        logger.info('Payment API Response:', { status: response.status, ok: response.ok })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          logger.info('API Error Response (text):', { errorText, status: response.status })
+          
+          let errorData
+          try {
+            errorData = JSON.parse(errorText)
+          } catch {
+            errorData = { error: errorText }
+          }
+          
+          logger.info('API Error Response (parsed):', { errorData, status: response.status })
+          throw new Error(errorData.error || 'Failed to create payment')
+        }
+        
+        const data = await response.json()
+        logger.info('Payment successful:', {data})
+        return data
+      } catch (fetchError) {
+        logger.error('Fetch error:', { fetchError })
+        throw fetchError
       }
-      logger.info('Payment successful:', {response})
-
-      return response.json()
     },
+    retry: 0, // 🔒 DISABLE RETRIES - Prevent automatic retry of failed payment mutations
     onError: (error: Error) => {
       logger.error('Error creating payment:', {error})
+      
+      // Check if it's the UPI restriction error
+      const errorMessage = error.message
+      logger.info('Checking for UPI restriction:', { 
+        errorMessage, 
+        includesUPI: errorMessage.includes('subscriptions cannot be updated when payment mode is upi'),
+        includesError: errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION'),
+        errorMessageLength: errorMessage.length,
+        errorMessageType: typeof errorMessage
+      })
+      
+      if (errorMessage.includes('subscriptions cannot be updated when payment mode is upi') ||
+          errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION')) {
+        logger.info('UPI subscription restriction detected, showing toast notification')
+        
+        // Show toast notification instead of modal
+        toastActions.warning(
+          'UPI Subscription Restriction',
+          'Plan changes are not available for UPI subscriptions. Contact support or wait for the billing cycle to end.'
+        )
+        return // Don't show generic error toast
+      }
+      
+      logger.info('Showing generic error toast - UPI restriction not detected')
       toastActions.error('Payment Failed', error.message)
     },
   })

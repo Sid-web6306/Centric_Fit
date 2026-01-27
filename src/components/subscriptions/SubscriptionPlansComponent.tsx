@@ -77,6 +77,9 @@ export function SubscriptionPlansComponent({
   const { plans, isLoading, createPayment, currentSubscription, error, refetch, trial } = useSimplifiedPaymentSystem()
   logger.debug("plans", currentSubscription);
 
+  // Check for scheduled changes
+  const hasScheduledChange = currentSubscription?.scheduled_change_type === 'plan_change'
+
   // Transform trial data to match expected interface
   const trialInfo = trial ? {
     trial_start_date: trial.startDate,
@@ -145,6 +148,12 @@ export function SubscriptionPlansComponent({
   }
 
   const handlePlanSelect = async (planId: string) => {
+    // 🔒 ACTION-LEVEL LOCK: Synchronously block re-entry
+    if (createPayment.isPending) {
+      logger.info('Payment action already in progress - blocking re-entry')
+      return
+    }
+
     if (onPlanSelect) {
       onPlanSelect(planId, billingCycle)
       return
@@ -296,8 +305,25 @@ export function SubscriptionPlansComponent({
         }
       }
     } catch (error) {
+      logger.error('SubscriptionPlansComponent catch error:', { error })
       
-      toastActions.error('Operation Failed', error instanceof Error ? error.message : 'Failed to process request')
+      // Check if it's the UPI restriction error - don't show duplicate toast
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (errorMessage.includes('subscriptions cannot be updated when payment mode is upi') ||
+          errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION')) {
+        logger.info('UPI restriction caught in component - not showing duplicate toast')
+        return // Don't show duplicate toast - the payment hook already handled it
+      }
+      
+      // Check if payment hook already handled this error
+      if (errorMessage.includes('Payment Failed') || 
+          errorMessage.includes('UPI Subscription Restriction')) {
+        logger.info('Payment error already handled by hook - not showing duplicate toast')
+        return
+      }
+      
+      logger.info('Showing generic error toast - UPI restriction not detected')
+      // toastActions.error('Operation Failed', errorMessage)
     } finally {
       setSelectedPlan(null)
     }
@@ -420,6 +446,30 @@ export function SubscriptionPlansComponent({
         </div>
       )}
 
+      {/* Scheduled Change Status Section */}
+      {hasScheduledChange && (
+        <div className="flex justify-center">
+          <DynamicCard className="max-w-md border-2 border-orange-500/50 bg-gradient-to-r from-card to-orange-50 shadow-lg">
+            <DynamicCardContent className="p-6">
+              <div className="flex items-center justify-center gap-3 text-orange-600">
+                <DynamicTimer className="h-5 w-5" />
+                <span className="font-medium">
+                  Downgrade Scheduled
+                </span>
+              </div>
+              <div className="text-center mt-2">
+                <p className="text-sm text-muted-foreground">
+                  Your plan will change to {currentSubscription.scheduled_change_data?.newPlanName || 'a lower tier'} on {new Date(currentSubscription.scheduled_change_effective_date).toLocaleDateString('en-IN')}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Plan changes are locked until the scheduled change takes effect
+                </p>
+              </div>
+            </DynamicCardContent>
+          </DynamicCard>
+        </div>
+      )}
+
       {/* Enhanced Billing Cycle Toggle */}
       <div className="flex flex-col items-center space-y-4">
         <p className="text-sm text-muted-foreground">Choose your billing cycle</p>
@@ -489,8 +539,9 @@ export function SubscriptionPlansComponent({
           if (!plan) return null
           logger.debug("plan", {plan});
 
-          const isPopular = plan.tier_level === 2 // Professional plan
           const isLoading = createPayment.isPending && selectedPlan === plan.id
+          const isPaymentInProgress = createPayment.isPending // Global action lock state
+          const isPopular = plan.tier_level === 2 // Professional plan
           const isCurrentPlan = showCurrentPlan && currentSubscription?.subscription_plan_id === plan.id
           const isCurrentPlanAndBilling = isCurrentPlan && currentSubscription?.billing_cycle === billingCycle
           
@@ -584,17 +635,19 @@ export function SubscriptionPlansComponent({
                 
                 <DynamicButton 
                   onClick={() => handlePlanSelect(plan.id)}
-                  disabled={isLoading || isCurrentPlanAndBilling}
+                  disabled={isPaymentInProgress || isLoading || isCurrentPlanAndBilling || hasScheduledChange}
                   className={`w-full h-12 font-medium transition-all ${
                     variant === 'premium' ? 'duration-500' : 'duration-300'
                   } ease-in-out hover:scale-105 hover:shadow-lg transform ${
                     isCurrentPlanAndBilling 
                       ? 'bg-primary/10 text-primary cursor-not-allowed border-primary/20'
+                      : hasScheduledChange
+                      ? 'bg-orange-50 text-orange-600 cursor-not-allowed border-orange-200'
                       : isPopular 
                       ? 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 cursor-pointer border-0' 
                       : 'cursor-pointer hover:bg-primary/5 hover:border-primary/50'
                   } ${isLoading ? 'cursor-wait' : ''}`}
-                  variant={isCurrentPlanAndBilling ? 'outline' : isPopular ? 'default' : 'outline'}
+                  variant={isCurrentPlanAndBilling ? 'outline' : hasScheduledChange ? 'outline' : isPopular ? 'default' : 'outline'}
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -605,6 +658,11 @@ export function SubscriptionPlansComponent({
                     <div className="flex items-center gap-2">
                       <DynamicCheckCircle className="h-4 w-4" />
                       Current Plan
+                    </div>
+                  ) : hasScheduledChange ? (
+                    <div className="flex items-center gap-2">
+                      <DynamicTimer className="h-4 w-4" />
+                      Change Scheduled
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">

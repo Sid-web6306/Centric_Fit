@@ -277,6 +277,28 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
                 ))}
               </div>
             </div>
+
+            {/* Scheduled Change Section */}
+            {currentSubscription?.scheduled_change_type === 'plan_change' && (
+              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-800">
+                      Scheduled Downgrade
+                    </p>
+                    <p className="text-xs text-orange-600 mt-1">
+                      Changes to {currentSubscription.scheduled_change_data?.newPlanName} on {new Date(currentSubscription.scheduled_change_effective_date).toLocaleDateString('en-IN')}
+                    </p>
+                    <p className="text-xs text-orange-500 mt-1">
+                      Plan changes are locked until this takes effect
+                    </p>
+                  </div>
+                  <div className="ml-3">
+                    <DynamicTimer className="h-4 w-4 text-orange-600" />
+                  </div>
+                </div>
+              </div>
+            )}
             
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">

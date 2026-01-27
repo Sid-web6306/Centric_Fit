@@ -43,6 +43,8 @@ interface RazorpaySubscriptionEntity {
     }
   }
   notes?: Record<string, string>
+  has_scheduled_changes?: boolean
+  change_scheduled_at?: number
 }
 
 interface RazorpayWebhookEvent {
@@ -160,26 +162,13 @@ export async function POST(req: NextRequest) {
         await handleSubscriptionCharged(event, supabase, processingStart);
         break;
         
+      case 'subscription.updated':
+        await handleSubscriptionUpdated(event, supabase, processingStart);
+        break;
+        
       case 'subscription.cancelled':
         await handleSubscriptionCancelled(event, supabase, processingStart);
         break;
-        
-      case 'subscription.paused':
-        await handleSubscriptionPaused(event, supabase, processingStart);
-        break;
-        
-      case 'subscription.resumed':
-        await handleSubscriptionResumed(event, supabase, processingStart);
-        break;
-        
-      case 'subscription.pending':
-        await handleSubscriptionPending(event, supabase, processingStart);
-        break;
-        
-      case 'subscription.completed':
-        await handleSubscriptionCompleted(event, supabase, processingStart);
-        break;
-        
       default:
         logger.warn('Unhandled webhook event type', { eventType: event.event, eventId: event.payload?.payment?.entity?.id || event.payload?.subscription?.entity?.id });
     }
@@ -546,133 +535,113 @@ async function handleSubscriptionCancelled(
   await logWebhookEvent(event, supabase, Date.now() - processingStart);
 }
 
-async function handleSubscriptionPaused(
+async function handleSubscriptionUpdated(
   event: RazorpayWebhookEvent, 
   supabase: SupabaseClient, 
   processingStart: number
 ): Promise<void> {
   const subscription = event.payload.subscription!.entity;
   
-  logger.info('⏸️ Subscription paused', { 
+  logger.info('🔄 Subscription updated', { 
     subscriptionId: subscription.id,
-    status: subscription.status
-  });
-
-  // Update subscription status
-  const { error } = await supabase
-    .from('subscriptions')
-    .update({
-      status: 'paused',
-      paused_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('razorpay_subscription_id', subscription.id);
-
-  if (error) {
-    logger.error('❌ Error pausing subscription', { 
-      error: error.message,
-      subscriptionId: subscription.id
-    });
-  }
-
-  await logWebhookEvent(event, supabase, Date.now() - processingStart);
-}
-
-async function handleSubscriptionResumed(
-  event: RazorpayWebhookEvent, 
-  supabase: SupabaseClient, 
-  processingStart: number
-): Promise<void> {
-  const subscription = event.payload.subscription!.entity;
-  
-  logger.info('▶️ Subscription resumed', { 
-    subscriptionId: subscription.id,
-    status: subscription.status
-  });
-
-  // Update subscription status
-  const { error } = await supabase
-    .from('subscriptions')
-    .update({
-      status: 'active',
-      paused_at: null,
-      updated_at: new Date().toISOString()
-    })
-    .eq('razorpay_subscription_id', subscription.id);
-
-  if (error) {
-    logger.error('❌ Error resuming subscription', { 
-      error: error.message,
-      subscriptionId: subscription.id
-    });
-  }
-
-  await logWebhookEvent(event, supabase, Date.now() - processingStart);
-}
-
-async function handleSubscriptionPending(
-  event: RazorpayWebhookEvent, 
-  supabase: SupabaseClient, 
-  processingStart: number
-): Promise<void> {
-  const subscription = event.payload.subscription!.entity;
-  
-  logger.info('🕒 Subscription pending', { 
-    subscriptionId: subscription.id,
-    status: subscription.status
-  });
-
-  // Update subscription status
-  const { error } = await supabase
-    .from('subscriptions')
-    .update({
-      status: 'pending',
-      updated_at: new Date().toISOString()
-    })
-    .eq('razorpay_subscription_id', subscription.id);
-
-  if (error) {
-    logger.error('❌ Error updating subscription to pending', { 
-      error: error.message,
-      subscriptionId: subscription.id
-    });
-  }
-
-  await logWebhookEvent(event, supabase, Date.now() - processingStart);
-}
-
-async function handleSubscriptionCompleted(
-  event: RazorpayWebhookEvent, 
-  supabase: SupabaseClient, 
-  processingStart: number
-): Promise<void> {
-  const subscription = event.payload.subscription!.entity;
-  
-  logger.info('✅ Subscription completed', { 
-    subscriptionId: subscription.id,
+    planId: subscription.plan_id,
     status: subscription.status,
-    endedAt: subscription.ended_at
+    hasScheduledChanges: subscription.has_scheduled_changes,
+    changeScheduledAt: subscription.change_scheduled_at
   });
 
-  // Update subscription status
-  const { error } = await supabase
+  // Find the subscription in our database
+  const { data: dbSubscription, error: fetchError } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('razorpay_subscription_id', subscription.id)
+    .single()
+
+  if (fetchError || !dbSubscription) {
+    logger.error('❌ Subscription not found in DB for webhook update', {
+      razorpaySubscriptionId: subscription.id,
+      error: fetchError?.message
+    })
+    await logWebhookEvent(event, supabase, Date.now() - processingStart);
+    return
+  }
+
+  // Get new plan details from Razorpay plan_id
+  const { data: newPlan, error: planError } = await supabase
+    .from('subscription_plans')
+    .select('*')
+    .eq('razorpay_plan_id', subscription.plan_id)
+    .single()
+
+  if (planError || !newPlan) {
+    logger.error('❌ New plan not found for webhook update', {
+      razorpayPlanId: subscription.plan_id,
+      error: planError?.message
+    })
+    await logWebhookEvent(event, supabase, Date.now() - processingStart);
+    return
+  }
+
+  // Determine change type for logging
+  const changeType = subscription.has_scheduled_changes ? 
+    'scheduled_downgrade_applied' : 'immediate_upgrade_applied';
+
+  logger.info('⚡ Applying subscription change', {
+    subscriptionId: dbSubscription.id,
+    newPlanId: newPlan.id,
+    oldPlanId: dbSubscription.subscription_plan_id,
+    changeType
+  })
+
+  // Update subscription in database - works for both upgrades and downgrades
+  const { error: updateError } = await supabase
     .from('subscriptions')
     .update({
-      status: 'completed',
-      ends_at: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : new Date().toISOString(),
+      subscription_plan_id: newPlan.id,
+      amount: newPlan.price_inr,
+      billing_cycle: newPlan.billing_cycle,
+      current_period_start: new Date(subscription.current_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_end * 1000).toISOString(),
+      scheduled_change_type: null,
+      scheduled_change_effective_date: null,
+      scheduled_change_data: null,
       updated_at: new Date().toISOString()
     })
-    .eq('razorpay_subscription_id', subscription.id);
+    .eq('id', dbSubscription.id)
 
-  if (error) {
-    logger.error('❌ Error completing subscription', { 
-      error: error.message,
-      subscriptionId: subscription.id
-    });
+  if (updateError) {
+    logger.error('❌ Error applying subscription change in DB', {
+      error: updateError.message,
+      subscriptionId: dbSubscription.id
+    })
+  } else {
+    logger.info('✅ Subscription change applied successfully', {
+      subscriptionId: dbSubscription.id,
+      oldPlanId: dbSubscription.subscription_plan_id,
+      newPlanId: newPlan.id,
+      changeType
+    })
+
+    // Log the change event
+    await supabase
+      .from('subscription_events')
+      .insert({
+        subscription_id: dbSubscription.id,
+        event_type: 'plan_changed',
+        event_data: {
+          old_plan_id: dbSubscription.subscription_plan_id,
+          new_plan_id: newPlan.id,
+          change_type: changeType,
+          razorpay_plan_id: subscription.plan_id
+        },
+        webhook_id: subscription.id,
+        processing_duration_ms: 0
+      })
   }
 
   await logWebhookEvent(event, supabase, Date.now() - processingStart);
 }
+
 
 async function logWebhookEvent(
   event: RazorpayWebhookEvent,
