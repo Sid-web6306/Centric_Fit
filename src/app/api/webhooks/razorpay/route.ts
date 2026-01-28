@@ -514,13 +514,14 @@ async function handleSubscriptionCancelled(
     endedAt: subscription.ended_at
   });
 
-  // Update subscription status
+  // Update subscription status with enhanced tracking for end-of-cycle cancellation
   const { error } = await supabase
     .from('subscriptions')
     .update({
       status: 'canceled',
       ends_at: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : new Date().toISOString(),
       canceled_at: new Date().toISOString(),
+      cancel_at_period_end: false, // Now actually cancelled (was scheduled before)
       updated_at: new Date().toISOString()
     })
     .eq('razorpay_subscription_id', subscription.id);
@@ -529,6 +530,12 @@ async function handleSubscriptionCancelled(
     logger.error('❌ Error canceling subscription', { 
       error: error.message,
       subscriptionId: subscription.id
+    });
+  } else {
+    logger.info('✅ Subscription successfully marked as canceled in database', {
+      subscriptionId: subscription.id,
+      canceledAt: new Date().toISOString(),
+      endsAt: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : new Date().toISOString()
     });
   }
 
