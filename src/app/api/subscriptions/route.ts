@@ -81,14 +81,8 @@ export async function POST(request: NextRequest) {
     }
 
     switch (action) {
-      case 'pause':
-        return handlePauseSubscription(supabase, user.id, params.subscriptionId)
-      
-      case 'resume':
-        return handleResumeSubscription(supabase, user.id, params.subscriptionId)
-      
       case 'cancel':
-        return handleCancelSubscription(supabase, user.id, params.subscriptionId, params.cancelAtPeriodEnd, params.feedback)
+        return handleCancelSubscription(supabase, user.id, params.subscriptionId, params.feedback)
       
       case 'change-plan':
         return handleChangePlan(supabase, user.id, params.subscriptionId, params.newPlanId, params.billingCycle)
@@ -334,184 +328,6 @@ async function handleCreateBillingPortal(supabase: SupabaseClient, user: Minimal
   }
 }
 
-// Helper function to pause subscription
-async function handlePauseSubscription(supabase: SupabaseClient, userId: string, subscriptionId: string) {
-  try {
-    if (!subscriptionId) {
-      return NextResponse.json({ error: 'Subscription ID is required' }, { status: 400 })
-    }
-
-    if (!PaymentService.isConfigured()) {
-      return NextResponse.json({ error: 'Razorpay not configured' }, { status: 500 })
-    }
-
-    // Get user's gym_id
-    const gymId = await getUserGymId(supabase, userId)
-    if (!gymId) {
-      return NextResponse.json({ error: 'User gym not found' }, { status: 404 })
-    }
-
-    // Verify subscription belongs to user and gym
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('id, razorpay_subscription_id')
-      .eq('id', subscriptionId)
-      .eq('user_id', userId)
-      .eq('gym_id', gymId)
-      .single()
-
-    if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
-    }
-
-    // Pause subscription in database
-    const { error: pauseError } = await supabase.rpc('pause_subscription', {
-      p_subscription_id: subscriptionId
-    })
-
-    if (pauseError) {
-      logger.error('Error pausing subscription:', { error: pauseError.message })
-      return NextResponse.json({ error: 'Failed to pause subscription' }, { status: 500 })
-    }
-
-    // Pause in Razorpay if available
-    if (subscription.razorpay_subscription_id) {
-      try {
-        await PaymentService.pauseSubscription(subscription.razorpay_subscription_id, 'now')
-      } catch (razorpayError) {
-        logger.error('Error pausing Razorpay subscription:', { error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError) })
-        // Don't fail the request if Razorpay update fails
-      }
-    }
-
-    logger.info('Subscription paused successfully:', {
-      userId,
-      subscriptionId,
-      razorpaySubscriptionId: subscription.razorpay_subscription_id
-    })
-
-    return NextResponse.json({ success: true, message: 'Subscription paused successfully' })
-
-  } catch (error) {
-    logger.error('Error in handlePauseSubscription:', { error: error instanceof Error ? error.message : String(error) })
-    return NextResponse.json({ error: 'Failed to pause subscription' }, { status: 500 })
-  }
-}
-
-// Helper function to resume subscription
-async function handleResumeSubscription(supabase: SupabaseClient, userId: string, subscriptionId: string) {
-  try {
-    if (!subscriptionId) {
-      return NextResponse.json({ error: 'Subscription ID is required' }, { status: 400 })
-    }
-
-    if (!PaymentService.isConfigured()) {
-      return NextResponse.json({ error: 'Razorpay not configured' }, { status: 500 })
-    }
-
-    // Get user's gym_id
-    const gymId = await getUserGymId(supabase, userId)
-    if (!gymId) {
-      return NextResponse.json({ error: 'User gym not found' }, { status: 404 })
-    }
-
-    // Verify subscription belongs to user and gym
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('id, razorpay_subscription_id')
-      .eq('id', subscriptionId)
-      .eq('user_id', userId)
-      .eq('gym_id', gymId)
-      .single()
-
-    if (!subscription) {
-      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
-    }
-
-    // Resume subscription in database
-    const { error: resumeError } = await supabase.rpc('resume_subscription', {
-      p_subscription_id: subscriptionId
-    })
-
-    if (resumeError) {
-      logger.error('Error resuming subscription:', { error: resumeError.message })
-      return NextResponse.json({ error: 'Failed to resume subscription' }, { status: 500 })
-    }
-
-    // Resume in Razorpay if available
-    if (subscription.razorpay_subscription_id) {
-      const razorpaySubscriptionId = subscription.razorpay_subscription_id
-      const maxAttempts = 3
-      let attempt = 0
-      let lastError: unknown = null
-
-      while (attempt < maxAttempts) {
-        try {
-          attempt++
-          await PaymentService.resumeSubscription(razorpaySubscriptionId, 'now')
-          break
-        } catch (razorpayError) {
-          lastError = razorpayError
-          logger.error('Error resuming Razorpay subscription:', {
-            userId,
-            subscriptionId,
-            razorpaySubscriptionId,
-            attempt,
-            maxAttempts,
-            error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError),
-            stack: razorpayError instanceof Error ? razorpayError.stack : undefined
-          })
-          if (attempt < maxAttempts) {
-            // Exponential backoff
-            await new Promise((resolve) => setTimeout(resolve, attempt * 200))
-          }
-        }
-      }
-
-      if (attempt === maxAttempts) {
-        // Roll back DB resume to maintain consistency if Razorpay failed
-        const { error: rollbackError } = await supabase.rpc('pause_subscription', {
-          p_subscription_id: subscriptionId
-        })
-
-        if (rollbackError) {
-          logger.error('Failed to rollback subscription after Razorpay resume failure:', {
-            userId,
-            subscriptionId,
-            razorpaySubscriptionId,
-            lastError: lastError instanceof Error ? lastError.message : String(lastError),
-            rollbackError: rollbackError.message
-          })
-        } else {
-          logger.warn('Rolled back subscription to paused state after Razorpay resume failure:', {
-            userId,
-            subscriptionId,
-            razorpaySubscriptionId,
-            lastError: lastError instanceof Error ? lastError.message : String(lastError)
-          })
-        }
-
-        return NextResponse.json(
-          { error: 'Failed to resume subscription with payment provider. Subscription remains paused.' },
-          { status: 502 }
-        )
-      }
-    }
-
-    logger.info('Subscription resumed successfully:', {
-      userId,
-      subscriptionId,
-      razorpaySubscriptionId: subscription.razorpay_subscription_id
-    })
-
-    return NextResponse.json({ success: true, message: 'Subscription resumed successfully' })
-
-  } catch (error) {
-    logger.error('Error in handleResumeSubscription:', { error: error instanceof Error ? error.message : String(error) })
-    return NextResponse.json({ error: 'Failed to resume subscription' }, { status: 500 })
-  }
-}
-
 // Helper function to cancel subscription
 type CancellationFeedback = {
   reason: string
@@ -523,7 +339,6 @@ async function handleCancelSubscription(
   supabase: SupabaseClient,
   userId: string,
   subscriptionId: string,
-  cancelAtPeriodEnd: boolean = true,
   feedback?: CancellationFeedback
 ) {
   try {
@@ -579,10 +394,9 @@ async function handleCancelSubscription(
       }
     }
 
-    // Cancel subscription in database
+    // Cancel subscription in database (always end-of-cycle)
     const { error: cancelError } = await supabase.rpc('cancel_subscription', {
-      p_subscription_id: subscriptionId,
-      p_cancel_at_period_end: cancelAtPeriodEnd
+      p_subscription_id: subscriptionId
     })
 
     if (cancelError) {
@@ -590,33 +404,27 @@ async function handleCancelSubscription(
       return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 })
     }
 
-    // Cancel in Razorpay if available
+    // Cancel in Razorpay with end-of-cycle option
     if (subscription.razorpay_subscription_id) {
       try {
-        if (cancelAtPeriodEnd) {
-          // Schedule cancellation at period end
-          await PaymentService.cancelSubscription(subscription.razorpay_subscription_id, true)
-        } else {
-          // Cancel immediately
-          await PaymentService.cancelSubscription(subscription.razorpay_subscription_id, false)
-        }
+        await PaymentService.cancelSubscription(subscription.razorpay_subscription_id, true)
       } catch (razorpayError) {
         logger.error('Error canceling Razorpay subscription:', { error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError) })
         // Don't fail the request if Razorpay update fails
       }
     }
 
-    logger.info('Subscription canceled successfully:', {
+    logger.info('Subscription cancellation scheduled successfully:', {
       userId,
       subscriptionId,
       razorpaySubscriptionId: subscription.razorpay_subscription_id,
-      cancelAtPeriodEnd,
+      cancelAtPeriodEnd: true,
       feedbackProvided: !!feedback
     })
 
     return NextResponse.json({ 
       success: true, 
-      message: cancelAtPeriodEnd ? 'Subscription will be canceled at the end of the billing period' : 'Subscription canceled immediately'
+      message: 'Subscription will be canceled at the end of the billing period'
     })
 
   } catch (error) {
