@@ -1,69 +1,44 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/use-auth'
 import { ChartAccessResponse } from '@/actions/chart-access.actions'
 
 export function useChartAccess(gymId: string | null) {
   const { user } = useAuth()
-  const [data, setData] = useState<ChartAccessResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    if (!user || !gymId) {
-      setData(null)
-      setError(null)
-      return
-    }
-
-    const fetchChartAccess = async () => {
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetch(`/api/charts/access?gym_id=${gymId}`)
-        
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to load chart access')
-        }
-        
-        const result = await response.json()
-        setData(result)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load chart access')
-        setData(null)
-      } finally {
-        setIsLoading(false)
+  const query = useQuery({
+    queryKey: ['chart-access', gymId],
+    queryFn: async (): Promise<ChartAccessResponse> => {
+      if (!gymId) throw new Error('Gym ID is required')
+      
+      const response = await fetch(`/api/charts/access?gym_id=${gymId}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to load chart access')
       }
-    }
-
-    fetchChartAccess()
-  }, [user, gymId])
+      
+      return response.json()
+    },
+    enabled: !!user && !!gymId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - matches analytics cache
+    refetchOnWindowFocus: false,
+  })
 
   const refetch = () => {
-    if (user && gymId) {
-      fetch(`/api/charts/access?gym_id=${gymId}`)
-        .then(async (response) => {
-          if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || 'Failed to load chart access')
-          }
-          return response.json()
-        })
-        .then(setData)
-        .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load chart access'))
-    }
+    queryClient.invalidateQueries({ queryKey: ['chart-access', gymId] })
   }
 
   return {
-    data,
-    isLoading,
-    error,
+    data: query.data ?? null,
+    isLoading: query.isLoading,
+    error: query.error?.message ?? null,
     refetch
   }
 }
+
 
 export function useChartsByCategory(gymId: string | null) {
   const { data, isLoading, error, refetch } = useChartAccess(gymId)

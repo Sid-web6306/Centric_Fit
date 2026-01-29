@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { LucideIcon } from 'lucide-react'
 import { useChartsByCategory } from '@/hooks/use-chart-access'
 import LockedChart from './LockedChart'
+import ChartPlaceholder from './ChartPlaceholder'
 import { cn } from '@/lib/utils'
 
 // Import chart components
@@ -36,7 +37,7 @@ function ChartIcon({ iconName }: { iconName: string | null }) {
   if (!iconName) return null
 
   // Dynamically import the icon
-  const IconComponent = React.lazy(() => 
+  const IconComponent = React.lazy(() =>
     import('lucide-react').then((module) => ({
       default: module[iconName as keyof typeof module] as LucideIcon
     }))
@@ -66,14 +67,14 @@ function ChartSkeleton() {
   )
 }
 
-function ChartCard({ 
-  chart, 
-  gymId, 
-  onUpgrade 
-}: { 
-  chart: any, 
-  gymId: string | null, 
-  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void 
+function ChartCard({
+  chart,
+  gymId,
+  onUpgrade
+}: {
+  chart: any,
+  gymId: string | null,
+  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void
 }) {
   const ChartComponent = ChartComponents[chart.component_name]
 
@@ -99,9 +100,10 @@ function ChartCard({
   }
 
   // Render locked chart if access is not allowed
+  // 🔒 SECURITY: Use placeholder instead of real chart to prevent data fetching
   if (chart.access_level === 'locked') {
-    const requiredPlan = chart.category === 'growth' ? 'professional' : 
-                       chart.category === 'revenue' ? 'professional' : 'enterprise'
+    const requiredPlan = chart.category === 'growth' ? 'professional' :
+      chart.category === 'revenue' ? 'professional' : 'enterprise'
 
     return (
       <LockedChart
@@ -121,9 +123,8 @@ function ChartCard({
             )}
           </CardHeader>
           <CardContent>
-            <React.Suspense fallback={<Skeleton className="h-64 w-full" />}>
-              <ChartComponent gymId={gymId} />
-            </React.Suspense>
+            {/* Placeholder instead of real chart - no data fetch */}
+            <ChartPlaceholder height={200} />
           </CardContent>
         </Card>
       </LockedChart>
@@ -156,16 +157,16 @@ function ChartCard({
   )
 }
 
-export function DynamicChartRenderer({ 
-  gymId, 
-  category, 
-  className, 
-  onUpgrade 
+export function DynamicChartRenderer({
+  gymId,
+  category,
+  className,
+  onUpgrade
 }: DynamicChartRendererProps) {
-  const { 
-    chartsByCategory, 
-    isLoading, 
-    error 
+  const {
+    chartsByCategory,
+    isLoading,
+    error
   } = useChartsByCategory(gymId)
 
   if (error) {
@@ -186,7 +187,7 @@ export function DynamicChartRenderer({
     )
   }
 
-  const chartsToRender = category ? chartsByCategory[category] : 
+  const chartsToRender = category ? chartsByCategory[category] :
     Object.values(chartsByCategory).flat()
 
   if (chartsToRender.length === 0) {
@@ -211,14 +212,14 @@ export function DynamicChartRenderer({
   )
 }
 
-export function OperationalCharts({ 
-  gymId, 
-  className, 
-  onUpgrade 
-}: { 
+export function OperationalCharts({
+  gymId,
+  className,
+  onUpgrade
+}: {
   gymId: string | null
   className?: string
-  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void 
+  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void
 }) {
   return (
     <DynamicChartRenderer
@@ -230,14 +231,14 @@ export function OperationalCharts({
   )
 }
 
-export function GrowthCharts({ 
-  gymId, 
-  className, 
-  onUpgrade 
-}: { 
+export function GrowthCharts({
+  gymId,
+  className,
+  onUpgrade
+}: {
   gymId: string | null
   className?: string
-  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void 
+  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void
 }) {
   return (
     <DynamicChartRenderer
@@ -249,14 +250,14 @@ export function GrowthCharts({
   )
 }
 
-export function RevenueCharts({ 
-  gymId, 
-  className, 
-  onUpgrade 
-}: { 
+export function RevenueCharts({
+  gymId,
+  className,
+  onUpgrade
+}: {
   gymId: string | null
   className?: string
-  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void 
+  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void
 }) {
   return (
     <DynamicChartRenderer
@@ -268,14 +269,14 @@ export function RevenueCharts({
   )
 }
 
-export function AdvancedCharts({ 
-  gymId, 
-  className, 
-  onUpgrade 
-}: { 
+export function AdvancedCharts({
+  gymId,
+  className,
+  onUpgrade
+}: {
   gymId: string | null
   className?: string
-  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void 
+  onUpgrade?: (requiredPlan: 'starter' | 'professional' | 'enterprise') => void
 }) {
   return (
     <DynamicChartRenderer

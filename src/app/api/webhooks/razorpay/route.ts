@@ -9,6 +9,48 @@ import { validateWebhookSignature } from 'razorpay/dist/utils/razorpay-utils';
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 
+// Helper function to invalidate chart access cache after subscription changes
+async function invalidateChartAccessCache(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<void> {
+  try {
+    // Get user's gym ID
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('gym_id')
+      .eq('id', userId)
+      .single()
+
+    if (profile?.gym_id) {
+      const { error } = await supabase
+        .rpc('invalidate_chart_access_cache', {
+          p_user_id: userId,
+          p_gym_id: profile.gym_id
+        })
+
+      if (error) {
+        logger.warn('⚠️ Failed to invalidate chart access cache', {
+          userId,
+          gymId: profile.gym_id,
+          error: error.message
+        })
+      } else {
+        logger.info('✅ Chart access cache invalidated', {
+          userId,
+          gymId: profile.gym_id
+        })
+      }
+    }
+  } catch (error) {
+    logger.warn('⚠️ Error invalidating chart access cache', {
+      userId,
+      error: error instanceof Error ? error.message : String(error)
+    })
+    // Don't throw - cache invalidation is not critical
+  }
+}
+
 // Razorpay webhook event types
 interface RazorpayPaymentEntity {
   id: string
@@ -462,6 +504,11 @@ async function handleSubscriptionActivated(
     }
   }
 
+  // 🔒 Invalidate chart access cache after subscription activated
+  if (userId) {
+    await invalidateChartAccessCache(supabase, userId)
+  }
+
   await logWebhookEvent(event, supabase, Date.now() - processingStart);
 }
 
@@ -537,6 +584,23 @@ async function handleSubscriptionCancelled(
       canceledAt: new Date().toISOString(),
       endsAt: subscription.ended_at ? new Date(subscription.ended_at * 1000).toISOString() : new Date().toISOString()
     });
+
+    // 🔒 Invalidate chart access cache after subscription cancelled
+    // Get user from subscription notes
+    const userId = subscription.notes?.userId
+    if (userId) {
+      await invalidateChartAccessCache(supabase, userId)
+    } else {
+      // Try to get user from DB subscription
+      const { data: dbSub } = await supabase
+        .from('subscriptions')
+        .select('user_id')
+        .eq('razorpay_subscription_id', subscription.id)
+        .single()
+      if (dbSub?.user_id) {
+        await invalidateChartAccessCache(supabase, dbSub.user_id)
+      }
+    }
   }
 
   await logWebhookEvent(event, supabase, Date.now() - processingStart);
@@ -644,6 +708,11 @@ async function handleSubscriptionUpdated(
         webhook_id: subscription.id,
         processing_duration_ms: 0
       })
+
+    // 🔒 Invalidate chart access cache after subscription updated
+    if (dbSubscription.user_id) {
+      await invalidateChartAccessCache(supabase, dbSubscription.user_id)
+    }
   }
 
   await logWebhookEvent(event, supabase, Date.now() - processingStart);
