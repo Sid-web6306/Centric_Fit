@@ -18,6 +18,13 @@ const bulkCreateMemberSchema = z.object({
   })).min(1, 'At least one member is required')
 })
 
+// Type for the create_member_with_profile function result
+interface CreateMemberResult {
+  member_id: string
+  profile_id: string
+  is_new_profile: boolean
+}
+
 // POST /api/members/bulk - Bulk create members
 export async function POST(request: NextRequest) {
   try {
@@ -51,10 +58,9 @@ export async function POST(request: NextRequest) {
             p_last_name: memberData.last_name,
             p_email: memberData.email || undefined,
             p_phone_number: memberData.phone_number || undefined,
-            p_status: memberData.status || 'active',
-            p_join_date: memberData.join_date || new Date().toISOString().split('T')[0]
-          })
-          .single()
+            p_status: memberData.status,
+            p_join_date: memberData.join_date ? new Date(memberData.join_date).toISOString() : new Date().toISOString()
+          }) as { data: CreateMemberResult | null; error: any }
 
         if (createError) {
           failed.push({ 

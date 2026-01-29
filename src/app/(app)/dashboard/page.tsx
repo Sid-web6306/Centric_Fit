@@ -1,5 +1,5 @@
 'use client'
-
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -18,16 +18,16 @@ import {
   UserCheck,
   Calendar,
   Zap,
-  Info
+  Info,
+  BarChart3
 } from 'lucide-react';
 import { useAuth, usePostOnboardingSync } from '@/hooks/use-auth';
 import { useGymAnalytics } from '@/hooks/use-gym-analytics';
 import { DashboardHeader } from '@/components/layout/PageHeader';
+import { OperationalCharts } from '@/components/analytics/DynamicChartRenderer';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toastActions } from '@/stores/toast-store'
-import React from 'react';
-import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts'
 
 const DashboardPage = () => {
   const searchParams = useSearchParams()
@@ -50,6 +50,10 @@ const DashboardPage = () => {
     isLoading: analyticsLoading,
     refetch: refetchAnalytics
   } = useGymAnalytics(gymId || null, 30)
+
+  const handleUpgrade = () => {
+    router.push('/upgrade')
+  }
 
   // Clean up URL parameters
   React.useEffect(() => {
@@ -449,109 +453,31 @@ const DashboardPage = () => {
             </Card>
           )}
 
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Member Growth Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Member Growth (Last 30 Days)</CardTitle>
-                <CardDescription>Track how your membership is growing</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={analytics?.memberTrend || []}>
-                    <defs>
-                      <linearGradient id="colorMembersDash" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 10 }} />
-                    <YAxis className="text-xs" tick={{ fontSize: 10 }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                      }}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="count" 
-                      stroke="#3b82f6" 
-                      fillOpacity={1} 
-                      fill="url(#colorMembersDash)"
-                      name="Total Members"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Daily Attendance */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Daily Check-ins (Last 7 Days)</CardTitle>
-                <CardDescription>Monitor member activity patterns</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={analytics?.attendanceTrend || []}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 10 }} />
-                    <YAxis className="text-xs" tick={{ fontSize: 10 }} />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '6px',
-                        fontSize: '12px'
-                      }}
-                    />
-                    <Bar dataKey="checkins" fill="#10b981" radius={[4, 4, 0, 0]} name="Check-ins" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Peak Hours */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Peak Hours Analysis</CardTitle>
-              <CardDescription>Optimize staffing based on busiest times</CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Analytics Overview
+                  </CardTitle>
+                  <CardDescription>
+                    Quick insights from your gym performance data
+                  </CardDescription>
+                </div>
+                <Link href="/analytics">
+                  <Button variant="outline" size="sm">
+                    View All Analytics
+                    <ArrowUpRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={analytics?.peakHours?.slice(0, 12) || []}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="hour" 
-                    className="text-xs" 
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(hour) => {
-                      const h = Number(hour)
-                      return h > 12 ? `${h-12}PM` : h === 12 ? '12PM' : `${h}AM`
-                    }}
-                  />
-                  <YAxis className="text-xs" tick={{ fontSize: 10 }} />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--background))', 
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '6px',
-                      fontSize: '12px'
-                    }}
-                    labelFormatter={(hour) => {
-                      const h = Number(hour)
-                      return h > 12 ? `${h-12}:00 PM` : h === 12 ? '12:00 PM' : `${h}:00 AM`
-                    }}
-                  />
-                  <Bar dataKey="count" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Check-ins" />
-                </BarChart>
-              </ResponsiveContainer>
+              <OperationalCharts 
+                gymId={gymId || null} 
+                onUpgrade={handleUpgrade}
+              />
             </CardContent>
           </Card>
 

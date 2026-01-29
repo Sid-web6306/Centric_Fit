@@ -5,6 +5,13 @@ import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 import { getMemberErrorResponse } from '@/lib/member-error-messages'
 
+// Type for the create_member_with_profile function result
+interface CreateMemberResult {
+  member_id: string
+  profile_id: string
+  is_new_profile: boolean
+}
+
 // Validation schemas
 const createMemberSchema = z.object({
   gym_id: z.string().uuid(),
@@ -199,12 +206,15 @@ export async function POST(request: NextRequest) {
         p_phone_number: validatedData.phone_number || undefined,
         p_status: validatedData.status,
         p_join_date: validatedData.join_date || new Date().toISOString().split('T')[0]
-      })
-      .single()
+      }) as { data: CreateMemberResult | null, error: unknown }
 
     if (createError) {
       logger.error('Error creating member:', { createError })
       return getMemberErrorResponse(createError)
+    }
+
+    if (!result) {
+      return NextResponse.json({ error: 'Failed to create member' }, { status: 500 })
     }
 
     // Fetch the full member record with profile data
