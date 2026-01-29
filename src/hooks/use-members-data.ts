@@ -493,7 +493,7 @@ export function useUpdateMember() {
   })
 }
 
-// Enhanced Delete Member
+// Enhanced remove Member
 export function useDeleteMember() {
   const queryClient = useQueryClient()
   
@@ -514,7 +514,7 @@ export function useDeleteMember() {
       if (!response.ok) {
         const result = await response.json()
         logger.error('Member deletion failed', { memberId, error: result.error })
-        throw new Error(result.error || 'Failed to delete member')
+        throw new Error(result.error || 'Failed to remove member')
       }
       
       return { memberId, gymId }
@@ -537,7 +537,7 @@ export function useDeleteMember() {
         queryClient.setQueryData(membersKeys.detail(memberId), context.previousMember)
       }
       
-      toastActions.error('Deletion Failed', 'Failed to delete member. Please try again.')
+      toastActions.error('Deletion Failed', 'Failed to remove member. Please try again.')
     },
     onSuccess: ({ memberId, gymId }) => {
       // Remove from all caches

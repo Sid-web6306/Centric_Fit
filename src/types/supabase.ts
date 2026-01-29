@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       attendance_sessions: {
@@ -101,6 +126,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      chart_access_rules: {
+        Row: {
+          access_level: string
+          chart_id: string
+          created_at: string | null
+          id: string
+          plan_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_level: string
+          chart_id: string
+          created_at?: string | null
+          id?: string
+          plan_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_level?: string
+          chart_id?: string
+          created_at?: string | null
+          id?: string
+          plan_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chart_access_rules_chart_id_fkey"
+            columns: ["chart_id"]
+            isOneToOne: false
+            referencedRelation: "chart_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chart_definitions: {
+        Row: {
+          category: string
+          chart_key: string
+          component_name: string
+          created_at: string | null
+          description: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          sort_order: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          chart_key: string
+          component_name: string
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          sort_order?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          chart_key?: string
+          component_name?: string
+          created_at?: string | null
+          description?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          sort_order?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       documents: {
         Row: {
@@ -442,6 +547,7 @@ export type Database = {
       members: {
         Row: {
           created_at: string
+          deleted_at: string | null
           gym_id: string
           id: string
           invitation_count: number | null
@@ -457,6 +563,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           gym_id: string
           id?: string
           invitation_count?: number | null
@@ -472,6 +579,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           gym_id?: string
           id?: string
           invitation_count?: number | null
@@ -746,51 +854,6 @@ export type Database = {
           },
         ]
       }
-      subscription_owners: {
-        Row: {
-          created_at: string
-          gym_id: string
-          id: string
-          is_primary_owner: boolean | null
-          subscription_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          gym_id: string
-          id?: string
-          is_primary_owner?: boolean | null
-          subscription_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          gym_id?: string
-          id?: string
-          is_primary_owner?: boolean | null
-          subscription_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_owners_gym_id_fkey"
-            columns: ["gym_id"]
-            isOneToOne: false
-            referencedRelation: "gyms"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscription_owners_subscription_id_fkey"
-            columns: ["subscription_id"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subscription_plans: {
         Row: {
           advanced_analytics: boolean | null
@@ -799,7 +862,6 @@ export type Database = {
           created_at: string | null
           currency: string | null
           custom_reporting: boolean | null
-          data_retention_months: number | null
           description: string | null
           display_name: string | null
           features: string[] | null
@@ -828,7 +890,6 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           custom_reporting?: boolean | null
-          data_retention_months?: number | null
           description?: string | null
           display_name?: string | null
           features?: string[] | null
@@ -857,7 +918,6 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           custom_reporting?: boolean | null
-          data_retention_months?: number | null
           description?: string | null
           display_name?: string | null
           features?: string[] | null
@@ -885,7 +945,9 @@ export type Database = {
         Row: {
           amount: number
           billing_cycle: string
+          cancel_at_period_end: boolean | null
           canceled_at: string | null
+          cancellation_requested_at: string | null
           created_at: string
           currency: string
           current_period_end: string
@@ -915,7 +977,9 @@ export type Database = {
         Insert: {
           amount: number
           billing_cycle?: string
+          cancel_at_period_end?: boolean | null
           canceled_at?: string | null
+          cancellation_requested_at?: string | null
           created_at?: string
           currency?: string
           current_period_end: string
@@ -945,7 +1009,9 @@ export type Database = {
         Update: {
           amount?: number
           billing_cycle?: string
+          cancel_at_period_end?: boolean | null
           canceled_at?: string | null
+          cancellation_requested_at?: string | null
           created_at?: string
           currency?: string
           current_period_end?: string
@@ -988,6 +1054,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_chart_access: {
+        Row: {
+          chart_permissions: Json
+          created_at: string | null
+          expires_at: string
+          gym_id: string
+          id: string
+          plan_type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chart_permissions?: Json
+          created_at?: string | null
+          expires_at: string
+          gym_id: string
+          id?: string
+          plan_type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chart_permissions?: Json
+          created_at?: string | null
+          expires_at?: string
+          gym_id?: string
+          id?: string
+          plan_type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1242,7 +1341,7 @@ export type Database = {
         Returns: boolean
       }
       cancel_subscription: {
-        Args: { p_cancel_at_period_end?: boolean; p_subscription_id: string }
+        Args: { p_subscription_id: string }
         Returns: boolean
       }
       check_gym_access: {
@@ -1290,35 +1389,18 @@ export type Database = {
         }
         Returns: string
       }
-      create_member_with_profile:
-        | {
-            Args: {
-              p_email?: string
-              p_first_name: string
-              p_gym_id: string
-              p_join_date?: string
-              p_last_name: string
-              p_phone_number?: string
-              p_status?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_email?: string
-              p_first_name: string
-              p_gym_id: string
-              p_join_date?: string
-              p_last_name: string
-              p_phone_number?: string
-              p_status?: string
-            }
-            Returns: {
-              is_new_profile: boolean
-              member_id: string
-              profile_id: string
-            }[]
-          }
+      create_member_with_profile: {
+        Args: {
+          p_email?: string
+          p_first_name: string
+          p_gym_id: string
+          p_join_date?: string
+          p_last_name: string
+          p_phone_number?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
       create_subscription: {
         Args: {
           p_amount: number
@@ -1378,6 +1460,20 @@ export type Database = {
         }
         Returns: string
       }
+      get_charts_with_access: {
+        Args: { p_gym_id: string; p_user_id: string }
+        Returns: {
+          access_level: string
+          category: string
+          chart_key: string
+          component_name: string
+          description: string
+          icon_name: string
+          is_accessible: boolean
+          sort_order: number
+          title: string
+        }[]
+      }
       get_gym_owner_info: {
         Args: { gym_uuid: string }
         Returns: {
@@ -1410,6 +1506,7 @@ export type Database = {
         Args: { p_gym_id?: string; p_user_id: string }
         Returns: {
           created_at: string
+          deleted_at: string | null
           gym_id: string
           id: string
           invitation_count: number | null
@@ -1530,6 +1627,10 @@ export type Database = {
           total_seconds: number
         }[]
       }
+      get_user_chart_access: {
+        Args: { p_gym_id: string; p_user_id: string }
+        Returns: Json
+      }
       get_user_gym_id:
         | { Args: never; Returns: string }
         | { Args: { p_user_id: string }; Returns: string }
@@ -1553,6 +1654,10 @@ export type Database = {
       initialize_trial_subscription: {
         Args: { p_user_id: string }
         Returns: string
+      }
+      invalidate_chart_access_cache: {
+        Args: { p_gym_id?: string; p_user_id: string }
+        Returns: undefined
       }
       is_own_profile: { Args: { p_profile_id: string }; Returns: boolean }
       log_subscription_analytics: {
@@ -1889,6 +1994,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

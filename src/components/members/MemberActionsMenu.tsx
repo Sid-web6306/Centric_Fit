@@ -19,7 +19,6 @@ import {
   UserCheck,
   AlertCircle
 } from 'lucide-react'
-import { logger } from '@/lib/logger'
 import { type Member } from '@/types/member.types'
 import { MemberPortalInvite } from './MemberPortalInvite'
 
@@ -127,40 +126,13 @@ export function MemberActionsMenu({
 
         <DropdownMenuSeparator />
 
-        {/* Status Actions */}
-        {member.status !== 'active' && (
-          <DropdownMenuItem 
-            onClick={() => {
-              // This would trigger a status update
-              logger.info('Activate member:', { memberId: member.id })
-            }}
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Activate Member
-          </DropdownMenuItem>
-        )}
-
-        {member.status === 'active' && (
-          <DropdownMenuItem 
-            onClick={() => {
-              // This would trigger a status update
-              logger.info('Deactivate member:', { memberId: member.id })
-            }}
-          >
-            <Clock className="h-4 w-4 mr-2" />
-            Deactivate Member
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuSeparator />
-
         {/* Danger Zone */}
         <DropdownMenuItem 
           onClick={() => onDelete?.(member)}
           className="text-red-600 focus:text-red-600"
         >
           <Trash2 className="h-4 w-4 mr-2" />
-          Delete Member
+          Remove Member
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -346,13 +346,14 @@ export async function DELETE(request: NextRequest) {
       .from('members')
       .update({
         status: 'inactive',
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        deleted_at: new Date().toISOString(),
       })
       .eq('id', memberId)
 
     if (deleteError) {
       logger.error('Error deleting member:', { deleteError })
-      return NextResponse.json({ error: 'Failed to delete member' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to remove member' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, message: 'Member deleted successfully' })

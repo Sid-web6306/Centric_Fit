@@ -2,17 +2,45 @@
 
 import { Suspense } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, UserX, LogOut } from 'lucide-react'
+import { Building2, UserX, LogOut, Trash2 } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { RequireAuth } from '@/components/auth/AuthGuard'
-import { useLogout } from '@/hooks/use-auth'
+import { useAuth, useLogout } from '@/hooks/use-auth'
+import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 
 const InactiveUserContent = () => {
   const router = useRouter()
   const logoutMutation = useLogout()
+  const { user } = useAuth()
+
+  // Fetch member data to check deleted_at status
+  const { data: memberData } = useQuery({
+    queryKey: ['member-status', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null
+      
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('members')
+        .select('deleted_at, status')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (error) {
+        console.error('Error fetching member data:', error)
+        return null
+      }
+      
+      return data
+    },
+    enabled: !!user?.id
+  })
+
+  const isDeleted = !!memberData?.deleted_at
 
   const handleCreateNewGym = () => {
     router.push('/onboarding')
@@ -27,15 +55,26 @@ const InactiveUserContent = () => {
     <Card className="w-full max-w-lg shadow-lg border-0 bg-white/90 backdrop-blur-sm">
       <CardHeader className="pb-6">
         <div className="flex items-center justify-center mb-4">
-          <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-            <UserX className="w-6 h-6 text-orange-600" />
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+            isDeleted ? 'bg-red-100' : 'bg-orange-100'
+          }`}>
+            {isDeleted ? (
+              <Trash2 className="w-6 h-6 text-red-600" />
+            ) : (
+              <UserX className="w-6 h-6 text-orange-600" />
+            )}
           </div>
         </div>
+        
         <CardTitle className="text-center text-xl font-bold text-gray-900">
-          Access Suspended
+          {isDeleted ? 'Account Removed' : 'Access Suspended'}
         </CardTitle>
+        
         <CardDescription className="text-center text-gray-600">
-          Your access to the gym has been temporarily suspended. You can create a new gym or contact support for assistance.
+          {isDeleted 
+            ? 'Your account has been permanently removed from the fitness center. You can create a new gym or contact support for assistance.'
+            : 'Your access to the gym has been temporarily suspended. You can contact support for assistance.'
+          }
         </CardDescription>
       </CardHeader>
       
