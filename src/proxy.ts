@@ -23,6 +23,7 @@ interface CacheEntry {
     hasGym: boolean
     role: string | null
     isInactive: boolean
+    isRemoved: boolean
   }
 }
 
@@ -93,6 +94,7 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
   hasGym: boolean
   userRole: string | null
   isInactive: boolean
+  isRemoved: boolean
   profileData: UserProfile | null
 }> => {
   try {
@@ -112,7 +114,7 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
 
     if (error) {
       logger.error('Profile fetch error:', { message: error.message, code: error.code })
-      return { hasGym: false, userRole: null, isInactive: false, profileData: null }
+      return { hasGym: false, userRole: null, isInactive: false, isRemoved: false, profileData: null }
     }
 
     const hasGymId = Boolean(profile?.gym_id)
@@ -141,10 +143,28 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
     const hasGym = hasGymId && hasActiveRole
     const isInactive = hasGymId && !hasActiveRole
 
-    return { hasGym, userRole, isInactive, profileData: profile as unknown as UserProfile }
+    // Check if member is removed (has deleted_at timestamp)
+    let isRemoved = false
+    if (hasGymId && userRole === 'member') {
+      try {
+        const { data: memberData } = await supabase
+          .from('members')
+          .select('deleted_at, status')
+          .eq('user_id', userId)
+          .single()
+        
+        isRemoved = !!memberData?.deleted_at || memberData?.status === 'inactive'
+      } catch (memberError) {
+        logger.warn('Failed to fetch member status for inactive check:', { memberError })
+        // If we can't fetch member data, don't consider them removed
+        isRemoved = false
+      }
+    }
+
+    return { hasGym, userRole, isInactive, isRemoved, profileData: profile as unknown as UserProfile }
   } catch (error) {
     logger.error('Profile fetch exception:', {error})
-    return { hasGym: false, userRole: null, isInactive: false, profileData: null }
+    return { hasGym: false, userRole: null, isInactive: false, isRemoved: false, profileData: null }
   }
 }
 
@@ -375,10 +395,10 @@ export async function proxy(request: NextRequest) {
     }
 
     // Fetch user profile and role information
-    const { hasGym, userRole, isInactive, profileData } = await fetchUserProfile(supabase, user.id)
+    const { hasGym, userRole, isInactive, isRemoved, profileData } = await fetchUserProfile(supabase, user.id)
 
     // Cache user state for potential reuse
-    const userState = { isAuthenticated, hasGym, role: userRole, isInactive }
+    const userState = { isAuthenticated, hasGym, role: userRole, isInactive, isRemoved }
 
     // Redirect authenticated users away from auth routes
     if (isAuthRoute(pathname)) {
@@ -395,6 +415,26 @@ export async function proxy(request: NextRequest) {
     // Handle inactive users (has gym but no active role)
     if (isInactive && !isSpecialRoute(pathname) && !isPublicRoute && !isOnboardingRoute) {
       return createRedirect('/inactive-user', request, inviteToken || undefined)
+    }
+
+    // Handle access to inactive-user page - only allow if user is actually inactive/removed
+    if (pathname === '/inactive-user') {
+      // If user is not inactive or removed, redirect them away
+      if (!isInactive && !isRemoved) {
+        let redirectPath = '/dashboard'
+        
+        // Redirect members to portal
+        if (userRole === 'member' && hasGym) {
+          redirectPath = '/portal'
+        } else if (!hasGym) {
+          redirectPath = '/onboarding'
+        }
+        
+        return createRedirect(redirectPath, request)
+      }
+      
+      // Allow access to inactive-user page
+      return response
     }
 
     // Handle onboarding flow
@@ -417,6 +457,11 @@ export async function proxy(request: NextRequest) {
       // Redirect to onboarding if no gym
       if (!hasGym) {
         return createRedirect('/onboarding', request, inviteToken || undefined)
+      }
+      
+      // Redirect removed/inactive members to inactive-user page
+      if (isRemoved || isInactive) {
+        return createRedirect('/inactive-user', request, inviteToken || undefined)
       }
       
       // Allow dashboard access with invite token (for multi-gym invitations)
@@ -461,6 +506,11 @@ export async function proxy(request: NextRequest) {
 
     // Handle portal routes (member-specific)
     if (isPortalRoute(pathname)) {
+      // Redirect removed/inactive members to inactive-user page
+      if (isRemoved || isInactive) {
+        return createRedirect('/inactive-user', request, inviteToken || undefined)
+      }
+      
       if (!profileData?.gym_id) {
         const dashboardResponse = createRedirect('/dashboard', request)
         setToastCookie(dashboardResponse, 'no_gym')

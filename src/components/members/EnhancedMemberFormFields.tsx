@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Control } from 'react-hook-form'
-import { MEMBER_STATUS_OPTIONS, type MemberStatus } from '@/types/member.types'
+import { Member, MEMBER_STATUS_OPTIONS, type MemberStatus } from '@/types/member.types'
 import { Mail, Smartphone, UserCheck, MessageSquare } from 'lucide-react'
 
 // Enhanced form data interface with portal access options
@@ -15,7 +15,7 @@ export interface EnhancedMemberFormData {
   last_name: string
   email?: string
   phone_number?: string
-  status: MemberStatus
+  status: MemberStatus,
   
   // Phase 2: Portal access options (optional)
   enable_portal_access?: boolean
@@ -24,6 +24,7 @@ export interface EnhancedMemberFormData {
 }
 
 interface EnhancedMemberFormFieldsProps {
+  member?: Member
   control: Control<EnhancedMemberFormData>
   showDescriptions?: boolean
   showPortalOptions?: boolean
@@ -31,6 +32,7 @@ interface EnhancedMemberFormFieldsProps {
 }
 
 export function EnhancedMemberFormFields({ 
+  member,
   control, 
   showDescriptions = true,
   showPortalOptions = true,
@@ -264,7 +266,7 @@ export function EnhancedMemberFormFields({
       )}
 
       {/* Edit mode notice */}
-      {isEdit && (
+      {isEdit && !member?.user_id && (
         <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-start gap-3">
             <UserCheck className="h-5 w-5 text-blue-600 mt-0.5" />

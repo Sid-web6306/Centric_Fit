@@ -232,13 +232,6 @@ const AcceptInviteContent = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <Button
-                      variant="outline"
-                      className="h-12 border-primary/20 hover:bg-primary/5 hover:border-primary/40"
-                      onClick={handleLogin}
-                    >
-                      Log In
-                    </Button>
-                    <Button
                       className="h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40"
                       onClick={handleSignup}
                     >

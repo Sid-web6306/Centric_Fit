@@ -64,7 +64,7 @@ export const PERMISSION_LABELS: Record<Permission, PermissionLabel> = {
   'members.delete': {
     permission: 'members.delete',
     title: 'Remove Members',
-    description: 'Delete member accounts and remove their data permanently',
+    description: 'Remove member accounts and remove their data permanently',
     icon: Trash2,
     category: 'Member Management',
     severity: 'critical',

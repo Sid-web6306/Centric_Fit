@@ -623,7 +623,7 @@ const MembersPage = () => {
           <DialogHeader className="space-y-3">
             <DialogTitle className="flex items-center gap-2">
               <Trash2 className="h-5 w-5 text-destructive" />
-              Delete Member
+              Remove Member
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to delete {selectedMember?.first_name} {selectedMember?.last_name}? 
@@ -643,7 +643,7 @@ const MembersPage = () => {
               onClick={handleDeleteMember}
               disabled={isSubmitting || deleteMemberMutation.isPending}
             >
-              {isSubmitting || deleteMemberMutation.isPending ? 'Deleting...' : 'Delete Member'}
+              {isSubmitting || deleteMemberMutation.isPending ? 'Removing...' : 'Remove'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -345,7 +345,7 @@ export class MemberService {
   }
 
   /**
-   * Delete member (soft delete by marking as inactive)
+   * Remove member (soft delete by marking as inactive)
    */
   static async deleteMember(memberId: string): Promise<void> {
     const params = new URLSearchParams({ id: memberId })
@@ -356,7 +356,7 @@ export class MemberService {
     if (!response.ok) {
       const result = await response.json()
       logger.error('Member deletion failed', { memberId, error: result.error })
-      throw new Error(result.error || 'Failed to delete member')
+      throw new Error(result.error || 'Failed to remove member')
     }
   }
 

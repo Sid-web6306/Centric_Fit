@@ -12,7 +12,7 @@ The primary goal is to build and deploy a core set of features that allow a smal
 
 *   **Secure Authentication:** Gym owners can sign up and log in.
 *   **Multi-tenancy:** Each gym owner's data is isolated and secure.
-*   **Member Management:** Ability to add, view, update, and delete members.
+*   **Member Management:** Ability to add, view, update, and remove members.
 *   **Dashboard:** A simple overview of key metrics (e.g., total members).
 *   **Check-in System:** A basic feature for members to check into the gym.
 

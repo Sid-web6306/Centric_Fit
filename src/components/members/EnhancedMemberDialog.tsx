@@ -253,6 +253,7 @@ export function EnhancedMemberDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <EnhancedMemberFormFields 
+              member={member}
               control={form.control} 
               showDescriptions={!isEdit}
               showPortalOptions={!isEdit}

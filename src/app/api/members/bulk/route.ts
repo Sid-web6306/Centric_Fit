@@ -65,13 +65,13 @@ export async function POST(request: NextRequest) {
             }, 
             error: getMemberErrorMessage(createError) 
           })
-        } else if (result) {
+        } else if (result && typeof result === 'object' && 'member_id' in result) {
           success.push({
-            id: result.member_id,
+            id: result.member_id as string,
             email: memberData.email || null,
             first_name: memberData.first_name,
             last_name: memberData.last_name,
-            profile_id: result.profile_id
+            profile_id: result.profile_id as string
           })
         }
       } catch (err) {
