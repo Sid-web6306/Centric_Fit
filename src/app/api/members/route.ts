@@ -207,11 +207,18 @@ export async function POST(request: NextRequest) {
       return getMemberErrorResponse(createError)
     }
 
+    if (!result) {
+      return NextResponse.json({ error: 'Failed to create member' }, { status: 500 })
+    }
+
+    // Type assertion for the RPC result
+    const createResult = result as { member_id: string; profile_id: string }
+
     // Fetch the full member record with profile data
     const { data: member, error: fetchError } = await supabase
       .from('members_with_profile')
       .select('*')
-      .eq('id', result.member_id)
+      .eq('id', createResult.member_id)
       .single()
 
     if (fetchError) {
@@ -219,7 +226,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Member created but failed to fetch details' }, { status: 500 })
     }
 
-    return NextResponse.json({ member, profile_id: result.profile_id }, { status: 201 })
+    return NextResponse.json({ member, profile_id: createResult.profile_id }, { status: 201 })
 
   } catch (error) {
     logger.error('Members POST error:', { error })
