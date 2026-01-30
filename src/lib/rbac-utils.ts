@@ -131,7 +131,6 @@ export function getRoleDisplayName(role: GymRole): string {
     owner: 'Gym Owner',
     manager: 'Manager',
     trainer: 'Personal Trainer',
-    staff: 'Staff Member',
     member: 'Member'
   }
   
@@ -146,7 +145,6 @@ export function getRoleDescription(role: GymRole): string {
     owner: 'Full access to all gym features and settings',
     manager: 'Manage members, staff, and day-to-day operations',
     trainer: 'Access to assigned members and training features',
-    staff: 'Access to member management and basic features',
     member: 'Limited access to personal information and activities'
   }
   
@@ -161,7 +159,6 @@ export function getRoleColor(role: GymRole): string {
     owner: 'bg-purple-100 text-purple-800 border-purple-200',
     manager: 'bg-blue-100 text-blue-800 border-blue-200',
     trainer: 'bg-green-100 text-green-800 border-green-200',
-    staff: 'bg-yellow-100 text-yellow-800 border-yellow-200',
     member: 'bg-gray-100 text-gray-800 border-gray-200'
   }
   
@@ -176,7 +173,6 @@ export function getRoleIcon(role: GymRole): string {
     owner: '👑',
     manager: '👔',
     trainer: '💪',
-    staff: '👷',
     member: '👤'
   }
   
@@ -320,7 +316,6 @@ export function createRBACContext(
     isOwner: () => role === 'owner',
     isManager: () => role === 'manager',
     isTrainer: () => role === 'trainer',
-    isStaff: () => role === 'staff',
     isMember: () => role === 'member',
     
     // Permission checks

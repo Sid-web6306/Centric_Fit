@@ -9,7 +9,7 @@ import { InvitationService, createInviteSchema } from '@/lib/invitation-service'
 const updateInviteSchema = z.object({
   invite_id: z.string().uuid(),
   status: z.enum(['pending', 'accepted', 'expired', 'revoked']).optional(),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']).optional(),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']).optional(),
   expires_at: z.string().datetime().optional()
 })
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply role filter (member excluded from team page)
-    if (role && ['owner', 'manager', 'staff', 'trainer'].includes(role)) {
+    if (role && ['owner', 'manager', 'trainer'].includes(role)) {
       query = query.eq('role', role)
     }
 
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     // Get count - exclude member invitations
     let countQuery = supabase.from('gym_invitations').select('*', { count: 'exact', head: true }).eq('gym_id', targetGymId).neq('role', 'member')
     if (status !== 'all') countQuery = countQuery.eq('status', status)
-    if (role && ['owner', 'manager', 'staff', 'trainer'].includes(role)) countQuery = countQuery.eq('role', role)
+    if (role && ['owner', 'manager', 'trainer'].includes(role)) countQuery = countQuery.eq('role', role)
     if (search) countQuery = countQuery.or(`email.ilike.%${search}%,role.ilike.%${search}%`)
     const { count } = await countQuery
 

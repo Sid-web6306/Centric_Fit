@@ -18,7 +18,7 @@ export default function OfflinePage() {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4 pt-4">
                     <p className="text-center text-sm text-muted-foreground">
-                        Please checks your connection and try again. Some features may not be available while you are offline.
+                        Please check your connection and try again. Some features may not be available while you are offline.
                     </p>
                     <div className="flex gap-2 w-full">
                         <Button asChild className="w-full" variant="default">

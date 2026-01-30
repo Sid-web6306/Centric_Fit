@@ -17,7 +17,7 @@ import type {
 
 const assignRoleSchema = z.object({
   user_email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']),
   gym_id: z.string().uuid('Invalid gym ID'),
   expires_at: z.string().optional(),
   notify_user: z.boolean().default(true)
@@ -25,7 +25,7 @@ const assignRoleSchema = z.object({
 
 const updateRoleSchema = z.object({
   user_id: z.string().uuid('Invalid user ID'),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']),
   gym_id: z.string().uuid('Invalid gym ID'),
   custom_permissions: z.record(z.boolean()).optional(),
   expires_at: z.string().optional()

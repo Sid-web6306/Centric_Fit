@@ -25,7 +25,7 @@ type StaffProfile = {
   full_name: string | null
   email: string
   avatar_url: string | null
-  default_role: 'owner' | 'manager' | 'staff' | 'trainer' | 'member'
+  default_role: 'owner' | 'manager' | 'trainer' | 'member'
 }
 
 export default function StaffPage() {
@@ -129,12 +129,12 @@ export default function StaffPage() {
                                   <Badge variant="outline" className={`${ROLE_COLORS.trainer} capitalize`}>Trainer</Badge>
                                 </>
                               )}
-                              {p.default_role === 'staff' && (
+                              {/* {p.default_role === 'staff' && (
                                 <>
                                   <Users className="h-4 w-4 text-muted-foreground" />
                                   <Badge variant="outline" className={`${ROLE_COLORS.staff} capitalize`}>Staff</Badge>
                                 </>
-                              )}
+                              )} */}
                               {p.default_role === 'manager' && (
                                 <>
                                   <Users className="h-4 w-4 text-muted-foreground" />

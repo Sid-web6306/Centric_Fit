@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id, full_name, email, avatar_url, default_role', { count: 'exact' })
       .eq('gym_id', targetGymId)
-      .in('default_role', ['staff', 'manager', 'trainer', 'owner'])
+      .in('default_role', ['manager', 'trainer', 'owner'])
       .order('full_name', { ascending: true })
       .range(offset, offset + limit - 1)
 
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply role filter
-    if (role && ['staff', 'manager', 'trainer', 'owner'].includes(role)) {
+    if (role && ['manager', 'trainer', 'owner'].includes(role)) {
       query = query.eq('default_role', role)
     }
 

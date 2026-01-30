@@ -79,7 +79,6 @@ export const useRBAC = (): RBACContext | null => {
       },
       isOwner: role === 'owner',
       isManager: role === 'manager',
-      isStaff: role === 'staff',
       isTrainer: role === 'trainer',
       isMember: role === 'member',
     }
@@ -123,11 +122,6 @@ export const useIsOwner = (): boolean => {
 export const useIsManager = (): boolean => {
   const rbac = useRBAC()
   return rbac?.isManager || false
-}
-
-export const useIsStaff = (): boolean => {
-  const rbac = useRBAC()
-  return rbac?.isStaff || false
 }
 
 // ========== ROLE MANAGEMENT HOOKS ==========

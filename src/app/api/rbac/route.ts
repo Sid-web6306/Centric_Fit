@@ -21,7 +21,7 @@ import { ROLE_LEVELS } from '@/types/rbac.types'
 const assignRoleSchema = z.object({
   user_id: z.string().uuid().optional(),
   user_email: z.string().email().optional(),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']),
   gym_id: z.string().uuid(),
   expires_at: z.string().optional(),
   notify_user: z.boolean().default(true)
