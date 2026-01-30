@@ -3,10 +3,10 @@
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Suspense, useDeferredValue } from 'react'
-import { 
-  Users, 
-  LayoutDashboard, 
-  Settings, 
+import {
+  Users,
+  LayoutDashboard,
+  Settings,
   Dumbbell,
   UserCog,
   BookUser,
@@ -22,6 +22,8 @@ import { SidebarToggle } from '@/components/layout/SidebarToggle'
 import { CollapsibleUserSection } from '@/components/layout/CollapsibleUserSection'
 import { useSidebarShortcuts } from '@/hooks/use-sidebar-shortcuts'
 import { cn } from '@/lib/utils'
+import { useGymData } from '@/hooks/use-gym-data'
+import Image from 'next/image'
 
 interface ClientLayoutProps {
   children: React.ReactNode
@@ -36,9 +38,12 @@ function ClientLayoutContent({ children }: ClientLayoutProps) {
     sidebarCollapsedMobile,
     toggleMobileSidebar,
   } = useSidebarState()
-  
+
   // Enable keyboard shortcuts
   useSidebarShortcuts()
+
+  // Get gym data for logo and name
+  const { data: gymData } = useGymData(profile?.gym_id || null)
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -55,12 +60,12 @@ function ClientLayoutContent({ children }: ClientLayoutProps) {
       {/* Desktop Sidebar */}
       <motion.div
         initial={false}
-        animate={{ 
+        animate={{
           width: sidebarCollapsed ? 64 : 256,
         }}
-        transition={{ 
-          duration: 0.3, 
-          ease: 'easeOut' 
+        transition={{
+          duration: 0.3,
+          ease: 'easeOut'
         }}
         className={cn(
           'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50',
@@ -76,19 +81,36 @@ function ClientLayoutContent({ children }: ClientLayoutProps) {
             /* Desktop collapsed state - only toggle button centered */
             <SidebarToggle />
           ) : (
-            /* Desktop expanded state - logo + text + toggle button */
+            /* Desktop expanded state - logo + name + tagline + toggle button */
             <>
-              <div className="flex items-center min-w-0">
-                <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
-                <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
-                  {profile?.gym_id ? 'Centric Fit' : 'Setup Required'}
-                </span>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {gymData?.logo_url ? (
+                  <Image
+                    src={gymData.logo_url}
+                    alt={gymData.name || 'Logo'}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-md object-contain flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Dumbbell className="h-6 w-6 text-primary" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-card-foreground truncate">
+                    {gymData?.name || (profile?.gym_id ? 'Loading...' : 'Setup Required')}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Powered by Centric Fit
+                  </p>
+                </div>
               </div>
               <SidebarToggle />
             </>
           )}
         </div>
-        
+
         {/* Navigation */}
         <nav className="mt-5 flex-1 px-2">
           <div className="space-y-1">
@@ -125,15 +147,32 @@ function ClientLayoutContent({ children }: ClientLayoutProps) {
             >
               {/* Mobile Header */}
               <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-                <div className="flex items-center min-w-0">
-                  <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
-                  <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
-                    {profile?.gym_id ? 'Centric Fit' : 'Setup Required'}
-                  </span>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {gymData?.logo_url ? (
+                    <Image
+                      src={gymData.logo_url}
+                      alt={gymData.name || 'Logo'}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-md object-contain flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Dumbbell className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-card-foreground truncate">
+                      {gymData?.name || 'Centric Fit'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Powered by Centric Fit
+                    </p>
+                  </div>
                 </div>
                 <SidebarToggle isMobile />
               </div>
-              
+
               {/* Mobile Navigation */}
               <nav className="mt-5 px-2 flex-1">
                 <div className="space-y-1">

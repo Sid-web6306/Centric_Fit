@@ -3,10 +3,10 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Suspense, useDeferredValue, useEffect } from 'react'
-import { 
-  Home, 
-  History, 
-  User, 
+import {
+  Home,
+  History,
+  User,
   Dumbbell,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
@@ -20,6 +20,8 @@ import { cn } from '@/lib/utils'
 import { PWAWrapper } from '@/components/pwa/PWAWrapper'
 import { RealtimeProvider } from '@/components/providers/realtime-provider-simple'
 import { PortalDataProvider } from '@/components/providers/portal-data-provider'
+import { useGymData } from '@/hooks/use-gym-data'
+import Image from 'next/image'
 
 interface PortalLayoutProps {
   children: React.ReactNode
@@ -29,15 +31,18 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
   const pathname = usePathname()
   const deferredPathname = useDeferredValue(pathname)
   const router = useRouter()
-  const { user, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading, profile } = useAuth()
   const {
     sidebarCollapsed,
     sidebarCollapsedMobile,
     toggleMobileSidebar,
   } = useSidebarState()
-  
+
   // Enable keyboard shortcuts
   useSidebarShortcuts()
+
+  // Get gym data for logo and name
+  const { data: gymData } = useGymData(profile?.gym_id || null)
 
   // Handle redirect for unauthenticated users
   useEffect(() => {
@@ -75,12 +80,12 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
       {/* Desktop Sidebar */}
       <motion.div
         initial={false}
-        animate={{ 
+        animate={{
           width: sidebarCollapsed ? 64 : 256,
         }}
-        transition={{ 
-          duration: 0.3, 
-          ease: 'easeOut' 
+        transition={{
+          duration: 0.3,
+          ease: 'easeOut'
         }}
         className={cn(
           'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50',
@@ -96,17 +101,34 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
             <SidebarToggle />
           ) : (
             <>
-              <div className="flex items-center min-w-0">
-                <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
-                <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
-                  Member Portal
-                </span>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                {gymData?.logo_url ? (
+                  <Image
+                    src={gymData.logo_url}
+                    alt={gymData.name || 'Logo'}
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 rounded-md object-contain flex-shrink-0"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Dumbbell className="h-6 w-6 text-primary" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-card-foreground truncate">
+                    {gymData?.name || 'Member Portal'}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Powered by Centric Fit
+                  </p>
+                </div>
               </div>
               <SidebarToggle />
             </>
           )}
         </div>
-        
+
         {/* Navigation */}
         <nav className="mt-5 flex-1 px-2">
           <div className="space-y-1">
@@ -143,15 +165,32 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
             >
               {/* Mobile Header */}
               <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-                <div className="flex items-center min-w-0">
-                  <Dumbbell className="h-8 w-8 text-primary flex-shrink-0" />
-                  <span className="ml-2 text-xl font-bold text-card-foreground whitespace-nowrap">
-                    Member Portal
-                  </span>
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {gymData?.logo_url ? (
+                    <Image
+                      src={gymData.logo_url}
+                      alt={gymData.name || 'Logo'}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-md object-contain flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Dumbbell className="h-6 w-6 text-primary" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-card-foreground truncate">
+                      {gymData?.name || 'Member Portal'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Powered by Centric Fit
+                    </p>
+                  </div>
                 </div>
                 <SidebarToggle isMobile />
               </div>
-              
+
               {/* Mobile Navigation */}
               <nav className="mt-5 px-2 flex-1">
                 <div className="space-y-1">

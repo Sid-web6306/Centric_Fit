@@ -136,7 +136,7 @@ export function getFileExtension(filename: string): string {
  */
 export function validateImageFile(file: File): { isValid: boolean; error?: string } {
   const acceptedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-  const maxSize = 5 * 1024 * 1024 // 5MB
+  const maxSize = 1 * 1024 * 1024 // 1MB
   
   if (!acceptedTypes.includes(file.type)) {
     return {
@@ -148,7 +148,7 @@ export function validateImageFile(file: File): { isValid: boolean; error?: strin
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: 'Image file must be smaller than 5MB'
+      error: 'Image file must be smaller than 1MB'
     }
   }
   

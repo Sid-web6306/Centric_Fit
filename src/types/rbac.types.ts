@@ -221,6 +221,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<GymRole, Permission[]> = {
   member: [
     'profile.read', 'profile.update',
     'activities.read',
+    'gym.read', // Allow members to view basic gym info like name and logo
   ],
 } as const;
 
