@@ -1,6 +1,6 @@
 # 🚀 Centric Fit
 
-A multi-tenant SaaS application for managing gym memberships, schedules, and check-ins. This project is a solo-developer effort to build a functional MVP within 6 weeks.
+A multi-tenant SaaS application for managing gym memberships, schedules, and check-ins.
 
 ---
 
