@@ -10,7 +10,13 @@ const createGymSchema = z.object({
 })
 
 const updateGymSchema = z.object({
-  name: z.string().min(1, 'Gym name is required').max(100, 'Gym name too long').optional(),
+  name: z.string().min(1, 'Name is required').max(100, 'Name too long').optional(),
+  description: z.string().max(500, 'Description too long').optional().nullable(),
+  address: z.string().max(255, 'Address too long').optional().nullable(),
+  phone: z.string().max(20, 'Phone number too long').optional().nullable(),
+  email: z.string().email('Invalid email format').optional().nullable().or(z.literal('')),
+  website: z.string().url('Invalid URL format').optional().nullable().or(z.literal('')),
+  logo_url: z.string().url('Invalid logo URL').optional().nullable(),
 })
 
 // Helper to resolve gym_id from user or parameter
@@ -45,7 +51,7 @@ export async function GET(request: NextRequest) {
     const gymId = searchParams.get('id')
 
     if (gymId) {
-      // Fetch specific gym
+      // Fetch specific gym - RLS policy handles access control
       const { data: gym, error } = await supabase
         .from('gyms')
         .select('*')
@@ -58,12 +64,6 @@ export async function GET(request: NextRequest) {
         }
         logger.error('Error fetching gym:', { error })
         return NextResponse.json({ error: 'Failed to fetch gym' }, { status: 500 })
-      }
-
-      // Check permissions
-      const canView = await checkUserPermission(user.id, gymId, 'gym.read')
-      if (!canView) {
-        return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
       }
 
       return NextResponse.json({ gym })

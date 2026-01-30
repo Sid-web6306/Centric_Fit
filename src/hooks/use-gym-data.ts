@@ -11,6 +11,14 @@ import { logger } from '@/lib/logger'
 export interface Gym {
   id: string
   name: string | null
+  description: string | null
+  address: string | null
+  phone: string | null
+  email: string | null
+  website: string | null
+  logo_url: string | null
+  settings: Record<string, unknown> | null
+  is_active: boolean
   created_at: string
   updated_at?: string
 }
