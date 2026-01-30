@@ -106,7 +106,7 @@ export function isValidEmail(email: string): boolean {
  * @returns Sanitized role or null if invalid
  */
 export function sanitizeRole(role: string): string | null {
-  const validRoles = ['owner', 'manager', 'staff', 'trainer', 'member']
+  const validRoles = ['owner', 'manager', 'trainer', 'member']
   const sanitized = role.toLowerCase().trim()
   return validRoles.includes(sanitized) ? sanitized : null
 }

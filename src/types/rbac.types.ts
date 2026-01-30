@@ -1,6 +1,6 @@
 // RBAC Types for Centric Fit Application
 
-export type GymRole = 'owner' | 'manager' | 'staff' | 'trainer' | 'member';
+export type GymRole = 'owner' | 'manager' | 'trainer' | 'member';
 
 export type Permission = 
   // Member Management
@@ -106,7 +106,6 @@ export interface RBACContext {
   hasMinimumRole: (role: GymRole) => boolean;
   isOwner: boolean;
   isManager: boolean;
-  isStaff: boolean;
   isTrainer: boolean;
   isMember: boolean;
 }
@@ -138,14 +137,12 @@ export const ROLE_LEVELS: Record<GymRole, number> = {
   owner: 100,
   manager: 75,
   trainer: 60,
-  staff: 50,
   member: 25,
 } as const;
 
 // Role hierarchy for easy comparison
 export const ROLE_HIERARCHY: GymRole[] = [
   'member',
-  'staff',
   'trainer',
   'manager',
   'owner',
@@ -215,12 +212,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<GymRole, Permission[]> = {
     'activities.create', 'activities.read', 'activities.update',
     'profile.read', 'profile.update',
   ],
-  staff: [
-    'members.create', 'members.read', 'members.update',
-    'gym.read',
-    'activities.create', 'activities.read', 'activities.update',
-    'profile.read', 'profile.update',
-  ],
+  // staff: [
+  //   'members.create', 'members.read', 'members.update',
+  //   'gym.read',
+  //   'activities.create', 'activities.read', 'activities.update',
+  //   'profile.read', 'profile.update',
+  // ],
   member: [
     'profile.read', 'profile.update',
     'activities.read',

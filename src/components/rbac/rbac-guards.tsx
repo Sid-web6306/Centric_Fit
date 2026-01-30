@@ -181,11 +181,11 @@ export const ManagerOnly: React.FC<ConditionalRenderProps> = ({ children, fallba
 /**
  * Shows content only for staff and above
  */
-export const StaffOnly: React.FC<ConditionalRenderProps> = ({ children, fallback }) => (
-  <MinimumRoleGuard minimumRole="staff" fallback={fallback}>
-    {children}
-  </MinimumRoleGuard>
-)
+// export const StaffOnly: React.FC<ConditionalRenderProps> = ({ children, fallback }) => (
+//   <MinimumRoleGuard minimumRole="staff" fallback={fallback}>
+//     {children}
+//   </MinimumRoleGuard>
+// )
 
 /**
  * Shows content for trainers and above

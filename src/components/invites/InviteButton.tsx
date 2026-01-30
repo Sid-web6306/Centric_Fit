@@ -19,7 +19,7 @@ import { InviteCreationErrorBoundary } from './InvitationErrorBoundary'
 
 const inviteSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']),
   expires_in_hours: z.number().min(1).max(168),
   message: z.string().max(500).optional()
 })
@@ -146,7 +146,7 @@ export const InviteButton: React.FC<InviteButtonProps> = ({
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(['member', 'staff', 'trainer', 'manager', 'owner'] as GymRole[])
+                  {(['member', 'trainer', 'manager', 'owner'] as GymRole[])
                     .filter(role => canInviteRole(role))
                     .map(role => (
                       <SelectItem key={role} value={role}>

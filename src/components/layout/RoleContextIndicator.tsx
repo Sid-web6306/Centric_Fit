@@ -16,7 +16,7 @@ import { useGymData, useGymOwner } from '@/hooks/use-gym-data'
 import { ROLE_LEVELS } from '@/types/rbac.types'
 import { cn } from '@/lib/utils'
 
-type GymRole = 'owner' | 'manager' | 'trainer' | 'staff' | 'member'
+type GymRole = 'owner' | 'manager' | 'trainer' | 'member'
 
 // Role icon mapping
 export const ROLE_ICONS = {

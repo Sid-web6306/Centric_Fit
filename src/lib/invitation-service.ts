@@ -16,7 +16,7 @@ import type { User } from '@supabase/supabase-js'
 
 export const createInviteSchema = z.object({
   email: z.string().email('Valid email address is required'),
-  role: z.enum(['owner', 'manager', 'staff', 'trainer', 'member']),
+  role: z.enum(['owner', 'manager', 'trainer', 'member']),
   gym_id: z.string().uuid().optional(),
   expires_in_hours: z.number().min(1).max(168).default(72),
   message: z.string().max(500).optional(),
