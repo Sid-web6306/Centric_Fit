@@ -29,7 +29,7 @@ export const MEMBER_ERRORS = {
   // Duplicate/Unique constraint errors
   DUPLICATE_EMAIL: {
     code: 'DUPLICATE_EMAIL',
-    message: 'A member with this email already exists in your gym',
+    message: 'A member with this email already exists in your fitness center',
     httpStatus: 409,
   },
   DUPLICATE_PHONE: {
@@ -88,9 +88,9 @@ export const MEMBER_ERRORS = {
     message: 'Member not found',
     httpStatus: 404,
   },
-  GYM_NOT_FOUND: {
-    code: 'GYM_NOT_FOUND',
-    message: 'No gym association found for your account',
+  FITNESS_CENTER_NOT_FOUND: {
+    code: 'FITNESS_CENTER_NOT_FOUND',
+    message: 'No fitness center association found for your account',
     httpStatus: 400,
   },
   

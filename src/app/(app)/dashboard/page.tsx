@@ -129,7 +129,7 @@ const DashboardPage = () => {
       {/* Header */}
       <DashboardHeader
         title={`${greeting}, ${profile?.full_name?.split(' ')[0] || 'there'}! 👋`}
-        subtitle="Here's your gym overview for today"
+        subtitle="Here's your business overview for today"
       >
         <div className="flex flex-col sm:flex-row gap-2">
           <Link href="/members">

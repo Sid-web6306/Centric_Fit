@@ -20,7 +20,7 @@ type OnboardingStep = 1 | 2
 // Steps configuration
 const STEPS: Step[] = [
   { id: 'personal', title: 'Your Details', description: 'Tell us about you' },
-  { id: 'gym-name', title: 'Gym Setup', description: 'Name your gym' },
+  { id: 'gym-name', title: 'Setup', description: 'Name your fitness center' },
 ]
 
 // Inner content that uses useSearchParams must be wrapped in Suspense
@@ -164,7 +164,7 @@ const OnboardingContent = () => {
         // Don't fail the onboarding
       }
 
-      toastActions.success('Success!', 'Your gym has been set up successfully')
+      toastActions.success('Success!', 'Your fitness center has been set up successfully')
 
       // Invalidate queries to refresh data after onboarding
       await postOnboardingSync()

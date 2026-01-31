@@ -10,8 +10,25 @@ import {
   shouldRedirectToLogin
 } from '@/lib/auth-messages'
 
+// Enhanced email validation schema
 const EmailSchema = z.object({
-  email: z.string().email()
+  email: z.string()
+    .min(1, 'Email is required')
+    .max(254, 'Email is too long')
+    .transform(val => val.trim().toLowerCase())
+    .refine(val => val.length > 0, { message: 'Email is required' })
+    .refine(
+      val => /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(val),
+      { message: 'Please enter a valid email address' }
+    )
+    .refine(
+      val => {
+        // Check domain has at least one dot
+        const parts = val.split('@')
+        return parts.length === 2 && parts[1].includes('.')
+      },
+      { message: 'Please enter a valid email domain' }
+    )
 })
 
 
@@ -181,8 +198,13 @@ export async function updateUserEmail(formData: FormData): Promise<AuthResult> {
     const validation = EmailSchema.safeParse({ email: newEmail })
     
     if (!validation.success) {
-      return { error: 'Please enter a valid email address' }
+      // Return the first validation error message
+      const firstError = validation.error.errors[0]
+      return { error: firstError?.message || 'Please enter a valid email address' }
     }
+
+    // Use the validated (trimmed, lowercased) email
+    const validatedEmail = validation.data.email
 
     const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -191,15 +213,32 @@ export async function updateUserEmail(formData: FormData): Promise<AuthResult> {
       return { error: 'Authentication required' }
     }
 
-    // Check if it's the same email
-    if (user.email === newEmail) {
+    // Check if it's the same email (normalize current email for comparison)
+    if (user.email?.toLowerCase().trim() === validatedEmail) {
       return { error: 'This is already your current email address' }
+    }
+
+    // Check if email is already used by another user in profiles table
+    const { data: existingProfile, error: profileCheckError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', validatedEmail)
+      .neq('id', user.id)
+      .maybeSingle()
+
+    if (profileCheckError) {
+      logger.error('Email check error:', { error: profileCheckError })
+      return { error: 'Failed to verify email availability. Please try again.' }
+    }
+
+    if (existingProfile) {
+      return { error: 'This email address is already registered to another account.' }
     }
 
     // Use updateUser method to initiate email change
     // This will send verification emails to both current and new email addresses
     const { error } = await supabase.auth.updateUser({
-      email: newEmail
+      email: validatedEmail
     })
 
     if (error) {

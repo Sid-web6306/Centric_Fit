@@ -37,7 +37,7 @@ export const PERMISSION_LABELS: Record<Permission, PermissionLabel> = {
   'members.create': {
     permission: 'members.create',
     title: 'Add New Members',
-    description: 'Register new gym members and create member profiles',
+    description: 'Register new fitness center members and create member profiles',
     icon: UserPlus,
     category: 'Member Management',
     severity: 'medium',
@@ -75,7 +75,7 @@ export const PERMISSION_LABELS: Record<Permission, PermissionLabel> = {
   'analytics.read': {
     permission: 'analytics.read',
     title: 'View Analytics',
-    description: 'Access gym performance metrics, member statistics, and reports',
+    description: 'Access fitness center performance metrics, member statistics, and reports',
     icon: BarChart3,
     category: 'Analytics & Reports',
     severity: 'low',
@@ -94,28 +94,28 @@ export const PERMISSION_LABELS: Record<Permission, PermissionLabel> = {
   // Gym Settings
   'gym.create': {
     permission: 'gym.create',
-    title: 'Create Gym',
-    description: 'Create new gyms and manage facility setup',
+    title: 'Create Fitness center',
+    description: 'Create new fitness centers and manage facility setup',
     icon: Building2,
-    category: 'Gym Settings',
+    category: 'Settings',
     severity: 'critical',
     color: 'bg-orange-100 text-orange-800 border-orange-200'
   },
   'gym.read': {
     permission: 'gym.read',
-    title: 'View Gym Settings',
-    description: 'View gym information, operating hours, and basic settings',
+    title: 'View fitness center Settings',
+    description: 'View fitness center information, operating hours, and basic settings',
     icon: Building2,
-    category: 'Gym Settings',
+    category: 'Settings',
     severity: 'low',
     color: 'bg-cyan-100 text-cyan-800 border-cyan-200'
   },
   'gym.update': {
     permission: 'gym.update',
-    title: 'Manage Gym Settings',
-    description: 'Modify gym details, operating hours, policies, and configurations',
+    title: 'Manage fitness center Settings',
+    description: 'Modify fitness center details, operating hours, policies, and configurations',
     icon: Settings,
-    category: 'Gym Settings',
+    category: 'Settings',
     severity: 'high',
     color: 'bg-orange-100 text-orange-800 border-orange-200'
   },
@@ -249,7 +249,7 @@ export const PERMISSION_CATEGORIES = {
     'analytics.read',
     'analytics.export'
   ],
-  'Gym Settings': [
+  'Settings': [
     'gym.create',
     'gym.read',
     'gym.update'
@@ -289,7 +289,7 @@ export const getCategoryIcon = (category: string): LucideIcon => {
   switch (category) {
     case 'Member Management': return Users
     case 'Analytics & Reports': return BarChart3
-    case 'Gym Settings': return Building2
+    case 'Settings': return Building2
     case 'Staff Management': return Shield
     case 'Financial': return CreditCard
     case 'Activities': return Activity
@@ -302,7 +302,7 @@ export const getCategoryColor = (category: string): string => {
   switch (category) {
     case 'Member Management': return 'bg-blue-50 border-blue-200'
     case 'Analytics & Reports': return 'bg-purple-50 border-purple-200'
-    case 'Gym Settings': return 'bg-orange-50 border-orange-200'
+    case 'Settings': return 'bg-orange-50 border-orange-200'
     case 'Staff Management': return 'bg-emerald-50 border-emerald-200'
     case 'Financial': return 'bg-green-50 border-green-200'
     case 'Activities': return 'bg-teal-50 border-teal-200'

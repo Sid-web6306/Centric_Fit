@@ -80,7 +80,7 @@ export const sanitizeInput = {
     
     // Ensure minimum length
     if (gymName.length < 2) {
-      throw new Error('Gym name must be at least 2 characters long')
+      throw new Error('Center name must be at least 2 characters long')
     }
     
     return gymName

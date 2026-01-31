@@ -161,7 +161,7 @@ export const STATIC_SUBSCRIPTION_PLANS: StaticSubscriptionPlan[] = [
     features: [
       "All Professional Features",
       "API Access",
-      "Multi-Gym Management",
+      "Multi-Fitness Management",
       "Custom Reports",
       "Priority Support", 
       "Advanced Retention Analytics",

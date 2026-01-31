@@ -72,8 +72,8 @@ const InactiveUserContent = () => {
         
         <CardDescription className="text-center text-gray-600">
           {isDeleted 
-            ? 'Your account has been permanently removed from the fitness center. You can create a new gym or contact support for assistance.'
-            : 'Your access to the gym has been temporarily suspended. You can contact support for assistance.'
+            ? 'Your account has been permanently removed from the fitness center. You can create a new fitness center or contact support for assistance.'
+            : 'Your access to the fitness center has been temporarily suspended. You can contact support for assistance.'
           }
         </CardDescription>
       </CardHeader>
@@ -86,7 +86,7 @@ const InactiveUserContent = () => {
             className="w-full"
           >
             <Building2 className="w-4 h-4 mr-2" />
-            Create New Gym
+            Create New Fitness Center
           </Button>
           
           <Button 

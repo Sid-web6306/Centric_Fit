@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
       <div className="space-y-6 p-6 md:p-8">
       <PageHeader
         title="Business Analytics"
-        description="Key metrics and insights to grow your gym"
+        description="Key metrics and insights to grow your business"
       >
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh}>

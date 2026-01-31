@@ -18,13 +18,13 @@ export default function TermsOfServicePage() {
 
       <PolicySection title="Description of Service">
         <p>
-          Centric Fit is a cloud-based gym management software that provides tools for:
+          Centric Fit is a cloud-based fitness management software that provides tools for:
         </p>
         <ul className="list-disc list-inside ml-4 space-y-2">
           <li>Member management and customer relationship management (CRM)</li>
           <li>Subscription and billing management</li>
           <li>Analytics and reporting tools</li>
-          <li>Multi-tenant gym operations support</li>
+          <li>Multi-tenant fitness operations support</li>
           <li>Integration with payment processors</li>
         </ul>
       </PolicySection>
