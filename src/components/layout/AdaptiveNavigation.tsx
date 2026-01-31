@@ -490,10 +490,10 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
     return (
       <div className={`text-center ${className}`}>
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
-          Almost there! Complete your gym setup
+          Almost there! Complete your fitness center setup
         </h2>
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
-          Finish setting up your gym profile to unlock the full power of our management platform.
+          Finish setting up your fitness center profile to unlock the full power of our management platform.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
           <Link href="/onboarding">

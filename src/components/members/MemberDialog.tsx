@@ -38,7 +38,7 @@ export function MemberDialog({
   const title = isEdit ? 'Edit Member' : 'Add New Member'
   const description = isEdit 
     ? 'Update member information. Changes will be saved immediately.'
-    : 'Add a new member to your gym. All fields except email and phone are required.'
+    : 'Add a new member to your community. All fields except email and phone are required.'
   const submitText = isEdit ? 'Update Member' : 'Add Member'
   const submittingText = isEdit ? 'Updating...' : 'Adding...'
 

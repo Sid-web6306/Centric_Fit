@@ -10,26 +10,43 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { OTPInput } from '@/components/ui/otp-input'
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog'
-import { 
-  AlertCircle, 
-  CheckCircle, 
-  Mail, 
-  Loader2, 
-  RefreshCw 
+import {
+  AlertCircle,
+  CheckCircle,
+  Mail,
+  Loader2,
+  RefreshCw
 } from 'lucide-react'
 import { toastActions } from '@/stores/toast-store'
 import { logger } from '@/lib/logger'
 import { useQueryClient } from '@tanstack/react-query'
 
+// Enhanced email validation schema
 const emailSchema = z.object({
-  newEmail: z.string().email('Please enter a valid email address')
+  newEmail: z.string()
+    .min(1, 'Email is required')
+    .max(254, 'Email is too long')
+    .transform(val => val.trim().toLowerCase())
+    .refine(val => val.length > 0, { message: 'Email is required' })
+    .refine(
+      val => /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/.test(val),
+      { message: 'Please enter a valid email address' }
+    )
+    .refine(
+      val => {
+        // Check domain has at least one dot
+        const parts = val.split('@')
+        return parts.length === 2 && parts[1].includes('.')
+      },
+      { message: 'Please enter a valid email domain' }
+    )
 })
 
 type EmailFormData = z.infer<typeof emailSchema>
@@ -72,9 +89,19 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
     setIsLoading(true)
     setError('')
 
+    // Client-side validation: Check if new email is the same as current
+    const normalizedNewEmail = data.newEmail.trim().toLowerCase()
+    const normalizedCurrentEmail = currentEmail.trim().toLowerCase()
+
+    if (normalizedNewEmail === normalizedCurrentEmail) {
+      setError('This is already your current email address')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const formData = new FormData()
-      formData.append('newEmail', data.newEmail)
+      formData.append('newEmail', normalizedNewEmail)
 
       const result = await updateUserEmail(formData)
 
@@ -117,15 +144,15 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
         // Refresh the user session to get updated authentication context
         const supabase = createClient()
         const { error: sessionError } = await supabase.auth.getSession()
-        
+
         if (sessionError) {
-          
+
         }
-        
+
         // Refetch user data to get updated email
         await queryClient.invalidateQueries({ queryKey: ['auth-session'] })
         await queryClient.refetchQueries({ queryKey: ['auth-session'] })
-        
+
         toastActions.success('Email Updated!', 'Your email address has been updated successfully.')
         onEmailUpdated?.()
         handleClose()
@@ -193,7 +220,7 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
             Update Email Address
           </DialogTitle>
           <DialogDescription>
-            {step === 'email' 
+            {step === 'email'
               ? 'Enter your new email address. We\'ll send a verification code to your new email address.'
               : 'Check your new email address for the verification code and enter it below.'
             }
@@ -302,8 +329,8 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">
-                    {canResend 
-                      ? 'You can request a new code' 
+                    {canResend
+                      ? 'You can request a new code'
                       : `Resend available in ${formatTime(resendCooldown)}`
                     }
                   </span>

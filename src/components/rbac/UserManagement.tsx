@@ -124,13 +124,13 @@ export function UserManagement({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Remove User from Gym
+              Remove User from Center
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove <strong>{userName || userEmail}</strong> from your gym?
+              Are you sure you want to remove <strong>{userName || userEmail}</strong> from your center?
               <br />
               <span className="text-sm text-muted-foreground mt-1 block">
-                This will remove their access to the gym and clean up their associated data.
+                This will remove their access to the center and clean up their associated data.
               </span>
               {userRole === 'owner' && (
                 <div className="mt-2">
@@ -139,7 +139,7 @@ export function UserManagement({
                     Owner
                   </Badge>
                   <p className="mt-2 text-destructive font-medium">
-                    Warning: You are removing another owner from the gym. This action cannot be undone.
+                    Warning: You are removing another owner from the center. This action cannot be undone.
                   </p>
                 </div>
               )}

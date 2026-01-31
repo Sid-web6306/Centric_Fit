@@ -155,7 +155,7 @@ export function EnhancedMemberFormFields({
               </Select>
               {showDescriptions && (
                 <FormDescription>
-                  Member can use gym services immediately regardless of status.
+                  Member can use fitness services immediately regardless of status.
                 </FormDescription>
               )}
               <FormMessage />
@@ -249,7 +249,7 @@ export function EnhancedMemberFormFields({
                   </FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="Welcome to our gym! We&apos;re excited to have you as part of our community. Your portal access will allow you to..."
+                      placeholder="Welcome to fitness community! We&apos;re excited to have you as part of our community. Your portal access will allow you to..."
                       className="min-h-[80px]"
                       {...field} 
                     />

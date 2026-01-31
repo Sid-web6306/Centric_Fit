@@ -128,7 +128,7 @@ export function createPermission(resource: string, action: string): Permission {
  */
 export function getRoleDisplayName(role: GymRole): string {
   const displayNames: Record<GymRole, string> = {
-    owner: 'Gym Owner',
+    owner: 'Owner',
     manager: 'Manager',
     trainer: 'Personal Trainer',
     member: 'Member'
@@ -142,7 +142,7 @@ export function getRoleDisplayName(role: GymRole): string {
  */
 export function getRoleDescription(role: GymRole): string {
   const descriptions: Record<GymRole, string> = {
-    owner: 'Full access to all gym features and settings',
+    owner: 'Full access to all fitness center features and settings',
     manager: 'Manage members, staff, and day-to-day operations',
     trainer: 'Access to assigned members and training features',
     member: 'Limited access to personal information and activities'
@@ -190,7 +190,7 @@ export function getPermissionDisplayName(permission: Permission): string {
   const resourceNames: Record<string, string> = {
     members: 'Members',
     analytics: 'Analytics',
-    gym: 'Gym Settings',
+    gym: 'Settings',
     staff: 'Staff',
     billing: 'Billing',
     activities: 'Activities',
@@ -216,15 +216,15 @@ export function getPermissionDisplayName(permission: Permission): string {
  */
 export function getPermissionDescription(permission: Permission): string {
   const descriptions: Record<Permission, string> = {
-    'members.create': 'Add new members to the gym',
+    'members.create': 'Add new members to the center',
     'members.read': 'View member list and details',
     'members.update': 'Edit member information',
-    'members.delete': 'Remove members from the gym',
-    'analytics.read': 'Access gym analytics and reports',
+    'members.delete': 'Remove members from the center',
+    'analytics.read': 'Access center analytics and reports',
     'analytics.export': 'Export analytics data and reports',
-    'gym.create': 'Create new gym',
-    'gym.read': 'View gym information and settings',
-    'gym.update': 'Modify gym settings and information',
+    'gym.create': 'Create new center',
+    'gym.read': 'View center information and settings',
+    'gym.update': 'Modify center settings and information',
     'staff.create': 'Invite new staff members',
     'staff.read': 'View staff list and roles',
     'staff.update': 'Update staff roles and permissions',

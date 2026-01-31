@@ -215,7 +215,7 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 md:p-8">
       <PageHeader
-        title="Attendance Dashboard"
+        title="Attendance"
         description="View attendance history and current status"
       />
 

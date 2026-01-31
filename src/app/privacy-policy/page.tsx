@@ -8,7 +8,7 @@ export default function PrivacyPolicyPage() {
         <p>
           At Centric Fit (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;), we are committed to protecting your privacy and personal information. 
           This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use 
-          our gym management software service.
+          our fitness management software service.
         </p>
         <p>
           By using our service, you agree to the collection and use of information in accordance with this policy. 
@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
         <p><strong>Personal Information:</strong></p>
         <ul className="list-disc list-inside ml-4 space-y-2">
           <li>Name, email address, phone number</li>
-          <li>Gym/business information and address</li>
+          <li>Fitness center/business information and address</li>
           <li>Payment and billing information</li>
           <li>Profile information and preferences</li>
         </ul>
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
       <PolicySection title="How We Use Your Information">
         <p>We use the collected information for the following purposes:</p>
         <ul className="list-disc list-inside ml-4 space-y-2">
-          <li>Provide and maintain our gym management service</li>
+          <li>Provide and maintain our fitness center management service</li>
           <li>Process payments and manage subscriptions</li>
           <li>Send important service updates and notifications</li>
           <li>Improve our software and develop new features</li>

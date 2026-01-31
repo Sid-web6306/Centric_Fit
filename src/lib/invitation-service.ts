@@ -69,7 +69,7 @@ export class InvitationService {
       // Resolve gym ID
       const gymId = await this.resolveGymId(input.gym_id)
       if (!gymId) {
-        return { success: false, error: 'No gym association found' }
+        return { success: false, error: 'No fitness center association found' }
       }
 
       // Check permissions

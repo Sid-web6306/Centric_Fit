@@ -237,7 +237,7 @@ export function generateInvitationEmailHTML(data: InvitationEmailData): string {
                     <div class="gym-icon">🏋️</div>
                     <div class="gym-details">
                         <h2>${gymName}</h2>
-                        <p>Gym Management Platform</p>
+                        <p>Fitness Management Platform</p>
                     </div>
                 </div>
                 
@@ -372,7 +372,7 @@ This invitation is personal and expires on ${expireDate}.
 If you didn't expect this invitation, you can safely ignore this email.
 
 ---
-Gym Management Platform
+Fitness Management Platform
 Empowering fitness businesses with modern management tools
 
 This email was sent to ${recipientEmail}.
@@ -387,5 +387,5 @@ export function generateInvitationSubject(gymName: string, role: string): string
 
 // Preview text for email clients
 export function generateInvitationPreview(inviterName: string, gymName: string): string {
-  return `${inviterName} has invited you to join ${gymName}. Accept your invitation to start managing the gym today!`;
+  return `${inviterName} has invited you to join ${gymName}. Accept your invitation to start managing the center today!`;
 }
