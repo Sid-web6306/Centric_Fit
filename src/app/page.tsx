@@ -23,6 +23,7 @@ import {
   TiltCard,
   FloatingElement
 } from "@/components/landing/InteractiveElements";
+const heroWords = ["Fitness Management", "Member Tracking", "Business Growth", "Smart Analytics"];
 
 function HomeComponent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -71,7 +72,6 @@ function HomeComponent() {
     { number: 24, label: "Support", suffix: "/7" }
   ];
 
-  const heroWords = ["Fitness Management", "Member Tracking", "Business Growth", "Smart Analytics"];
 
   const testimonials = [
     {
