@@ -1,10 +1,10 @@
 'use client'
 
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Users, 
-  TrendingUp, 
-  Star, 
+import {
+  Users,
+  TrendingUp,
+  Star,
   Shield,
   Smartphone,
   Check,
@@ -23,7 +23,7 @@ function HomeComponent() {
 
   useEffect(() => {
     setIsVisible(true);
-    
+
     // Only animate statistics if stats are visible
     let interval: NodeJS.Timeout | null = null;
     if (statsVisible) {
@@ -90,7 +90,7 @@ function HomeComponent() {
         {/* Primary background elements - visible on all devices */}
         <div className="absolute -top-20 sm:-top-40 -right-20 sm:-right-40 w-40 sm:w-80 h-40 sm:h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 motion-safe:animate-pulse"></div>
         <div className="absolute -bottom-20 sm:-bottom-40 -left-20 sm:-left-40 w-40 sm:w-80 h-40 sm:h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 motion-safe:animate-pulse motion-safe:delay-1000"></div>
-        
+
         {/* Secondary background elements - hidden on mobile for performance */}
         <div className="hidden sm:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 motion-safe:animate-pulse motion-safe:delay-500"></div>
         <div className="hidden md:block absolute top-20 left-20 w-40 h-40 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 motion-safe:animate-pulse motion-safe:delay-2000"></div>
@@ -107,7 +107,7 @@ function HomeComponent() {
             Modern Fitness Management System
           </span>
         </div>
-        
+
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight">
           The Future of <br className="hidden sm:block" />
           <span className="sm:hidden"> </span>
@@ -115,7 +115,7 @@ function HomeComponent() {
             Fitness Management
           </span>
         </h1>
-        
+
         <p className="text-base sm:text-lg lg:text-xl text-slate-300 mb-6 sm:mb-8 max-w-2xl lg:max-w-3xl leading-relaxed px-2">
           Built from the ground up for modern fitness businesses. Our comprehensive management system handles member tracking, analytics, multi-location support, and delivers powerful insights that traditional fitness software simply can&#39;t match.
         </p>
@@ -144,14 +144,13 @@ function HomeComponent() {
               Join thousands who are transforming their fitness business operations
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8" role="group" aria-label="Company statistics">
             {stats.map((stat, index) => (
-              <div 
+              <div
                 key={index}
-                className={`text-center bg-slate-800/30 rounded-lg p-4 sm:p-6 backdrop-blur transition-all duration-500 hover:bg-slate-800/50 focus-within:ring-2 focus-within:ring-purple-400 ${
-                  currentStat === index ? 'motion-safe:bg-slate-800/50 motion-safe:scale-105 motion-safe:shadow-lg' : ''
-                }`}
+                className={`text-center bg-slate-800/30 rounded-lg p-4 sm:p-6 backdrop-blur transition-all duration-500 hover:bg-slate-800/50 focus-within:ring-2 focus-within:ring-purple-400 ${currentStat === index ? 'motion-safe:bg-slate-800/50 motion-safe:scale-105 motion-safe:shadow-lg' : ''
+                  }`}
                 role="article"
                 aria-label={`${stat.number} ${stat.label}`}
               >
@@ -268,7 +267,7 @@ function HomeComponent() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur hover:bg-slate-800/70 transition-all duration-200">
               <CardContent className="p-6 sm:p-8 text-center">
                 <div className="p-2.5 sm:p-3 bg-green-500/20 rounded-lg inline-block mb-3 sm:mb-4">
@@ -288,7 +287,7 @@ function HomeComponent() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-slate-800/50 border-slate-700 backdrop-blur hover:bg-slate-800/70 transition-all duration-200 sm:col-span-2 lg:col-span-1">
               <CardContent className="p-6 sm:p-8 text-center">
                 <div className="p-2.5 sm:p-3 bg-blue-500/20 rounded-lg inline-block mb-3 sm:mb-4">
@@ -323,7 +322,7 @@ function HomeComponent() {
               Built specifically for the fitness industry with modern technology and proven business growth strategies
             </p>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-12 items-start">
             <div className="space-y-6 sm:space-y-8">
               <div className="flex items-start space-x-3 sm:space-x-4">
@@ -335,7 +334,7 @@ function HomeComponent() {
                   <p className="text-slate-300 text-sm sm:text-base leading-relaxed">Built with today&apos;s best practices - cloud-native, mobile-first, and designed for the modern fitness landscape.</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg flex-shrink-0">
                   <Check className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
@@ -345,7 +344,7 @@ function HomeComponent() {
                   <p className="text-slate-300 text-sm sm:text-base leading-relaxed">Advanced analytics that track member growth, revenue trends, and check-in patterns to optimize your business performance.</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg flex-shrink-0">
                   <Check className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
@@ -355,7 +354,7 @@ function HomeComponent() {
                   <p className="text-slate-300 text-sm sm:text-base leading-relaxed">Every feature designed specifically for fitness businesses - no generic business tools adapted for gyms.</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3 sm:space-x-4">
                 <div className="p-2 sm:p-3 bg-green-500/20 rounded-lg flex-shrink-0">
                   <Check className="h-5 w-5 sm:h-6 sm:w-6 text-green-400" />
@@ -366,7 +365,7 @@ function HomeComponent() {
                 </div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4 sm:gap-6 mt-6 lg:mt-0">
               <div className="bg-slate-800/50 p-4 sm:p-6 lg:p-8 rounded-lg backdrop-blur text-center hover:bg-slate-800/70 transition-all duration-200">
                 <div className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">50+</div>
