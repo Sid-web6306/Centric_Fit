@@ -12,6 +12,7 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import { SupabaseErrorHandler } from "@/components/providers/supabase-error-handler";
+import { HelloWidgetWrapper } from "@/components/support/HelloWidgetWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -69,6 +70,7 @@ export default function RootLayout({
               <SessionProvider>
                 <SupabaseErrorHandler />
                 {children}
+                <HelloWidgetWrapper />
                 <PWAWrapper />
                 <ServiceWorkerRegister />
               </SessionProvider>
