@@ -140,28 +140,29 @@ export function Typewriter({
 
     useEffect(() => {
         const word = words[currentWordIndex];
+        let timer: NodeJS.Timeout;
 
-        const timeout = setTimeout(() => {
-            if (!isDeleting) {
-                // Typing
-                if (currentText.length < word.length) {
-                    setCurrentText(word.slice(0, currentText.length + 1));
-                } else {
-                    // Pause before deleting
-                    setTimeout(() => setIsDeleting(true), pauseDuration);
-                }
-            } else {
-                // Deleting
-                if (currentText.length > 0) {
-                    setCurrentText(word.slice(0, currentText.length - 1));
-                } else {
+        if (isDeleting) {
+            timer = setTimeout(() => {
+                setCurrentText((prev) => prev.slice(0, -1));
+                if (currentText.length <= 1) {
                     setIsDeleting(false);
                     setCurrentWordIndex((prev) => (prev + 1) % words.length);
                 }
+            }, deletingSpeed);
+        } else {
+            if (currentText.length < word.length) {
+                timer = setTimeout(() => {
+                    setCurrentText(word.slice(0, currentText.length + 1));
+                }, typingSpeed);
+            } else {
+                timer = setTimeout(() => {
+                    setIsDeleting(true);
+                }, pauseDuration);
             }
-        }, isDeleting ? deletingSpeed : typingSpeed);
+        }
 
-        return () => clearTimeout(timeout);
+        return () => clearTimeout(timer);
     }, [currentText, isDeleting, currentWordIndex, words, typingSpeed, deletingSpeed, pauseDuration]);
 
     return (
