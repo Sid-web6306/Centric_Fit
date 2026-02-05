@@ -15,10 +15,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { 
-  ArrowRight, 
-  Menu, 
-  X, 
+import {
+  ArrowRight,
+  Menu,
+  X,
   ChevronDown,
   LogOut,
   LayoutDashboard,
@@ -26,8 +26,40 @@ import {
   Smartphone
 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
+import { PopupModal } from 'react-calendly'
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
+
+// Calendly popup hook
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL
+
+function useCalendlyPopup() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [rootElement, setRootElement] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    // Wait for mount to access document
+    setRootElement(document.getElementById('__next') || document.body)
+  }, [])
+
+  const openCalendly = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+
+  const CalendlyModal = useCallback(() => {
+    if (!rootElement || !CALENDLY_URL) return null
+    return (
+      <PopupModal
+        url={CALENDLY_URL}
+        onModalClose={() => setIsOpen(false)}
+        open={isOpen}
+        rootElement={rootElement}
+      />
+    )
+  }, [isOpen, rootElement])
+
+  return { openCalendly, CalendlyModal }
+}
 
 interface AdaptiveNavigationProps {
   className?: string
@@ -36,7 +68,7 @@ interface AdaptiveNavigationProps {
 export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
   const { isAuthenticated, hasGym, isLoading, user, profile } = useAuth()
   const rbac = useRBAC()
-  
+
   // Check if user is a member (from RBAC or profile default_role)
   const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -46,7 +78,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
   const toggleMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(prev => !prev)
   }, [])
-  
+
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false)
   }, [])
@@ -59,7 +91,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
       router.push('/')
       router.refresh()
     } catch (error) {
-      logger.error('Logout error:', {error})
+      logger.error('Logout error:', { error })
       toast.error('Failed to logout')
     }
   }
@@ -71,7 +103,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
         closeMobileMenu()
       }
     }
-    
+
     if (isMobileMenuOpen) {
       window.addEventListener('keydown', handleEscape)
       return () => window.removeEventListener('keydown', handleEscape)
@@ -127,9 +159,9 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
         {/* Desktop Navigation Links (Center) */}
         <div className="hidden md:flex items-center space-x-8">
           {navLinks.map((link) => (
-            <Link 
+            <Link
               key={link.href}
-              href={link.href} 
+              href={link.href}
               className="text-white hover:text-purple-300 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-transparent rounded-md px-3 py-2"
             >
               {link.label}
@@ -145,8 +177,8 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
               <div className="hidden md:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="flex items-center space-x-2 text-white hover:bg-white/10 px-2 sm:px-3"
                     >
                       <UserAvatar
@@ -160,13 +192,13 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    align="end" 
+                  <DropdownMenuContent
+                    align="end"
                     className="w-56 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                   >
                     <DropdownMenuItem asChild>
-                      <Link 
-                        href={isMember ? "/portal" : (hasGym ? "/dashboard" : "/onboarding")} 
+                      <Link
+                        href={isMember ? "/portal" : (hasGym ? "/dashboard" : "/onboarding")}
                         className="flex items-center cursor-pointer"
                       >
                         {isMember ? (
@@ -177,9 +209,9 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                         <span>{isMember ? "Portal" : (hasGym ? "Dashboard" : "Complete Setup")}</span>
                       </Link>
                     </DropdownMenuItem>
-                    
+
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={handleLogout}
                       className="flex items-center cursor-pointer text-red-600 dark:text-red-400"
                     >
@@ -195,15 +227,15 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
               {/* Desktop Login/Signup Buttons */}
               <div className="hidden md:flex items-center space-x-3">
                 <Link href="/login">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="text-white border-white border-2 bg-white/10 hover:bg-white hover:text-slate-900 active:bg-white active:text-slate-900 backdrop-blur transition-all duration-200 min-h-[40px] px-4"
                   >
                     Log In
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button 
+                  <Button
                     className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 active:from-purple-700 active:to-pink-700 text-white transition-all duration-200 min-h-[40px] px-4"
                   >
                     Sign Up
@@ -232,14 +264,14 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
       {isMobileMenuOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="md:hidden fixed inset-0 z-[998] bg-black/60 backdrop-blur-sm"
             onClick={closeMobileMenu}
             aria-hidden="true"
           />
-          
+
           {/* Drawer Panel */}
-          <div 
+          <div
             id="mobile-menu"
             className="md:hidden fixed inset-0 z-[999] flex"
             role="dialog"
@@ -266,9 +298,9 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                   {/* Navigation Links */}
                   <div className="flex flex-col space-y-2 px-4 sm:px-6 py-6">
                     {navLinks.map((link) => (
-                      <Link 
+                      <Link
                         key={link.href}
-                        href={link.href} 
+                        href={link.href}
                         onClick={closeMobileMenu}
                         className="text-lg text-white hover:text-purple-300 active:text-purple-400 transition-colors py-3 px-3 rounded-lg hover:bg-white/5 active:bg-white/10 flex items-center"
                       >
@@ -276,7 +308,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                       </Link>
                     ))}
                   </div>
-                  
+
                   {/* Auth Section */}
                   <div className="mt-auto px-4 sm:px-6 py-6 border-t border-slate-800 safe-area-inset-bottom">
                     {isAuthenticated ? (
@@ -291,12 +323,12 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                             {isMember ? "Portal" : (hasGym ? "Dashboard" : "Complete Setup")}
                           </Button>
                         </Link>
-                        <Button 
+                        <Button
                           onClick={() => {
                             handleLogout()
                             closeMobileMenu()
                           }}
-                          variant="outline" 
+                          variant="outline"
                           className="w-full text-red-500 border-red-500 hover:bg-red-500 hover:text-white min-h-[48px] text-base"
                         >
                           <LogOut className="mr-2 h-4 w-4" />
@@ -332,7 +364,10 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
 export function AdaptiveHeroCTA({ className }: { className?: string }) {
   const { isAuthenticated, hasGym, isLoading, profile } = useAuth()
   const rbac = useRBAC()
-  
+
+  // Calendly hook must be called unconditionally
+  const { openCalendly, CalendlyModal } = useCalendlyPopup()
+
   // Check if user is a member (from RBAC or profile default_role)
   const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
 
@@ -401,13 +436,19 @@ export function AdaptiveHeroCTA({ className }: { className?: string }) {
   // Anonymous user - standard signup CTA with enhanced touch targets
   return (
     <div className={`flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center ${className}`}>
+      <CalendlyModal />
       <Link href="/signup">
         <Button size="lg" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap">
           Try Free for 14 Days
           <ArrowRight className="ml-2 h-4 w-4 sm:h-6 sm:w-6" />
         </Button>
       </Link>
-      <Button size="lg" variant="outline" className="text-white border-white border-2 bg-white/10 hover:bg-white hover:text-slate-900 px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl backdrop-blur transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap">
+      <Button
+        size="lg"
+        variant="outline"
+        onClick={openCalendly}
+        className="text-white border-white border-2 bg-white/10 hover:bg-white hover:text-slate-900 px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl backdrop-blur transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap"
+      >
         Book a Demo
       </Button>
     </div>
@@ -418,7 +459,10 @@ export function AdaptiveHeroCTA({ className }: { className?: string }) {
 export function AdaptiveFinalCTA({ className }: { className?: string }) {
   const { isAuthenticated, hasGym, isLoading, profile } = useAuth()
   const rbac = useRBAC()
-  
+
+  // Calendly hook must be called unconditionally
+  const { openCalendly, CalendlyModal } = useCalendlyPopup()
+
   // Check if user is a member (from RBAC or profile default_role)
   const isMember = rbac?.role === 'member' || profile?.default_role === 'member'
 
@@ -508,8 +552,10 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
   }
 
   // Anonymous user - original content with mobile optimization
+
   return (
     <div className={`text-center ${className}`}>
+      <CalendlyModal />
       <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 sm:mb-6">
         Ready to modernize your fitness business management?
       </h2>
@@ -523,7 +569,12 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
             <ArrowRight className="ml-2 h-4 w-4 sm:h-6 sm:w-6" />
           </Button>
         </Link>
-        <Button size="lg" variant="outline" className="text-white border-white border-2 bg-white/10 hover:bg-white hover:text-slate-900 px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl backdrop-blur transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap">
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={openCalendly}
+          className="text-white border-white border-2 bg-white/10 hover:bg-white hover:text-slate-900 px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-xl backdrop-blur transition-all duration-200 min-w-[180px] sm:min-w-[220px] min-h-[48px] sm:min-h-[56px] whitespace-nowrap"
+        >
           Book a Demo
         </Button>
       </div>
