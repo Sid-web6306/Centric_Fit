@@ -27,11 +27,31 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "Centric Fit - Fitness Management System",
-  description: "A comprehensive Fitness management system",
+  description: "A comprehensive Fitness management system for modern fitness businesses. Member tracking, analytics, subscriptions, and more.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Centric Fit - Fitness Management System",
+  },
+  openGraph: {
+    title: "Centric Fit - Modern Fitness Management System",
+    description: "Complete fitness business management with member tracking, analytics, subscription management, and mobile app access.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Centric Fit - Modern Fitness Management System",
+      },
+    ],
+    type: "website",
+    siteName: "Centric Fit",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Centric Fit - Modern Fitness Management System",
+    description: "Complete fitness business management with member tracking, analytics, and subscription management.",
+    images: ["/og-image.png"],
   },
 };
 

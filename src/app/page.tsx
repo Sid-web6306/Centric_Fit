@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
   TrendingUp,
-  Star,
   Shield,
   Smartphone,
   Check,
@@ -66,32 +65,18 @@ function HomeComponent() {
   }, []);
 
   const stats = [
-    { number: 2500, label: "Active Users", suffix: "+" },
-    { number: 150, label: "Fitness Partners", suffix: "+" },
-    { number: 99.9, label: "Uptime", suffix: "%" },
+    { number: 50, label: "Members (Starter)", suffix: "+" },
+    { number: 200, label: "Members (Pro)", suffix: "+" },
+    { number: 99.9, label: "Uptime Target", suffix: "%" },
     { number: 24, label: "Support", suffix: "/7" }
   ];
 
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Gym Owner, FitZone Studio",
-      content: "Finally, a management system that actually understands the fitness industry! The member tracking and analytics have been game-changing for our business.",
-      rating: 5
-    },
-    {
-      name: "Mike Chen",
-      role: "Fitness Chain Manager",
-      content: "As an early adopter, I'm impressed by how this modern system has streamlined our operations across all locations with multi-location support.",
-      rating: 5
-    },
-    {
-      name: "Lisa Rodriguez",
-      role: "Personal Training Studio",
-      content: "The member management and reporting features are exactly what we needed. The mobile app access makes everything so convenient!",
-      rating: 5
-    }
+  // Early access benefits for the launch section
+  const earlyAccessBenefits = [
+    "Priority onboarding & dedicated support",
+    "Lock in founding member pricing forever",
+    "Direct access to the product team",
+    "Shape the features we build next"
   ];
 
   return (
@@ -445,34 +430,33 @@ function HomeComponent() {
           </div>
         </div>
 
-        {/* Testimonials Section - Mobile Optimized */}
-        <div id="testimonials" className="relative z-10 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 scroll-mt-20">
+        {/* Early Access Section - Mobile Optimized */}
+        <div id="early-access" className="relative z-10 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 scroll-mt-20">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-10 sm:mb-12 lg:mb-16">
+              <div className="inline-block mb-4 px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-500/30">
+                <span className="text-purple-300 text-sm font-medium">🚀 Launching Soon</span>
+              </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">
-                Loved by fitness professionals worldwide
+                Be Among the First
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-300 max-w-2xl mx-auto px-2">
-                Join thousands of successful gym owners who trust Centric Fit
+                Join our early access program and help shape the future of fitness management
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8" role="group" aria-label="Customer testimonials">
-              {testimonials.map((testimonial, index) => (
-                <Card key={index} className="bg-slate-800/50 border-slate-700 backdrop-blur hover:bg-slate-800/70 transition-all duration-200 focus-within:ring-2 focus-within:ring-yellow-400">
-                  <CardContent className="p-6 sm:p-8">
-                    <div className="flex items-center mb-3 sm:mb-4" role="img" aria-label={`${testimonial.rating} out of 5 stars`}>
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-current" aria-hidden="true" />
-                      ))}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8" role="group" aria-label="Early access benefits">
+              {earlyAccessBenefits.map((benefit, index) => (
+                <Card key={index} className="bg-slate-800/50 border-slate-700 backdrop-blur hover:bg-slate-800/70 transition-all duration-200">
+                  <CardContent className="p-6 text-center">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="p-2 bg-green-500/20 rounded-full">
+                        <Check className="h-5 w-5 text-green-400" />
+                      </div>
                     </div>
-                    <blockquote className="text-slate-300 mb-4 sm:mb-6 italic text-sm sm:text-base leading-relaxed">
-                      &#34;{testimonial.content}&#34;
-                    </blockquote>
-                    <footer>
-                      <div className="text-white font-semibold text-sm sm:text-base">{testimonial.name}</div>
-                      <div className="text-slate-400 text-xs sm:text-sm">{testimonial.role}</div>
-                    </footer>
+                    <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                      {benefit}
+                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -480,26 +464,28 @@ function HomeComponent() {
           </div>
         </div>
 
-        {/* Enhanced Social Proof - Mobile Optimized */}
+        {/* Launch Info Section - Mobile Optimized */}
         <div className="relative z-10 py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/30">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12">
               <h3 className="text-xl sm:text-2xl font-semibold text-white mb-4">
-                Trusted by 2,500+ fitness professionals
+                Built for Modern Fitness Businesses
               </h3>
               <div className="flex flex-col sm:flex-row justify-center items-center space-y-3 sm:space-y-0 sm:space-x-6 lg:space-x-8">
                 <div className="flex items-center space-x-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <span className="text-white text-sm sm:text-base">4.8/5 from 200+ reviews</span>
+                  <Shield className="h-5 w-5 text-green-400" />
+                  <span className="text-white text-sm sm:text-base">Bank-level Security</span>
                 </div>
                 <div className="hidden sm:block text-slate-300">•</div>
-                <div className="text-white text-sm sm:text-base">Featured in TechCrunch</div>
+                <div className="flex items-center space-x-2">
+                  <Smartphone className="h-5 w-5 text-purple-400" />
+                  <span className="text-white text-sm sm:text-base">Mobile-First PWA</span>
+                </div>
                 <div className="hidden sm:block text-slate-300">•</div>
-                <div className="text-white text-sm sm:text-base">Y Combinator S24</div>
+                <div className="flex items-center space-x-2">
+                  <Globe className="h-5 w-5 text-blue-400" />
+                  <span className="text-white text-sm sm:text-base">Made in India 🇮🇳</span>
+                </div>
               </div>
             </div>
           </div>
