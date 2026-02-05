@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Centric Fit - Fitness Management System",
+  title: "Centric Fit - Modern Fitness Management Software",
   description: "A comprehensive Fitness management system for modern fitness businesses. Member tracking, analytics, subscriptions, and more.",
   appleWebApp: {
     capable: true,

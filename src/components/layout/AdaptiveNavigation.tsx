@@ -114,7 +114,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
   const navLinks = [
     { href: '#features', label: 'Features' },
     { href: '#pricing', label: 'Pricing' },
-    { href: '#testimonials', label: 'Reviews' }
+    { href: '#early-access', label: 'Early Access' }
   ]
 
   // Show skeleton during loading
@@ -586,7 +586,7 @@ export function AdaptiveFinalCTA({ className }: { className?: string }) {
           <span className="hidden sm:inline">•</span>
           <span>✓ Cancel anytime</span>
         </div>
-        <p className="text-xs sm:text-sm px-4">Join the 2,500+ fitness professionals already transforming their business operations</p>
+        <p className="text-xs sm:text-sm px-4">Join forward-thinking fitness professionals transforming their business operations</p>
       </div>
     </div>
   )
