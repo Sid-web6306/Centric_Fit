@@ -26,32 +26,65 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Centric Fit - Modern Fitness Management Software",
-  description: "A comprehensive Fitness management system for modern fitness businesses. Member tracking, analytics, subscriptions, and more.",
+  metadataBase: new URL('https://centric.fit'),
+  title: {
+    default: "Centric Fit - Modern Fitness Management Software",
+    template: "%s | Centric Fit",
+  },
+  description: "A comprehensive fitness management system for modern fitness businesses. Member tracking, analytics, subscriptions, check-ins, and more. Built for gyms, studios & fitness centers in India.",
+  keywords: [
+    "gym management software",
+    "fitness management system",
+    "gym software India",
+    "member management",
+    "gym check-in system",
+    "fitness business software",
+    "gym analytics",
+    "gym subscription management",
+    "fitness center software",
+    "gym CRM",
+    "Centric Fit",
+  ],
+  alternates: {
+    canonical: 'https://centric.fit',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "Centric Fit - Fitness Management System",
   },
   openGraph: {
-    title: "Centric Fit - Modern Fitness Management System",
-    description: "Complete fitness business management with member tracking, analytics, subscription management, and mobile app access.",
+    title: "Centric Fit - Modern Fitness Management Software",
+    description: "Complete fitness business management with member tracking, analytics, subscription management, and mobile app access. Try free for 14 days.",
+    url: 'https://centric.fit',
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Centric Fit - Modern Fitness Management System",
+        alt: "Centric Fit - Modern Fitness Management Software",
       },
     ],
     type: "website",
     siteName: "Centric Fit",
+    locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Centric Fit - Modern Fitness Management System",
-    description: "Complete fitness business management with member tracking, analytics, and subscription management.",
+    title: "Centric Fit - Modern Fitness Management Software",
+    description: "Complete fitness business management with member tracking, analytics, and subscription management. Try free for 14 days.",
     images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 
@@ -99,6 +132,28 @@ export default function RootLayout({
           </RazorpayProvider>
         </ThemeProvider>
         <Analytics />
+        {/* Google Analytics */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('consent', 'default', {
+                  'analytics_storage': 'granted'
+                });
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}', {
+                  page_path: window.location.pathname,
+                });
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );
