@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { 
+import {
   DynamicCard,
   DynamicCardContent,
   DynamicCardDescription,
@@ -21,9 +21,9 @@ import { OdometerNumber } from '@/components/ui/animated-number'
 import { isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
-import { 
-  EnhancedPaymentHandler, 
-  createEnhancedPaymentHandler, 
+import {
+  EnhancedPaymentHandler,
+  createEnhancedPaymentHandler,
   createPaymentDismissHandler,
   createModalCleanupHandler
 } from '@/components/payments/EnhancedPaymentHandler'
@@ -32,7 +32,7 @@ import {
 declare global {
   interface Window {
     Razorpay: {
-      new (options: Record<string, unknown>): {
+      new(options: Record<string, unknown>): {
         open(): void
       }
     }
@@ -68,8 +68,8 @@ interface SubscriptionPlansComponentProps {
   variant?: 'default' | 'premium' // New: premium variant for enhanced animations
 }
 
-export function SubscriptionPlansComponent({ 
-  onPlanSelect, 
+export function SubscriptionPlansComponent({
+  onPlanSelect,
   showCurrentPlan = true,
   className = "",
   variant = 'default'
@@ -132,10 +132,10 @@ export function SubscriptionPlansComponent({
     // Otherwise, group from plans array
     const planTypes = ['starter', 'professional', 'enterprise']
     return planTypes.map(type => {
-      const monthlyPlan = subscriptionData.plans.find((plan: SubscriptionPlan) => 
+      const monthlyPlan = subscriptionData.plans.find((plan: SubscriptionPlan) =>
         plan.plan_type === type && plan.billing_cycle === 'monthly'
       )
-      const annualPlan = subscriptionData.plans.find((plan: SubscriptionPlan) => 
+      const annualPlan = subscriptionData.plans.find((plan: SubscriptionPlan) =>
         plan.plan_type === type && plan.billing_cycle === 'annual'
       )
       return {
@@ -167,45 +167,45 @@ export function SubscriptionPlansComponent({
         planId,
         billingCycle
       })
-      logger.info('Payment/subscription result:', {result})
-      
+      logger.info('Payment/subscription result:', { result })
+
       // Check if subscription was updated instead of creating new payment
       if (result.success && result.subscription) {
         // Subscription was updated successfully
-        const message = result.refund 
+        const message = result.refund
           ? `${result.message} Refund of ₹${result.refund.amount / 100} will be processed.`
           : result.message || 'Your subscription has been updated successfully!'
-          
+
         toastActions.success(
-          'Subscription Updated', 
+          'Subscription Updated',
           message
         )
         setSelectedPlan(null)
-        
+
         // Refresh subscription data
         if (refetch) {
           refetch()
         }
         return
       }
-      
+
       // Check if user already has this plan
       if (result.error && result.error.includes('already have an active subscription')) {
         toastActions.info(
-          'Already Subscribed', 
+          'Already Subscribed',
           'You already have an active subscription for this plan.'
         )
         setSelectedPlan(null)
         return
       }
-      
+
       // Check if this is an upgrade requiring payment
       if (result.requiresPayment && result.checkout) {
         // Check if Razorpay is available
         if (typeof window.Razorpay === 'undefined') {
           throw new Error('Razorpay SDK not loaded. Please refresh the page and try again.')
         }
-        
+
         const razorpayOptions = {
           ...result.checkout,
           handler: async (paymentResponse: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
@@ -226,29 +226,29 @@ export function SubscriptionPlansComponent({
               })
 
               const upgradeResult = await upgradeResponse.json()
-              
-              
+
+
 
               if (upgradeResult.success) {
                 toastActions.success(
-                  'Subscription Upgraded', 
+                  'Subscription Upgraded',
                   'Your subscription has been upgraded successfully!'
                 )
-                
+
                 // Refresh subscription data
                 if (refetch) {
                   refetch()
                 }
               } else {
                 toastActions.error(
-                  'Upgrade Failed', 
+                  'Upgrade Failed',
                   upgradeResult.error || 'Failed to upgrade subscription'
                 )
               }
             } catch (upgradeError) {
-              logger.error('Subscription upgrade failed:', {error: upgradeError})
+              logger.error('Subscription upgrade failed:', { error: upgradeError })
               toastActions.error(
-                'Upgrade Failed', 
+                'Upgrade Failed',
                 'Failed to complete subscription upgrade. Please contact support.'
               )
             }
@@ -263,7 +263,7 @@ export function SubscriptionPlansComponent({
             })
           }
         }
-        
+
         const razorpayCheckout = new window.Razorpay(razorpayOptions)
         if (typeof razorpayCheckout.open === 'function') {
           razorpayCheckout.open()
@@ -276,7 +276,7 @@ export function SubscriptionPlansComponent({
         if (typeof window.Razorpay === 'undefined') {
           throw new Error('Razorpay SDK not loaded. Please refresh the page and try again.')
         }
-        
+
         const razorpayOptions = {
           ...result.checkout,
           handler: createEnhancedPaymentHandler((paymentResponse) => {
@@ -296,7 +296,7 @@ export function SubscriptionPlansComponent({
             })
           }
         }
-        
+
         const razorpayCheckout = new window.Razorpay(razorpayOptions)
         if (typeof razorpayCheckout.open === 'function') {
           razorpayCheckout.open()
@@ -306,22 +306,22 @@ export function SubscriptionPlansComponent({
       }
     } catch (error) {
       logger.error('SubscriptionPlansComponent catch error:', { error })
-      
+
       // Check if it's the UPI restriction error - don't show duplicate toast
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('subscriptions cannot be updated when payment mode is upi') ||
-          errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION')) {
+        errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION')) {
         logger.info('UPI restriction caught in component - not showing duplicate toast')
         return // Don't show duplicate toast - the payment hook already handled it
       }
-      
+
       // Check if payment hook already handled this error
-      if (errorMessage.includes('Payment Failed') || 
-          errorMessage.includes('UPI Subscription Restriction')) {
+      if (errorMessage.includes('Payment Failed') ||
+        errorMessage.includes('UPI Subscription Restriction')) {
         logger.info('Payment error already handled by hook - not showing duplicate toast')
         return
       }
-      
+
       logger.info('Showing generic error toast - UPI restriction not detected')
       // toastActions.error('Operation Failed', errorMessage)
     } finally {
@@ -345,7 +345,7 @@ export function SubscriptionPlansComponent({
   const getPlanIcon = (tierLevel: number) => {
     switch (tierLevel) {
       case 1: return DynamicUsers
-      case 2: return DynamicStar  
+      case 2: return DynamicStar
       case 3: return DynamicZap
       default: return DynamicUsers
     }
@@ -391,7 +391,7 @@ export function SubscriptionPlansComponent({
 
   const groupedPlans = groupPlansByType(plans)
   logger.debug("raw plans data:", plans);
-  logger.debug("processed groupedPlans:", {groupedPlans});
+  logger.debug("processed groupedPlans:", { groupedPlans });
 
   if (groupedPlans.length === 0) {
     return (
@@ -473,56 +473,50 @@ export function SubscriptionPlansComponent({
       {/* Enhanced Billing Cycle Toggle */}
       <div className="flex flex-col items-center space-y-4">
         <p className="text-sm text-muted-foreground">Choose your billing cycle</p>
-        
+
         <div className="relative overflow-visible">
-          <div className={`flex items-center p-1 rounded-lg backdrop-blur border relative ${
-            variant === 'premium' 
-              ? 'bg-card/50 border-border shadow-lg' 
+          <div className={`flex items-center p-1 rounded-lg backdrop-blur border relative ${variant === 'premium'
+              ? 'bg-card/50 border-border shadow-lg'
               : 'bg-muted/50 border-border'
-          }`}>
+            }`}>
             {/* Enhanced sliding background indicator */}
-            <div 
-              className={`absolute top-1 bottom-1 rounded-md shadow-lg transition-all duration-500 ease-in-out transform ${
-                variant === 'premium'
+            <div
+              className={`absolute top-1 bottom-1 rounded-md shadow-lg transition-all duration-500 ease-in-out transform ${variant === 'premium'
                   ? 'bg-gradient-to-r from-primary/80 to-primary shadow-primary/25'
                   : 'bg-gradient-to-r from-primary to-primary/80'
-              } ${
-                billingCycle === 'monthly' 
-                  ? 'left-1 right-[50%] translate-x-0' 
+                } ${billingCycle === 'monthly'
+                  ? 'left-1 right-[50%] translate-x-0'
                   : 'left-[50%] right-1 translate-x-0'
-              }`}
+                }`}
             />
-            
+
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${
-                billingCycle === 'monthly'
+              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'monthly'
                   ? 'text-primary-foreground transform scale-105 font-semibold'
                   : 'text-muted-foreground hover:text-foreground hover:scale-102'
-              } ${billingCycle === 'monthly' ? 'cursor-default' : 'cursor-pointer'}`}
+                } ${billingCycle === 'monthly' ? 'cursor-default' : 'cursor-pointer'}`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle('annual')}
-              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${
-                billingCycle === 'annual'
+              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'annual'
                   ? 'text-primary-foreground transform scale-105 font-semibold'
                   : 'text-muted-foreground hover:text-foreground hover:scale-102'
-              } ${billingCycle === 'annual' ? 'cursor-default' : 'cursor-pointer'}`}
+                } ${billingCycle === 'annual' ? 'cursor-default' : 'cursor-pointer'}`}
             >
               Annual
             </button>
           </div>
-          
+
           {/* Enhanced save badge positioned outside the toggle */}
-          <DynamicBadge 
-            variant="secondary" 
-            className={`absolute -top-4 -right-1 z-50 bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${
-              billingCycle === 'annual' 
-                ? 'opacity-100 transform translate-y-0 scale-100' 
+          <DynamicBadge
+            variant="secondary"
+            className={`absolute -top-4 -right-1 z-50 bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${billingCycle === 'annual'
+                ? 'opacity-100 transform translate-y-0 scale-100'
                 : 'opacity-70 transform translate-y-1 scale-95'
-            }`}
+              }`}
           >
             Save 17%
           </DynamicBadge>
@@ -535,31 +529,29 @@ export function SubscriptionPlansComponent({
           const plan = planGroup.current
           const monthlyPlan = planGroup.monthly
           const annualPlan = planGroup.annual
-          
+
           if (!plan) return null
-          logger.debug("plan", {plan});
+          logger.debug("plan", { plan });
 
           const isLoading = createPayment.isPending && selectedPlan === plan.id
           const isPaymentInProgress = createPayment.isPending // Global action lock state
           const isPopular = plan.tier_level === 2 // Professional plan
           const isCurrentPlan = showCurrentPlan && currentSubscription?.subscription_plan_id === plan.id
           const isCurrentPlanAndBilling = isCurrentPlan && currentSubscription?.billing_cycle === billingCycle
-          
+
           const PlanIcon = getPlanIcon(plan.tier_level)
           const planColor = getPlanColor(plan.tier_level)
-          
+
           return (
-            <DynamicCard 
-              key={plan.plan_type} 
-              className={`relative transition-all ${
-                variant === 'premium' ? 'duration-600' : 'duration-300'
-              } ease-in-out hover:shadow-2xl hover:scale-105 backdrop-blur ${
-                isCurrentPlanAndBilling 
-                  ? 'border-2 border-primary shadow-xl shadow-primary/20 scale-105 bg-gradient-to-b from-card to-primary/5' 
-                  : isPopular 
-                  ? 'border-2 border-primary/70 shadow-xl shadow-primary/10 scale-105 bg-gradient-to-b from-card to-primary/5' 
-                  : `hover:shadow-lg border border-border ${variant === 'premium' ? 'bg-card/50' : 'bg-card'}`
-              }`}
+            <DynamicCard
+              key={plan.plan_type}
+              className={`relative transition-all ${variant === 'premium' ? 'duration-600' : 'duration-300'
+                } ease-in-out hover:shadow-2xl hover:scale-105 backdrop-blur ${isCurrentPlanAndBilling
+                  ? 'border-2 border-primary shadow-xl shadow-primary/20 scale-105 bg-gradient-to-b from-card to-primary/5'
+                  : isPopular
+                    ? 'border-2 border-primary/70 shadow-xl shadow-primary/10 scale-105 bg-gradient-to-b from-card to-primary/5'
+                    : `hover:shadow-lg border border-border ${variant === 'premium' ? 'bg-card/50' : 'bg-card'}`
+                }`}
             >
               {isCurrentPlanAndBilling && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-50">
@@ -575,54 +567,54 @@ export function SubscriptionPlansComponent({
                   </DynamicBadge>
                 </div>
               )}
-              
+
               <DynamicCardHeader className="text-center pb-4 pt-8">
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <div className={`p-2 rounded-full ${
-                    planColor === 'blue' ? 'bg-primary/10' : 
-                    planColor === 'yellow' ? 'bg-primary/15' : 
-                    'bg-primary/20'
-                  }`}>
-                    <PlanIcon className={`h-5 w-5 ${
-                      planColor === 'blue' ? 'text-primary/80' : 
-                      planColor === 'yellow' ? 'text-primary' : 
-                      'text-primary'
-                    }`} />
+                  <div className={`p-2 rounded-full ${planColor === 'blue' ? 'bg-primary/10' :
+                      planColor === 'yellow' ? 'bg-primary/15' :
+                        'bg-primary/20'
+                    }`}>
+                    <PlanIcon className={`h-5 w-5 ${planColor === 'blue' ? 'text-primary/80' :
+                        planColor === 'yellow' ? 'text-primary' :
+                          'text-primary'
+                      }`} />
                   </div>
                   <DynamicCardTitle className="text-xl">
                     {plan.plan_type.charAt(0).toUpperCase() + plan.plan_type.slice(1)}
                   </DynamicCardTitle>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-bold">
-                      <OdometerNumber 
-                        value={formatPrice(plan.price_inr)}
+                      <OdometerNumber
+                        value={billingCycle === 'annual' && annualPlan ? Math.round(annualPlan.price_inr / 12 / 100) : formatPrice(plan.price_inr)}
                         className="transition-all duration-300"
                       />
                     </span>
                     <span className="text-muted-foreground">
-                      /{billingCycle === 'monthly' ? 'month' : 'year'}
+                      /month
                     </span>
                   </div>
-                  <div className={`text-sm text-green-600 dark:text-green-400 mt-1 overflow-hidden transition-all duration-300 ease-out ${
-                    billingCycle === 'annual' ? 'max-h-6 opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-2'
-                  }`}>
+                  <div className={`text-sm mt-1 overflow-hidden transition-all duration-300 ease-out ${billingCycle === 'annual' ? 'max-h-8 opacity-100 transform translate-y-0' : 'max-h-0 opacity-0 transform -translate-y-2'
+                    }`}>
                     {monthlyPlan && annualPlan && (
-                      <>Save {calculateSavings(monthlyPlan.price_inr, annualPlan.price_inr)}% annually</>
+                      <>
+                        <span className="text-muted-foreground">Billed annually</span>
+                        <span className="text-green-600 dark:text-green-400 ml-2">Save {calculateSavings(monthlyPlan.price_inr, annualPlan.price_inr)}%</span>
+                      </>
                     )}
                   </div>
                 </div>
-                
+
                 <DynamicCardDescription className="text-base mt-2">
-                  {plan.member_limit 
-                    ? `Up to ${plan.member_limit} members` 
+                  {plan.member_limit
+                    ? `Up to ${plan.member_limit} members`
                     : 'Unlimited members'
                   }
                 </DynamicCardDescription>
               </DynamicCardHeader>
-              
+
               <DynamicCardContent className="space-y-6 pt-0">
                 <div className="space-y-3">
                   {plan.features.map((feature: string) => (
@@ -632,21 +624,19 @@ export function SubscriptionPlansComponent({
                     </div>
                   ))}
                 </div>
-                
-                <DynamicButton 
+
+                <DynamicButton
                   onClick={() => handlePlanSelect(plan.id)}
                   disabled={isPaymentInProgress || isLoading || isCurrentPlanAndBilling || hasScheduledChange}
-                  className={`w-full h-12 font-medium transition-all ${
-                    variant === 'premium' ? 'duration-500' : 'duration-300'
-                  } ease-in-out hover:scale-105 hover:shadow-lg transform ${
-                    isCurrentPlanAndBilling 
+                  className={`w-full h-12 font-medium transition-all ${variant === 'premium' ? 'duration-500' : 'duration-300'
+                    } ease-in-out hover:scale-105 hover:shadow-lg transform ${isCurrentPlanAndBilling
                       ? 'bg-primary/10 text-primary cursor-not-allowed border-primary/20'
                       : hasScheduledChange
-                      ? 'bg-orange-50 text-orange-600 cursor-not-allowed border-orange-200'
-                      : isPopular 
-                      ? 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 cursor-pointer border-0' 
-                      : 'cursor-pointer hover:bg-primary/5 hover:border-primary/50'
-                  } ${isLoading ? 'cursor-wait' : ''}`}
+                        ? 'bg-orange-50 text-orange-600 cursor-not-allowed border-orange-200'
+                        : isPopular
+                          ? 'bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 cursor-pointer border-0'
+                          : 'cursor-pointer hover:bg-primary/5 hover:border-primary/50'
+                    } ${isLoading ? 'cursor-wait' : ''}`}
                   variant={isCurrentPlanAndBilling ? 'outline' : hasScheduledChange ? 'outline' : isPopular ? 'default' : 'outline'}
                 >
                   {isLoading ? (
@@ -676,7 +666,7 @@ export function SubscriptionPlansComponent({
           )
         })}
       </div>
-      
+
       {/* Enhanced Payment Verification Dialog */}
       <EnhancedPaymentHandler
         isOpen={paymentDialog.isOpen}

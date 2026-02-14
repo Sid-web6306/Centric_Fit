@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { 
+import {
   Card,
   CardContent,
   CardDescription,
@@ -13,10 +13,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Check, Users, Star, Zap } from 'lucide-react'
 import { OdometerNumber } from '@/components/ui/animated-number'
-import { 
-  getStaticPlansByType, 
-  formatStaticPrice, 
-  calculateStaticSavings
+import {
+  getStaticPlansByType,
+  formatStaticPrice,
+  calculateStaticSavings,
+  getMonthlyFromAnnual
 } from '@/lib/static-subscription-plans'
 
 interface StaticSubscriptionPlansProps {
@@ -25,14 +26,14 @@ interface StaticSubscriptionPlansProps {
 
 export function StaticSubscriptionPlans({ className = "" }: StaticSubscriptionPlansProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
-  
+
   const groupedPlans = getStaticPlansByType()
-  
+
   // Get plan icon based on tier
   const getPlanIcon = (tierLevel: number) => {
     switch (tierLevel) {
       case 1: return Users
-      case 2: return Star  
+      case 2: return Star
       case 3: return Zap
       default: return Users
     }
@@ -47,44 +48,40 @@ export function StaticSubscriptionPlans({ className = "" }: StaticSubscriptionPl
         <div className="relative">
           <div className="flex items-center p-1 rounded-lg bg-slate-800/50 backdrop-blur border border-slate-700 relative overflow-hidden">
             {/* Sliding background indicator */}
-            <div 
-              className={`absolute top-1 bottom-1 rounded-md bg-gradient-to-r from-slate-700 to-slate-600 shadow-lg transition-all duration-500 ease-in-out transform ${
-                billingCycle === 'monthly' 
-                  ? 'left-1 right-[50%] translate-x-0' 
+            <div
+              className={`absolute top-1 bottom-1 rounded-md bg-gradient-to-r from-slate-700 to-slate-600 shadow-lg transition-all duration-500 ease-in-out transform ${billingCycle === 'monthly'
+                  ? 'left-1 right-[50%] translate-x-0'
                   : 'left-[50%] right-1 translate-x-0'
-              }`}
+                }`}
             />
-            
+
             <button
               onClick={() => setBillingCycle('monthly')}
-              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${
-                billingCycle === 'monthly'
+              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'monthly'
                   ? 'text-white transform scale-105 font-semibold'
                   : 'text-slate-400 hover:text-white hover:scale-102'
-              }`}
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingCycle('annual')}
-              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${
-                billingCycle === 'annual'
+              className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'annual'
                   ? 'text-white transform scale-105 font-semibold'
                   : 'text-slate-400 hover:text-white hover:scale-102'
-              }`}
+                }`}
             >
               Annual
             </button>
           </div>
-          
+
           {/* Save badge positioned outside the toggle */}
-          <Badge 
-            variant="secondary" 
-            className={`absolute -top-4 -right-1 bg-green-500/20 text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${
-              billingCycle === 'annual' 
-                ? 'opacity-100 transform translate-y-0 scale-100' 
+          <Badge
+            variant="secondary"
+            className={`absolute -top-4 -right-1 bg-green-500/20 text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${billingCycle === 'annual'
+                ? 'opacity-100 transform translate-y-0 scale-100'
                 : 'opacity-70 transform translate-y-1 scale-95'
-            }`}
+              }`}
           >
             Save 17%
           </Badge>
@@ -99,15 +96,14 @@ export function StaticSubscriptionPlans({ className = "" }: StaticSubscriptionPl
           const annualPlan = annual!
           const IconComponent = getPlanIcon(plan.tier_level)
           const isPopular = plan.is_popular || plan.plan_type === 'professional'
-          
+
           return (
-            <Card 
+            <Card
               key={plan.plan_type}
-              className={`relative overflow-hidden transition-all duration-600 ease-in-out hover:shadow-2xl hover:scale-105 bg-slate-800/50 backdrop-blur ${
-                isPopular 
-                  ? 'border-2 border-purple-500/50 shadow-xl shadow-purple-500/20' 
+              className={`relative overflow-hidden transition-all duration-600 ease-in-out hover:shadow-2xl hover:scale-105 bg-slate-800/50 backdrop-blur ${isPopular
+                  ? 'border-2 border-purple-500/50 shadow-xl shadow-purple-500/20'
                   : 'border border-slate-700'
-              }`}
+                }`}
             >
               {isPopular && (
                 <div className="absolute top-0 left-0 right-0">
@@ -116,54 +112,52 @@ export function StaticSubscriptionPlans({ className = "" }: StaticSubscriptionPl
                   </div>
                 </div>
               )}
-              
+
               <CardHeader className={`text-center space-y-4 ${isPopular ? 'pt-12' : 'pt-8'}`}>
                 <div className="flex items-center justify-center space-x-3">
-                  <div className={`p-2 rounded-lg ${
-                    plan.tier_level === 1 ? 'bg-blue-500/20' :
-                    plan.tier_level === 2 ? 'bg-yellow-500/20' :
-                    'bg-purple-500/20'
-                  }`}>
-                    <IconComponent className={`h-6 w-6 ${
-                      plan.tier_level === 1 ? 'text-blue-400' :
-                      plan.tier_level === 2 ? 'text-yellow-400' :
-                      'text-purple-400'
-                    }`} />
+                  <div className={`p-2 rounded-lg ${plan.tier_level === 1 ? 'bg-blue-500/20' :
+                      plan.tier_level === 2 ? 'bg-yellow-500/20' :
+                        'bg-purple-500/20'
+                    }`}>
+                    <IconComponent className={`h-6 w-6 ${plan.tier_level === 1 ? 'text-blue-400' :
+                        plan.tier_level === 2 ? 'text-yellow-400' :
+                          'text-purple-400'
+                      }`} />
                   </div>
                   <CardTitle className="text-2xl font-bold text-white">
                     {plan.displayName}
                   </CardTitle>
                 </div>
-                
+
                 <div className="space-y-2">
                   <div className="flex items-baseline justify-center gap-1">
                     <span className="text-4xl font-bold text-white">
-                      <OdometerNumber 
-                        value={formatStaticPrice(plan.price_inr)}
+                      <OdometerNumber
+                        value={billingCycle === 'annual' ? getMonthlyFromAnnual(annualPlan.price_inr) : formatStaticPrice(plan.price_inr)}
                         className="transition-all duration-500 ease-out"
                       />
                     </span>
                     <span className="text-slate-400 transition-all duration-500 ease-in-out">
-                      /{billingCycle === 'monthly' ? 'month' : 'year'}
+                      /month
                     </span>
                   </div>
-                  <div className={`text-sm text-green-400 transition-all duration-500 ease-in-out overflow-hidden ${
-                    billingCycle === 'annual' 
-                      ? 'max-h-8 opacity-100 transform translate-y-0 scale-100' 
+                  <div className={`text-sm transition-all duration-500 ease-in-out overflow-hidden ${billingCycle === 'annual'
+                      ? 'max-h-12 opacity-100 transform translate-y-0 scale-100'
                       : 'max-h-0 opacity-0 transform -translate-y-3 scale-95'
-                  }`}>
-                    Save {calculateStaticSavings(monthlyPlan.price_inr, annualPlan.price_inr)}% annually
+                    }`}>
+                    <span className="text-slate-400">Billed annually</span>
+                    <span className="text-green-400 ml-2">Save {calculateStaticSavings(monthlyPlan.price_inr, annualPlan.price_inr)}%</span>
                   </div>
                 </div>
-                
+
                 <CardDescription className="text-base text-slate-300">
-                  {plan.member_limit 
-                    ? `Up to ${plan.member_limit} members` 
+                  {plan.member_limit
+                    ? `Up to ${plan.member_limit} members`
                     : 'Unlimited members'
                   }
                 </CardDescription>
               </CardHeader>
-              
+
               <CardContent className="space-y-6 pt-0">
                 <div className="space-y-3">
                   {plan.features.map((feature: string) => (
@@ -173,20 +167,19 @@ export function StaticSubscriptionPlans({ className = "" }: StaticSubscriptionPl
                     </div>
                   ))}
                 </div>
-                
+
                 <Link href="/signup" className="block">
-                  <Button 
-                    className={`w-full h-12 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer ${
-                      isPopular 
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0' 
+                  <Button
+                    className={`w-full h-12 font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer ${isPopular
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0'
                         : 'bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50 hover:border-slate-500'
-                    }`}
+                      }`}
                     variant={isPopular ? 'default' : 'outline'}
                   >
                     Start Free Trial
                   </Button>
                 </Link>
-                
+
                 <div className="text-center text-xs text-slate-400">
                   14-day free trial • No credit card required
                 </div>

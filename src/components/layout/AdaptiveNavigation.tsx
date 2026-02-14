@@ -149,7 +149,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
     <>
       <nav className="relative z-50 flex items-center justify-between p-4 sm:p-6 backdrop-blur-sm" role="navigation" aria-label="Main navigation">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-transparent rounded-md">
+        <Link href="/" className="flex-1 flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-transparent rounded-md">
           <div className="p-1.5 sm:p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
             <Dumbbell className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
@@ -170,7 +170,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
         </div>
 
         {/* Right Section */}
-        <div className={`flex items-center space-x-2 sm:space-x-4 ${className}`}>
+        <div className={`flex-1 flex items-center justify-end space-x-2 sm:space-x-4 ${className}`}>
           {isAuthenticated ? (
             <>
               {/* Desktop User Menu */}
@@ -179,7 +179,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="flex items-center space-x-2 text-white hover:bg-white/10 px-2 sm:px-3"
+                      className="flex items-center space-x-2 text-white hover:bg-white/10 px-2 sm:px-3 max-w-[200px] sm:max-w-[240px]"
                     >
                       <UserAvatar
                         src={profile?.avatar_url}
@@ -188,7 +188,7 @@ export function AdaptiveNavigation({ className }: AdaptiveNavigationProps) {
                         userId={user?.id}
                         size="sm"
                       />
-                      <span className="text-sm sm:text-base">{profile?.full_name || user?.email?.split('@')[0] || 'User'}</span>
+                      <span className="text-sm sm:text-base min-w-0 block truncate" title={profile?.full_name || user?.email?.split('@')[0] || 'User'}>{profile?.full_name || user?.email?.split('@')[0] || 'User'}</span>
                       <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>

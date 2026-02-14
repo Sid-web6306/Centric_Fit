@@ -207,3 +207,8 @@ export const calculateStaticSavings = (monthlyPrice: number, annualPrice: number
   const savings = yearlyCostMonthly - annualPrice
   return Math.round((savings / yearlyCostMonthly) * 100)
 }
+
+// Get monthly equivalent from annual price (in paise)
+export const getMonthlyFromAnnual = (annualPriceInPaise: number): number => {
+  return Math.round(annualPriceInPaise / 12 / 100)
+}
