@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
@@ -9,11 +11,7 @@ import {
   Check,
   Globe
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import Footer from "@/components/layout/Footer";
-import { StaticSubscriptionPlans } from "@/components/subscriptions";
 import { AdaptiveNavigation, AdaptiveHeroCTA, AdaptiveFinalCTA } from "@/components/layout/AdaptiveNavigation";
-import { ProductShowcase } from "@/components/landing/ProductShowcase";
 import {
   AnimatedCounter,
   ScrollReveal,
@@ -22,6 +20,11 @@ import {
   TiltCard,
   FloatingElement
 } from "@/components/landing/InteractiveElements";
+
+// Lazy-load below-fold components to reduce initial JS bundle
+const ProductShowcase = dynamic(() => import("@/components/landing/ProductShowcase").then(mod => ({ default: mod.ProductShowcase })), { ssr: true });
+const StaticSubscriptionPlans = dynamic(() => import("@/components/subscriptions").then(mod => ({ default: mod.StaticSubscriptionPlans })), { ssr: true });
+const Footer = dynamic(() => import("@/components/layout/Footer"), { ssr: true });
 const heroWords = ["Fitness Management", "Member Tracking", "Business Growth", "Smart Analytics"];
 
 function HomeComponent() {

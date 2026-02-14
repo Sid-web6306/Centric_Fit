@@ -63,10 +63,10 @@ export function DemoCarousel({
                         <div
                             key={index}
                             className={`absolute inset-0 transition-all duration-500 ease-in-out ${index === currentIndex
-                                    ? 'opacity-100 translate-x-0 z-10'
-                                    : index < currentIndex
-                                        ? 'opacity-0 -translate-x-full z-0'
-                                        : 'opacity-0 translate-x-full z-0'
+                                ? 'opacity-100 translate-x-0 z-10'
+                                : index < currentIndex
+                                    ? 'opacity-0 -translate-x-full z-0'
+                                    : 'opacity-0 translate-x-full z-0'
                                 }`}
                         >
                             {/* Demo GIF */}
@@ -75,6 +75,10 @@ export function DemoCarousel({
                                 alt={slide.title}
                                 className="w-full h-full object-contain bg-slate-900"
                                 loading={index === 0 ? 'eager' : 'lazy'}
+                                decoding={index === 0 ? 'sync' : 'async'}
+                                fetchPriority={index === 0 ? 'high' : 'low'}
+                                width={1280}
+                                height={720}
                             />
 
                             {/* Gradient overlay for text readability */}
@@ -140,8 +144,8 @@ export function DemoCarousel({
                             key={index}
                             onClick={() => goToSlide(index)}
                             className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentIndex
-                                    ? 'w-6 bg-purple-500'
-                                    : 'bg-slate-600 hover:bg-slate-500'
+                                ? 'w-6 bg-purple-500'
+                                : 'bg-slate-600 hover:bg-slate-500'
                                 }`}
                             aria-label={`Go to slide ${index + 1}`}
                         />
