@@ -103,16 +103,19 @@ export const getAnnualSavingsAmount = (monthlyPrice: number, annualPrice: number
 }
 
 // Trial status helper functions
-export const isTrialExpiringSoon = (trialInfo: TrialInfo): boolean => {
+export const isTrialExpiringSoon = (trialInfo: TrialInfo | null | undefined): boolean => {
+  if (!trialInfo) return false
   return trialInfo.trial_status === 'active' && trialInfo.days_remaining <= 3
 }
 
-export const isTrialActive = (trialInfo: TrialInfo): boolean => {
+export const isTrialActive = (trialInfo: TrialInfo | null | undefined): boolean => {
+  if (!trialInfo) return false
   return trialInfo.trial_status === 'active' && trialInfo.days_remaining > 0
 }
 
-export const hasActiveSubscription = (subscriptionInfo: SubscriptionInfo | null): boolean => {
-  return subscriptionInfo?.status === 'active' && (subscriptionInfo?.trial_status === 'converted' || subscriptionInfo?.trial_status === null)
+export const hasActiveSubscription = (subscriptionInfo: SubscriptionInfo | null | undefined): boolean => {
+  if (!subscriptionInfo) return false
+  return subscriptionInfo.status === 'active' && (subscriptionInfo.trial_status === 'converted' || subscriptionInfo.trial_status === null)
 }
 
 export const isSubscriptionCanceled = (subscriptionInfo: SubscriptionInfo | null): boolean => {
@@ -166,7 +169,8 @@ export const getTrialStatusText = (status: string): string => {
 }
 
 // Helper function to determine if user needs to upgrade
-export const shouldShowUpgradePrompt = (trialInfo: TrialInfo, subscriptionInfo: SubscriptionInfo | null): boolean => {
+export const shouldShowUpgradePrompt = (trialInfo: TrialInfo | null | undefined, subscriptionInfo: SubscriptionInfo | null | undefined): boolean => {
+  if (!trialInfo) return false
   return (trialInfo.trial_status === 'expired' || isTrialExpiringSoon(trialInfo)) && !hasActiveSubscription(subscriptionInfo)
 }
 

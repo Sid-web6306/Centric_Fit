@@ -50,16 +50,12 @@ export interface PaymentResponse {
     amount: number
   }
   error?: string
+  effectiveDate?: string  // D5: For scheduled downgrades, the date when the change takes effect
   requiresPayment?: boolean
   orderId?: string
   amount?: number
   currency?: string
   upgradeType?: 'billing_cycle_change' | 'tier_change' | 'plan_change'
-  refund?: {
-    refundId: string
-    amount: number
-    status: string
-  }
   subscriptionData?: {
     subscriptionId: string
     newPlanId: string

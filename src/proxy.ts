@@ -15,17 +15,7 @@ interface UserProfile {
   }> | null
 }
 
-interface CacheEntry {
-  response: NextResponse
-  timestamp: number
-  userState?: {
-    isAuthenticated: boolean
-    hasGym: boolean
-    role: string | null
-    isInactive: boolean
-    isRemoved: boolean
-  }
-}
+
 
 // Configuration constants
 const CONFIG = {
@@ -53,8 +43,7 @@ const ROUTES = {
   ]
 } as const
 
-// Request cache with Map for better performance
-const requestCache = new Map<string, CacheEntry>()
+
 
 // Optimized environment detection
 const getEnvironmentPrefix = (): string => {
@@ -222,26 +211,6 @@ export async function proxy(request: NextRequest) {
   // Extract invitation token
   const inviteToken = request.nextUrl.searchParams.get('invite')
   const hasInviteToken = Boolean(inviteToken)
-
-  // Create cache key
-  const authHeader = request.headers.get('authorization')
-  const cacheKey = `${pathname}-${authHeader || 'no-auth'}-${inviteToken || 'no-invite'}`
-
-  // Check cache first
-  const cachedEntry = requestCache.get(cacheKey)
-  if (cachedEntry && Date.now() - cachedEntry.timestamp < CONFIG.CACHE_TTL) {
-    return cachedEntry.response
-  }
-
-  // Clean expired cache entries periodically
-  if (requestCache.size > 100) {
-    const now = Date.now()
-    for (const [key, entry] of requestCache.entries()) {
-      if (now - entry.timestamp >= CONFIG.CACHE_TTL) {
-        requestCache.delete(key)
-      }
-    }
-  }
 
   // Reduced logging for development
   if (isDev && !pathname.startsWith('/_next')) {
@@ -535,15 +504,6 @@ export async function proxy(request: NextRequest) {
       return response
     }
 
-    
-
-    // Cache successful response
-    requestCache.set(cacheKey, {
-      response,
-      timestamp: Date.now(),
-      userState
-    })
-    
     return response
 
   } catch (error) {

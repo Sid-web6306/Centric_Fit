@@ -35,7 +35,7 @@ export function PaymentStatusChecker({
   const verifyPayment = useCallback(async (): Promise<boolean> => {
     try {
       setStatus('verifying')
-      
+
       logger.info('🔍 Verifying payment with Razorpay...', {
         paymentId: razorpayPaymentId,
         subscriptionId: razorpaySubscriptionId,
@@ -44,7 +44,7 @@ export function PaymentStatusChecker({
 
       const response = await fetch('/api/payments/verify', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache'
         },
@@ -56,16 +56,16 @@ export function PaymentStatusChecker({
       })
 
       const result = await response.json()
-      
+
       if (response.ok && result.success) {
         setStatus('success')
         logger.info('✅ Payment verification successful', { result })
-        
+
         // Show success notification
         toast.success('Payment verified successfully! 🎉', {
           description: 'Your subscription is now active'
         })
-        
+
         onSuccess?.()
         return true
       } else {
@@ -78,7 +78,7 @@ export function PaymentStatusChecker({
         paymentId: razorpayPaymentId,
         attempt: attempts + 1
       })
-      
+
       setErrorMessage(errorMsg)
       return false
     }
@@ -91,7 +91,7 @@ export function PaymentStatusChecker({
       const finalError = `Payment verification failed after ${maxRetries} attempts. Please contact support.`
       setErrorMessage(finalError)
       onError?.(finalError)
-      
+
       toast.error('Payment verification failed', {
         description: 'Please contact support for assistance'
       })
@@ -99,24 +99,34 @@ export function PaymentStatusChecker({
     }
 
     setIsRetrying(true)
-    setAttempts(prev => prev + 1)
-    
+    const currentAttempt = attempts + 1
+    setAttempts(currentAttempt)
+
     // Exponential backoff: 2s, 4s, 8s...
     const delay = retryInterval * Math.pow(2, attempts)
-    
+
     logger.info(`⏱️ Retrying payment verification in ${delay}ms...`, {
-      attempt: attempts + 1,
+      attempt: currentAttempt,
       maxRetries,
       delay
     })
-    
+
     setTimeout(async () => {
       const success = await verifyPayment()
       setIsRetrying(false)
-      
-      if (!success) {
-        // Will retry again on next cycle unless max attempts reached
-        setTimeout(retryVerification, 1000)
+
+      if (!success && currentAttempt < maxRetries) {
+        // Schedule next retry only if we haven't exceeded maxRetries
+        retryVerification()
+      } else if (!success) {
+        // Max retries reached — stop and show failure
+        setStatus('failed')
+        const finalError = `Payment verification failed after ${maxRetries} attempts. Please contact support.`
+        setErrorMessage(finalError)
+        onError?.(finalError)
+        toast.error('Payment verification failed', {
+          description: 'Please contact support for assistance'
+        })
       }
     }, delay)
   }, [attempts, maxRetries, retryInterval, verifyPayment, onError])
@@ -165,7 +175,7 @@ export function PaymentStatusChecker({
       case 'pending':
         return 'Initializing payment verification...'
       case 'verifying':
-        return isRetrying 
+        return isRetrying
           ? `Retrying verification (${attempts}/${maxRetries})...`
           : 'Verifying payment with Razorpay...'
       case 'success':
@@ -187,15 +197,15 @@ export function PaymentStatusChecker({
           <RefreshCw className="h-4 w-4 text-muted-foreground animate-spin" />
         )}
       </div>
-      
+
       <p className="text-center font-medium text-foreground mb-2">
         {getStatusMessage()}
       </p>
-      
+
       {status === 'verifying' && (
         <div className="flex flex-col items-center gap-2">
           <div className="w-full bg-muted rounded-full h-2 max-w-xs">
-            <div 
+            <div
               className="bg-primary h-2 rounded-full transition-all duration-500 animate-pulse"
               style={{ width: `${Math.min(((attempts + 1) / maxRetries) * 100, 100)}%` }}
             />
@@ -205,7 +215,7 @@ export function PaymentStatusChecker({
           </p>
         </div>
       )}
-      
+
       {(status === 'failed' || status === 'timeout') && (
         <div className="text-center mt-4 space-y-2">
           <p className="text-sm text-muted-foreground">
@@ -216,7 +226,7 @@ export function PaymentStatusChecker({
           </p>
         </div>
       )}
-      
+
       {status === 'success' && (
         <div className="text-center mt-2">
           <p className="text-sm text-green-600">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   DynamicCard,
   DynamicCardContent,
@@ -21,6 +21,7 @@ import { OdometerNumber } from '@/components/ui/animated-number'
 import { isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
+import { ConfirmationDialog } from '@/components/ui/confirmation-dialog'
 import {
   EnhancedPaymentHandler,
   createEnhancedPaymentHandler,
@@ -94,6 +95,12 @@ export function SubscriptionPlansComponent({
   }
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly')
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean
+    planId: string
+    planName: string
+    isDowngrade: boolean
+  }>({ open: false, planId: '', planName: '', isDowngrade: false })
   const [paymentDialog, setPaymentDialog] = useState<{
     isOpen: boolean
     paymentResponse?: {
@@ -147,18 +154,8 @@ export function SubscriptionPlansComponent({
     }).filter(group => group.monthly && group.annual) // Only show complete plan types
   }
 
-  const handlePlanSelect = async (planId: string) => {
-    // 🔒 ACTION-LEVEL LOCK: Synchronously block re-entry
-    if (createPayment.isPending) {
-      logger.info('Payment action already in progress - blocking re-entry')
-      return
-    }
-
-    if (onPlanSelect) {
-      onPlanSelect(planId, billingCycle)
-      return
-    }
-
+  // Process the actual plan change (called after confirmation or directly for new subscriptions)
+  const processPlanChange = useCallback(async (planId: string) => {
     // Default behavior: create payment or update subscription
     setSelectedPlan(planId)
     try {
@@ -172,12 +169,16 @@ export function SubscriptionPlansComponent({
       // Check if subscription was updated instead of creating new payment
       if (result.success && result.subscription) {
         // Subscription was updated successfully
-        const message = result.refund
-          ? `${result.message} Refund of ₹${result.refund.amount / 100} will be processed.`
+        // D5: Include effective date for scheduled changes (downgrades)
+        const effectiveDate = result.effectiveDate
+          ? new Date(result.effectiveDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+          : null
+        const message = effectiveDate
+          ? `${result.message || 'Plan change scheduled.'} Effective from ${effectiveDate}.`
           : result.message || 'Your subscription has been updated successfully!'
 
         toastActions.success(
-          'Subscription Updated',
+          effectiveDate ? 'Downgrade Scheduled' : 'Subscription Updated',
           message
         )
         setSelectedPlan(null)
@@ -327,9 +328,37 @@ export function SubscriptionPlansComponent({
     } finally {
       setSelectedPlan(null)
     }
+  }, [createPayment, billingCycle, plans, currentSubscription, refetch])
+
+  // Entry point: decides whether to show confirmation dialog or proceed directly
+  const handlePlanSelect = (planId: string) => {
+    // 🔒 ACTION-LEVEL LOCK: Synchronously block re-entry
+    if (createPayment.isPending) {
+      logger.info('Payment action already in progress - blocking re-entry')
+      return
+    }
+
+    if (onPlanSelect) {
+      onPlanSelect(planId, billingCycle)
+      return
+    }
+
+    // D2: Show confirmation dialog for plan changes on existing subscriptions
+    if (currentSubscription && currentSubscription.subscription_plan_id !== planId) {
+      const targetPlan = groupPlansByType(plans).find(g => g.current?.id === planId)?.current
+      const planName = targetPlan?.plan_type
+        ? targetPlan.plan_type.charAt(0).toUpperCase() + targetPlan.plan_type.slice(1)
+        : 'selected'
+      const isDowngrade = (targetPlan?.tier_level || 0) < (currentSubscription?.subscription_plans?.tier_level || 0)
+
+      setConfirmDialog({ open: true, planId, planName, isDowngrade })
+      return
+    }
+
+    // No existing subscription — proceed directly
+    processPlanChange(planId)
   }
 
-  // Calculate savings for annual billing
   const calculateSavings = (monthlyPrice: number, annualPrice: number) => {
     const yearlyCostMonthly = monthlyPrice * 12
     const savings = yearlyCostMonthly - annualPrice
@@ -476,14 +505,14 @@ export function SubscriptionPlansComponent({
 
         <div className="relative overflow-visible">
           <div className={`flex items-center p-1 rounded-lg backdrop-blur border relative ${variant === 'premium'
-              ? 'bg-card/50 border-border shadow-lg'
-              : 'bg-muted/50 border-border'
+            ? 'bg-card/50 border-border shadow-lg'
+            : 'bg-muted/50 border-border'
             }`}>
             {/* Enhanced sliding background indicator */}
             <div
               className={`absolute top-1 bottom-1 rounded-md shadow-lg transition-all duration-500 ease-in-out transform ${variant === 'premium'
-                  ? 'bg-gradient-to-r from-primary/80 to-primary shadow-primary/25'
-                  : 'bg-gradient-to-r from-primary to-primary/80'
+                ? 'bg-gradient-to-r from-primary/80 to-primary shadow-primary/25'
+                : 'bg-gradient-to-r from-primary to-primary/80'
                 } ${billingCycle === 'monthly'
                   ? 'left-1 right-[50%] translate-x-0'
                   : 'left-[50%] right-1 translate-x-0'
@@ -493,8 +522,8 @@ export function SubscriptionPlansComponent({
             <button
               onClick={() => setBillingCycle('monthly')}
               className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'monthly'
-                  ? 'text-primary-foreground transform scale-105 font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:scale-102'
+                ? 'text-primary-foreground transform scale-105 font-semibold'
+                : 'text-muted-foreground hover:text-foreground hover:scale-102'
                 } ${billingCycle === 'monthly' ? 'cursor-default' : 'cursor-pointer'}`}
             >
               Monthly
@@ -502,8 +531,8 @@ export function SubscriptionPlansComponent({
             <button
               onClick={() => setBillingCycle('annual')}
               className={`relative z-10 px-8 py-3 text-sm font-medium rounded-md transition-all duration-500 ease-in-out ${billingCycle === 'annual'
-                  ? 'text-primary-foreground transform scale-105 font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:scale-102'
+                ? 'text-primary-foreground transform scale-105 font-semibold'
+                : 'text-muted-foreground hover:text-foreground hover:scale-102'
                 } ${billingCycle === 'annual' ? 'cursor-default' : 'cursor-pointer'}`}
             >
               Annual
@@ -514,8 +543,8 @@ export function SubscriptionPlansComponent({
           <DynamicBadge
             variant="secondary"
             className={`absolute -top-4 -right-1 z-50 bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${billingCycle === 'annual'
-                ? 'opacity-100 transform translate-y-0 scale-100'
-                : 'opacity-70 transform translate-y-1 scale-95'
+              ? 'opacity-100 transform translate-y-0 scale-100'
+              : 'opacity-70 transform translate-y-1 scale-95'
               }`}
           >
             Save 17%
@@ -571,12 +600,12 @@ export function SubscriptionPlansComponent({
               <DynamicCardHeader className="text-center pb-4 pt-8">
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <div className={`p-2 rounded-full ${planColor === 'blue' ? 'bg-primary/10' :
-                      planColor === 'yellow' ? 'bg-primary/15' :
-                        'bg-primary/20'
+                    planColor === 'yellow' ? 'bg-primary/15' :
+                      'bg-primary/20'
                     }`}>
                     <PlanIcon className={`h-5 w-5 ${planColor === 'blue' ? 'text-primary/80' :
-                        planColor === 'yellow' ? 'text-primary' :
-                          'text-primary'
+                      planColor === 'yellow' ? 'text-primary' :
+                        'text-primary'
                       }`} />
                   </div>
                   <DynamicCardTitle className="text-xl">
@@ -672,6 +701,25 @@ export function SubscriptionPlansComponent({
         isOpen={paymentDialog.isOpen}
         onClose={() => setPaymentDialog({ isOpen: false })}
         paymentResponse={paymentDialog.paymentResponse}
+      />
+
+      {/* D2: Confirmation dialog for plan changes */}
+      <ConfirmationDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) => setConfirmDialog(prev => ({ ...prev, open }))}
+        title={confirmDialog.isDowngrade ? 'Downgrade Plan' : 'Upgrade Plan'}
+        description={
+          confirmDialog.isDowngrade
+            ? `Are you sure you want to downgrade to the ${confirmDialog.planName} plan?\n\nYour current plan will remain active until the end of your billing cycle.`
+            : `Are you sure you want to upgrade to the ${confirmDialog.planName} (${billingCycle}) plan?\n\nYou will be charged a prorated amount for the remaining billing period.`
+        }
+        confirmLabel={confirmDialog.isDowngrade ? 'Downgrade' : 'Upgrade'}
+        variant={confirmDialog.isDowngrade ? 'destructive' : 'default'}
+        isLoading={createPayment.isPending}
+        onConfirm={() => {
+          setConfirmDialog(prev => ({ ...prev, open: false }))
+          processPlanChange(confirmDialog.planId)
+        }}
       />
     </div>
   )

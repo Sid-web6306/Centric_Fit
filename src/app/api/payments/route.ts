@@ -37,9 +37,21 @@ export async function POST(request: NextRequest) {
     // Get user profile for metadata
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name, gym_id')
+      .select('full_name, gym_id, is_gym_owner')
       .eq('id', user.id)
       .single()
+
+    // C3: Verify user has permission to manage subscriptions (gym owner only)
+    if (!profile?.is_gym_owner) {
+      logger.warn('Unauthorized subscription management attempt', {
+        userId: user.id,
+        isGymOwner: profile?.is_gym_owner
+      })
+      return NextResponse.json(
+        { error: 'Only gym owners can manage subscriptions' },
+        { status: 403 }
+      )
+    }
 
     // Get subscription plan details
     const { data: plan } = await supabase
@@ -58,7 +70,7 @@ export async function POST(request: NextRequest) {
     // Check for existing active subscription
     const { data: existingSubscription } = await supabase
       .from('subscriptions')
-      .select('id, status, subscription_plan_id, razorpay_subscription_id, current_period_end')
+      .select('id, status, subscription_plan_id, razorpay_subscription_id, current_period_start, current_period_end')
       .eq('user_id', user.id)
       .eq('gym_id', profile?.gym_id || '')
       .eq('status', 'active')
@@ -121,17 +133,32 @@ export async function POST(request: NextRequest) {
         isTierChange: currentPlan.plan_type !== plan.plan_type
       })
 
-      // Calculate proration amount (difference between plans)
+      // Calculate day-based proration amount
       const currentAmount = currentPlan.price_inr
       const newAmount = plan.price_inr
-      const prorationAmount = newAmount - currentAmount
 
-      logger.info('Proration calculation', {
+      // Time-based proration: charge only for the remaining days in the cycle
+      const now = new Date()
+      const periodStart = new Date(existingSubscription.current_period_start)
+      const periodEnd = new Date(existingSubscription.current_period_end)
+      const totalDaysInCycle = Math.max(1, Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)))
+      const daysRemaining = Math.max(0, Math.ceil((periodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+
+      // Daily rate difference × days remaining
+      const dailyRateDiff = (newAmount - currentAmount) / totalDaysInCycle
+      const prorationAmount = Math.round(dailyRateDiff * daysRemaining)
+
+      logger.info('Day-based proration calculation', {
         currentAmount,
         newAmount,
+        totalDaysInCycle,
+        daysRemaining,
+        dailyRateDiff: Math.round(dailyRateDiff),
         prorationAmount,
         isUpgrade: prorationAmount > 0,
         isDowngrade: prorationAmount < 0,
+        periodStart: periodStart.toISOString(),
+        periodEnd: periodEnd.toISOString(),
         currentPlanId: existingSubscription.subscription_plan_id,
         newPlanId: planId,
         billingCycle
@@ -225,15 +252,6 @@ export async function POST(request: NextRequest) {
               theme: {
                 color: '#3B82F6',
               },
-              modal: {
-                ondismiss: function() {
-                  
-                }
-              },
-              handler: async function(response: any) {
-                // This will be handled by the frontend
-                
-              }
             },
             subscriptionData: {
               subscriptionId: existingSubscription.id,
@@ -273,16 +291,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No Razorpay subscription found' }, { status: 400 })
           }
 
-          // Validate plan ID
-          const razorpayPlanId = plan.razorpay_plan_id || `plan_${planId}_${billingCycle}`
-          if (!razorpayPlanId) {
-            logger.error('No Razorpay plan ID available for downgrade', {
+          // Validate plan ID — fail explicitly if not configured (never construct fallback IDs)
+          if (!plan.razorpay_plan_id) {
+            logger.error('Razorpay plan ID missing for downgrade plan', {
               planId,
-              billingCycle,
-              razorpayPlanId: plan.razorpay_plan_id
+              billingCycle
             })
-            return NextResponse.json({ error: 'No Razorpay plan ID found for this plan' }, { status: 400 })
+            return NextResponse.json(
+              { error: 'Plan not properly configured with payment provider. Please contact support.' },
+              { status: 500 }
+            )
           }
+          const razorpayPlanId = plan.razorpay_plan_id
 
           logger.info('Attempting to schedule downgrade in Razorpay', {
             subscriptionId: existingSubscription.id,
@@ -359,30 +379,57 @@ export async function POST(request: NextRequest) {
 
     let customer
     try {
-      // Search for existing customer by email
-      let existingCustomer = null;
-      if (user.email) {
-        const customers = await PaymentService.fetchAllCustomers({
-          count: 100  // Increase count or implement pagination
-        });
-        logger.info('Razorpay customers:', { customers: customers.items.length })
-        existingCustomer = customers.items.find((c: any) => c.email === user.email);
-      }
-      
-      if (existingCustomer) {
-        logger.info('Razorpay customer found:', { customer: existingCustomer })
-        customer = existingCustomer
+      // B6: First check for stored razorpay_customer_id from previous subscriptions
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('razorpay_customer_id')
+        .eq('user_id', user.id)
+        .not('razorpay_customer_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (existingSub?.razorpay_customer_id) {
+        // Use stored customer ID — skip Razorpay API search
+        logger.info('Using stored Razorpay customer ID', {
+          customerId: existingSub.razorpay_customer_id
+        })
+        customer = { id: existingSub.razorpay_customer_id }
       } else {
-        customer = await PaymentService.createCustomer(customerData)
+        // Fallback: search Razorpay for existing customer by email
+        let existingCustomer = null
+        if (user.email) {
+          const customers = await PaymentService.fetchAllCustomers({
+            count: 100
+          })
+          logger.info('Razorpay customers:', { customers: customers.items.length })
+          existingCustomer = customers.items.find((c: any) => c.email === user.email)
+        }
+
+        if (existingCustomer) {
+          logger.info('Razorpay customer found via search:', { customer: existingCustomer })
+          customer = existingCustomer
+        } else {
+          customer = await PaymentService.createCustomer(customerData)
+        }
       }
     } catch (error) {
       logger.error('Error creating/finding Razorpay customer:', { error: error instanceof Error ? error.message : JSON.stringify(error) })
       return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 })
     }
 
+    // Validate Razorpay plan ID before creating subscription
+    if (!plan.razorpay_plan_id) {
+      logger.error('Razorpay plan ID missing for new subscription', { planId, billingCycle })
+      return NextResponse.json(
+        { error: 'Plan not properly configured with payment provider. Please contact support.' },
+        { status: 500 }
+      )
+    }
+
     // Create subscription
     const subscriptionData = {
-      plan_id: plan.razorpay_plan_id || `plan_${planId}_${billingCycle}`,
+      plan_id: plan.razorpay_plan_id,
       customer_id: customer.id,
       quantity: 1,
       total_count: billingCycle === 'annual' ? 12 : 60, // 5 years max
@@ -412,7 +459,7 @@ export async function POST(request: NextRequest) {
         subscriptionId: subscription.id,
         customerId: customer.id,
         checkout: {
-          offer_id: 'offer_R46udDRoTcRPIK',
+          ...(process.env.RAZORPAY_OFFER_ID ? { offer_id: process.env.RAZORPAY_OFFER_ID } : {}),
           key: serverConfig.razorpayKeyId,
           subscription_id: subscription.id,
           name: 'Centric Fit Pro',
@@ -426,11 +473,6 @@ export async function POST(request: NextRequest) {
           theme: {
             color: '#3B82F6',
           },
-          modal: {
-            ondismiss: function() {
-              
-            }
-          }
         }
       })
     } catch (error) {

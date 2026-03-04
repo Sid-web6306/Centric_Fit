@@ -143,8 +143,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      // Search in profile fields via view
-      query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
+      // Sanitize search input to prevent PostgREST filter injection
+      // Strip characters that could alter filter syntax: commas, dots, parentheses, quotes, backslashes
+      const sanitizedSearch = search.replace(/[,.()"'\\%;]/g, '').trim()
+      if (sanitizedSearch.length > 0) {
+        query = query.or(`first_name.ilike.%${sanitizedSearch}%,last_name.ilike.%${sanitizedSearch}%,email.ilike.%${sanitizedSearch}%`)
+      }
     }
 
     const { data: members, error: membersError, count } = await query

@@ -97,21 +97,6 @@ export interface RazorpaySubscription {
   remaining_count: number | string
 }
 
-export interface RazorpayRefund {
-  id: string
-  entity: string
-  amount: number | string
-  currency: string
-  payment_id: string
-  notes: Record<string, string | number | null>
-  receipt?: string | null
-  acquirer_data?: Record<string, unknown> | null
-  created_at: number | string
-  batch_id?: string | null
-  status: string
-  speed_processed: string
-  speed_requested: string
-}
 
 export interface RazorpayCustomerCollection {
   entity: string
@@ -135,12 +120,6 @@ export interface CreateOrderData {
   notes?: Record<string, string | number | null>
 }
 
-export interface CreateRefundData {
-  amount: number
-  speed?: 'normal' | 'optimum'
-  notes?: Record<string, string | number | null>
-  receipt?: string
-}
 
 export interface CreateCustomerData {
   name: string
@@ -196,14 +175,6 @@ export interface SubscriptionUpgradeData {
   gymId: string
 }
 
-export interface SubscriptionDowngradeData {
-  subscriptionId: string
-  newPlanId: string
-  billingCycle: 'monthly' | 'annual'
-  refundAmount: number
-  userId: string
-  gymId: string
-}
 
 export interface PaymentResult {
   success: boolean
@@ -215,11 +186,6 @@ export interface PaymentResult {
   currency?: string
   upgradeType?: 'billing_cycle_change' | 'tier_change' | 'plan_change'
   subscriptionData?: SubscriptionUpgradeData
-  refund?: {
-    refundId: string
-    amount: number
-    status: string
-  }
   checkout?: {
     key: string
     order_id: string
@@ -240,9 +206,7 @@ export interface PaymentResult {
   }
 }
 
-// Use the official Razorpay types instead of custom result interfaces
 export type RazorpayOrderResult = RazorpayOrder
-export type RazorpayRefundResult = RazorpayRefund
 export type RazorpaySubscriptionResult = RazorpaySubscription
 export type RazorpayCustomerResult = RazorpayCustomer
 
@@ -322,43 +286,6 @@ export class PaymentService {
       logger.error('Failed to create Razorpay order', {
         error: error instanceof Error ? error.message : String(error),
         orderData
-      })
-      throw error
-    }
-  }
-
-  /**
-   * Create a refund for a payment
-   */
-  static async createRefund(paymentId: string, refundData: CreateRefundData): Promise<RazorpayRefundResult> {
-    const razorpay = this.initializeRazorpay()
-    if (!razorpay) {
-      throw new Error('Razorpay not configured')
-    }
-
-    try {
-      logger.info('Creating Razorpay refund', { paymentId, refundData })
-      
-      const refund = await razorpay.payments.refund(paymentId, {
-        amount: Math.round(refundData.amount),
-        speed: refundData.speed || 'normal',
-        notes: refundData.notes || {},
-        receipt: refundData.receipt
-      })
-
-      logger.info('Razorpay refund created successfully', {
-        refundId: refund.id,
-        paymentId,
-        amount: refund.amount,
-        status: refund.status
-      })
-
-      return refund as RazorpayRefund
-    } catch (error) {
-      logger.error('Failed to create Razorpay refund', {
-        error: error instanceof Error ? error.message : String(error),
-        paymentId,
-        refundData
       })
       throw error
     }
@@ -624,99 +551,6 @@ export class PaymentService {
     }
   }
 
-  /**
-   * Handle subscription downgrade with refund
-   */
-  static async handleSubscriptionDowngrade(downgradeData: SubscriptionDowngradeData): Promise<PaymentResult> {
-    try {
-      const { subscriptionId, newPlanId, billingCycle, refundAmount } = downgradeData
-
-      // Update subscription in database first
-      const supabase = await createServerClient()
-      const { error: updateError } = await supabase
-        .from('subscriptions')
-        .update({
-          subscription_plan_id: newPlanId,
-          billing_cycle: billingCycle,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', subscriptionId)
-
-      if (updateError) {
-        throw new Error(`Failed to update subscription: ${updateError.message}`)
-      }
-
-      // Update Razorpay subscription
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('razorpay_subscription_id')
-        .eq('id', subscriptionId)
-        .single()
-
-      if (subscription?.razorpay_subscription_id) {
-        try {
-          await this.updateSubscription(subscription.razorpay_subscription_id, {
-            plan_id: `plan_${newPlanId}_${billingCycle}`,
-            schedule_change_at: 'now',
-            customer_notify: true
-          })
-        } catch (razorpayError) {
-          logger.warn('Failed to update Razorpay subscription for downgrade', {
-            error: razorpayError instanceof Error ? razorpayError.message : String(razorpayError),
-            subscriptionId
-          })
-        }
-      }
-
-      // Process refund for unused portion (if significant amount)
-      let refundResult = null
-      if (refundAmount >= 100) { // Only refund if amount is at least ₹1
-        try {
-          // Note: In a real implementation, you would need to store payment details
-          // to process refunds. For now, we'll skip the refund and just downgrade
-          logger.warn('Refund processing not implemented - no payment storage available', {
-            subscriptionId,
-            refundAmount
-          })
-          
-          // Skip refund processing for now
-          refundResult = null
-        } catch (refundError) {
-          logger.error('Failed to create refund for subscription downgrade', {
-            error: refundError instanceof Error ? refundError.message : String(refundError),
-            subscriptionId,
-            refundAmount
-          })
-          // Don't fail the downgrade if refund fails
-        }
-      }
-
-      return {
-        success: true,
-        data: {
-          message: refundResult 
-            ? `Subscription downgraded successfully. Refund of ₹${refundAmount / 100} will be processed.`
-            : 'Subscription downgraded successfully',
-          subscription: {
-            id: subscriptionId,
-            status: 'active',
-            plan_id: newPlanId,
-            billing_cycle: billingCycle
-          },
-          refund: refundResult
-        }
-      }
-    } catch (error) {
-      logger.error('Subscription downgrade failed', {
-        error: error instanceof Error ? error.message : String(error),
-        downgradeData
-      })
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to process downgrade'
-      }
-    }
-  }
 
   /**
    * Verify payment signature

@@ -72,22 +72,38 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createClient();
 
-  // ✅ Check for duplicate webhook processing (IDEMPOTENCY)
-  const { data: existingWebhook } = await supabase
+  // ✅ Atomic idempotency check: attempt to insert the webhook event immediately.
+  // If a duplicate webhook_id already exists, the unique constraint will prevent insertion.
+  // This eliminates the race condition window between a SELECT check and a later INSERT.
+  const { data: insertedWebhook, error: insertError } = await supabase
     .from('webhook_events')
-    .select('id, status')
-    .eq('webhook_id', webhookId)
+    .insert({
+      webhook_id: webhookId,
+      event_type: 'pending',
+      status: 'processing',
+      raw_event: null,
+      razorpay_event_id: 'pending',
+      created_at: new Date().toISOString()
+    })
+    .select('id')
     .single();
 
-  if (existingWebhook) {
-    logger.info('Webhook already processed, skipping', { 
-      webhookId,
-      status: existingWebhook.status
-    });
-    return NextResponse.json({ 
-      received: true, 
-      status: 'already_processed',
-      webhook_id: webhookId 
+  if (insertError) {
+    // If insert failed due to unique constraint (duplicate), skip processing
+    if (insertError.code === '23505') {
+      logger.info('Webhook already processed (caught by unique constraint), skipping', { 
+        webhookId
+      });
+      return NextResponse.json({ 
+        received: true, 
+        status: 'already_processed',
+        webhook_id: webhookId 
+      });
+    }
+    // For other insert errors, log but continue processing
+    logger.warn('Webhook event insert warning:', { 
+      error: insertError.message, 
+      webhookId 
     });
   }
 
@@ -133,17 +149,15 @@ export async function POST(req: NextRequest) {
       webhookId
     });
 
-    // ✅ Create webhook event record immediately for idempotency
+    // ✅ Update the webhook event record (inserted during idempotency check) with actual event data
     await supabase
       .from('webhook_events')
-      .insert({
-        webhook_id: webhookId,
+      .update({
         event_type: event.event,
-        status: 'processing',
         raw_event: JSON.parse(body),
         razorpay_event_id: eventId,
-        created_at: new Date().toISOString()
-      });
+      })
+      .eq('webhook_id', webhookId);
 
     switch (event.event) {
       case 'payment.captured':

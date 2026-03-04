@@ -12,7 +12,7 @@ interface UpgradePaymentRequest {
   subscriptionId: string
   newPlanId: string
   billingCycle: 'monthly' | 'annual'
-  newAmount: number
+  newAmount?: number // Ignored — amount is always looked up server-side
 }
 
 /**
@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
       razorpay_signature,
       subscriptionId,
       newPlanId,
-      billingCycle,
-      newAmount
+      billingCycle
+      // newAmount intentionally ignored — looked up server-side for security
     } = body
 
     // Validate input
@@ -136,12 +136,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'New plan not found' }, { status: 404 })
     }
 
-    // Update subscription in database
+    // Update subscription in database (amount from server-side plan lookup, never from client)
     const { error: updateError } = await supabase
       .from('subscriptions')
       .update({
         subscription_plan_id: newPlanId,
-        amount: newAmount,
+        amount: newPlan.price_inr,
         currency: newPlan.currency || 'INR',
         billing_cycle: billingCycle,
         updated_at: new Date().toISOString()
@@ -162,9 +162,17 @@ export async function POST(request: NextRequest) {
     // Update Razorpay subscription
     if (subscription.razorpay_subscription_id) {
       try {
+        if (!newPlan.razorpay_plan_id) {
+          logger.error('Razorpay plan ID missing for plan', { planId: newPlanId, billingCycle })
+          return NextResponse.json(
+            { error: 'Plan not properly configured with payment provider. Please contact support.' },
+            { status: 500 }
+          )
+        }
+
         if (PaymentService.isConfigured()) {
           await PaymentService.updateSubscription(subscription.razorpay_subscription_id, {
-            plan_id: newPlan.razorpay_plan_id || `plan_${newPlanId}_${billingCycle}`,
+            plan_id: newPlan.razorpay_plan_id,
             schedule_change_at: 'now',
             customer_notify: true
           })
@@ -187,7 +195,7 @@ export async function POST(request: NextRequest) {
       oldPlanId: subscription.subscription_plan_id,
       newPlanId,
       billingCycle,
-      newAmount,
+      amount: newPlan.price_inr,
       razorpay_payment_id,
       razorpay_order_id,
       userId: user.id,
@@ -202,7 +210,7 @@ export async function POST(request: NextRequest) {
         status: 'active',
         plan_id: newPlanId,
         billing_cycle: billingCycle,
-        amount: newAmount
+        amount: newPlan.price_inr
       },
       payment: {
         payment_id: razorpay_payment_id,
