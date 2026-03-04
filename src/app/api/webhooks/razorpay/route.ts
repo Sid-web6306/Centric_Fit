@@ -715,7 +715,6 @@ async function logWebhookError(
     eventType: event?.event || 'unknown',
     eventId,
     error: error.message,
-    stack: error.stack,
     processingDuration
   });
 
@@ -740,7 +739,7 @@ async function logWebhookError(
               razorpay_event_id: eventId,
               razorpay_event_type: event.event,
               error_message: error.message,
-              error_stack: error.stack,
+              // Omit error stack from DB — contains internal paths and implementation details
               event_created: event.created_at || Math.floor(Date.now() / 1000)
             },
             webhook_id: eventId,

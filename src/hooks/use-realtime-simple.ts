@@ -127,7 +127,7 @@ export function useRealtimeSync(gymId: string | null) {
     
     // Set up cross-tab communication listener
     const handleStorageEvent = (event: StorageEvent) => {
-      if (event.key === 'realtime-broadcast') {
+      if (event.key?.startsWith('realtime-broadcast')) {
         try {
           const broadcastData = JSON.parse(event.newValue || '{}')
           if (broadcastData.type === 'realtime-update') {
@@ -616,19 +616,6 @@ export function useRealtimeSync(gymId: string | null) {
     }
   }, [isAuthenticated, user, gymId, queryClient, invalidateQueries])
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const channels = channelsRef.current
-    const supabase = supabaseRef.current
-    
-    return () => {
-      channels.forEach((channel) => {
-        supabase?.removeChannel(channel)
-      })
-      channels.clear()
-    }
-  }, [])
-
   return {
     isConnected: channelsRef.current.size > 0,
     subscriptionCount: channelsRef.current.size
@@ -649,8 +636,12 @@ export function useTableRealtime(
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
 
   useEffect(() => {
-    const existingChannel = channelRef.current
+    // Lazy initialize supabase client
+    if (!supabaseRef.current) {
+      supabaseRef.current = createClient()
+    }
     const supabase = supabaseRef.current
+    const existingChannel = channelRef.current
     
     if (!options?.enabled || !isAuthenticated || !user || !entityId) {
       if (existingChannel) {

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { PaymentService } from '@/services/payment.service'
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
 
     // If user has an active subscription, handle upgrade/downgrade with payment
     if (existingSubscription) {
@@ -132,6 +132,25 @@ export async function POST(request: NextRequest) {
         isBillingCycleChange,
         isTierChange: currentPlan.plan_type !== plan.plan_type
       })
+
+      // M4: Check for scheduled changes on Razorpay subscription before computing proration
+      if (existingSubscription.razorpay_subscription_id) {
+        try {
+          const razorpaySub = await PaymentService.fetchSubscription(existingSubscription.razorpay_subscription_id)
+          if (razorpaySub?.has_scheduled_changes) {
+            return NextResponse.json({
+              error: 'You have a pending plan change scheduled. Please wait for it to take effect or cancel it before making another change.',
+              hasScheduledChanges: true,
+              effectiveDate: existingSubscription.current_period_end
+            }, { status: 409 })
+          }
+        } catch (rzpError) {
+          logger.warn('Could not check Razorpay subscription for scheduled changes:', {
+            error: rzpError instanceof Error ? rzpError.message : String(rzpError)
+          })
+          // Continue with proration — non-blocking check
+        }
+      }
 
       // Calculate day-based proration amount
       const currentAmount = currentPlan.price_inr
@@ -403,7 +422,7 @@ export async function POST(request: NextRequest) {
             count: 100
           })
           logger.info('Razorpay customers:', { customers: customers.items.length })
-          existingCustomer = customers.items.find((c: any) => c.email === user.email)
+          existingCustomer = customers.items.find((c: { email?: string }) => c.email === user.email)
         }
 
         if (existingCustomer) {

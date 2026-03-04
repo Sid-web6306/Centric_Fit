@@ -653,17 +653,18 @@ export class PaymentService {
   /**
    * Pause a Razorpay subscription
    */
-  static async pauseSubscription(subscriptionId: string, pauseAt: 'now' | number = 'now'): Promise<RazorpaySubscriptionResult> {
+  static async pauseSubscription(subscriptionId: string): Promise<RazorpaySubscriptionResult> {
     const razorpay = this.initializeRazorpay()
     if (!razorpay) {
       throw new Error('Razorpay not configured')
     }
 
     try {
-      logger.info('Pausing Razorpay subscription', { subscriptionId, pauseAt })
+      logger.info('Pausing Razorpay subscription', { subscriptionId })
       
+      // Razorpay only supports pausing immediately ('now')
       const subscription = await razorpay.subscriptions.pause(subscriptionId, {
-        pause_at: pauseAt === 'now' ? 'now' : 'now' // Razorpay only supports 'now' for pause
+        pause_at: 'now'
       })
 
       logger.info('Razorpay subscription paused successfully', {
@@ -675,8 +676,7 @@ export class PaymentService {
     } catch (error) {
       logger.error('Failed to pause Razorpay subscription', {
         error: error instanceof Error ? error.message : String(error),
-        subscriptionId,
-        pauseAt
+        subscriptionId
       })
       throw error
     }
@@ -685,17 +685,18 @@ export class PaymentService {
   /**
    * Resume a Razorpay subscription
    */
-  static async resumeSubscription(subscriptionId: string, resumeAt: 'now' | number = 'now'): Promise<RazorpaySubscriptionResult> {
+  static async resumeSubscription(subscriptionId: string): Promise<RazorpaySubscriptionResult> {
     const razorpay = this.initializeRazorpay()
     if (!razorpay) {
       throw new Error('Razorpay not configured')
     }
 
     try {
-      logger.info('Resuming Razorpay subscription', { subscriptionId, resumeAt })
+      logger.info('Resuming Razorpay subscription', { subscriptionId })
       
+      // Razorpay only supports resuming immediately ('now')
       const subscription = await razorpay.subscriptions.resume(subscriptionId, {
-        resume_at: resumeAt === 'now' ? 'now' : 'now' // Razorpay only supports 'now' for resume
+        resume_at: 'now'
       })
 
       logger.info('Razorpay subscription resumed successfully', {
@@ -707,8 +708,7 @@ export class PaymentService {
     } catch (error) {
       logger.error('Failed to resume Razorpay subscription', {
         error: error instanceof Error ? error.message : String(error),
-        subscriptionId,
-        resumeAt
+        subscriptionId
       })
       throw error
     }

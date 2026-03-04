@@ -586,17 +586,29 @@ export async function deleteUserFromGym(userId: string, gymId: string) {
     // 3. Note: member_activities are linked via member_id, so they'll be cleaned up when member is deactivated
 
     // 4. Clean up any pending invitations for this user
-    const { data: targetUser } = await supabase.auth.admin.getUserById(userId)
-    if (targetUser?.user?.email) {
-      await supabase
-        .from('gym_invitations')
-        .update({ 
-          status: 'revoked',
-          updated_at: new Date().toISOString()
+    try {
+      const { data: targetUser, error: adminError } = await supabase.auth.admin.getUserById(userId)
+      if (adminError) {
+        logger.warn('Failed to fetch user via admin API for invitation cleanup:', { 
+          error: adminError.message, userId, gymId 
         })
-        .eq('email', targetUser.user.email)
-        .eq('gym_id', gymId)
-        .eq('status', 'pending')
+      } else if (targetUser?.user?.email) {
+        await supabase
+          .from('gym_invitations')
+          .update({ 
+            status: 'revoked',
+            updated_at: new Date().toISOString()
+          })
+          .eq('email', targetUser.user.email)
+          .eq('gym_id', gymId)
+          .eq('status', 'pending')
+      }
+    } catch (adminErr) {
+      logger.warn('Admin API exception during invitation cleanup:', { 
+        error: adminErr instanceof Error ? adminErr.message : String(adminErr),
+        userId, gymId
+      })
+      // Non-critical: continue even if invitation cleanup fails
     }
 
     // 5. Profile remains intact - user will be detected as inactive by middleware

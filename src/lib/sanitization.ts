@@ -94,8 +94,8 @@ export const sanitizeInput = {
     
     let name = input.trim()
     
-    // Allow only letters, spaces, hyphens, and apostrophes
-    name = name.replace(/[^a-zA-Z\s'-]/g, '')
+    // Allow Unicode letters (supports Devanagari, Latin with diacritics, etc.), spaces, hyphens, and apostrophes
+    name = name.replace(/[^\p{L}\p{M}\s'-]/gu, '')
     
     // Remove multiple spaces
     name = name.replace(/\s+/g, ' ')
@@ -184,7 +184,11 @@ export const validateInput = {
 
 /**
  * Rate limiting utilities (simple in-memory implementation)
- * In production, use Redis or similar for distributed rate limiting
+ * 
+ * ⚠️ WARNING: This in-memory store does NOT work in serverless environments (e.g. Vercel).
+ * Each serverless function invocation may use a different instance, resetting the store.
+ * For production rate limiting, use an external store like Upstash Redis or Supabase.
+ * This implementation is suitable for local development / long-running Node.js servers only.
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 

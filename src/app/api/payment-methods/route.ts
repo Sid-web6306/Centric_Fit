@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { PaymentService } from '@/services/payment.service'
@@ -107,13 +107,13 @@ export async function POST(request: NextRequest) {
       try {
         // Search for customer by email - Razorpay supports email-based search
         const customers = await PaymentService.fetchAllCustomers()
-        customer = customers.items.find((c: any) => 
+        customer = customers.items.find((c: { email?: string }) => 
           c.email?.toLowerCase() === user.email?.toLowerCase()
         )
       } catch (searchError) {
         logger.error('Failed to search for existing customer:', { 
           error: searchError,
-          email: user.email 
+          email: user.email ? `${user.email.substring(0, 3)}***` : 'none'
         })
         // Continue to create new customer
       }

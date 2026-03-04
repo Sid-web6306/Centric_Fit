@@ -55,8 +55,10 @@ const getEnvironmentPrefix = (): string => {
   return 'prod' // Default for production
 }
 
-// Optimized static file detection with caching
+// Optimized static file detection with bounded caching
 const staticFileCache = new Map<string, boolean>()
+const STATIC_CACHE_MAX_SIZE = 500
+
 const isStaticFile = (pathname: string): boolean => {
   if (staticFileCache.has(pathname)) {
     return staticFileCache.get(pathname)!
@@ -66,6 +68,10 @@ const isStaticFile = (pathname: string): boolean => {
     pattern instanceof RegExp ? pattern.test(pathname) : pathname.startsWith(pattern as string)
   )
   
+  // Prevent unbounded cache growth
+  if (staticFileCache.size >= STATIC_CACHE_MAX_SIZE) {
+    staticFileCache.clear()
+  }
   staticFileCache.set(pathname, isStatic)
   return isStatic
 }
@@ -159,7 +165,11 @@ const fetchUserProfile = async (supabase: SupabaseClient, userId: string): Promi
   }
 }
 
-// Subscription access check with caching
+// Last-known subscription access state per user (used as fallback on errors)
+const subscriptionAccessCache = new Map<string, { hasAccess: boolean; timestamp: number }>()
+const SUBSCRIPTION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+// Subscription access check with last-known-state fallback
 const checkSubscriptionAccess = async (supabase: SupabaseClient, userId: string): Promise<boolean> => {
   try {
     const { data: hasAccess, error } = await supabase.rpc('check_subscription_access', {
@@ -167,14 +177,26 @@ const checkSubscriptionAccess = async (supabase: SupabaseClient, userId: string)
     })
 
     if (error) {
-      logger.warn('Subscription check error - failing open:', {error})
-      return true // Fail open on error
+      logger.warn('Subscription check error - using cached state:', {error})
+      // Use last-known-state if available, otherwise fail open
+      const cached = subscriptionAccessCache.get(userId)
+      if (cached && Date.now() - cached.timestamp < SUBSCRIPTION_CACHE_TTL) {
+        return cached.hasAccess
+      }
+      return true // No cached state available — fail open as last resort
     }
 
-    return Boolean(hasAccess)
+    const result = Boolean(hasAccess)
+    // Cache the successful result
+    subscriptionAccessCache.set(userId, { hasAccess: result, timestamp: Date.now() })
+    return result
   } catch (error) {
-    logger.warn('Subscription check exception - failing open:', {error})
-    return true // Fail open on error
+    logger.warn('Subscription check exception - using cached state:', {error})
+    const cached = subscriptionAccessCache.get(userId)
+    if (cached && Date.now() - cached.timestamp < SUBSCRIPTION_CACHE_TTL) {
+      return cached.hasAccess
+    }
+    return true // No cached state available — fail open as last resort
   }
 }
 
