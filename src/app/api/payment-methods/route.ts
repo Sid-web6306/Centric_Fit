@@ -136,18 +136,17 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           razorpay_payment_method_id: paymentMethodToken,
           type: cardDetails?.type || 'card',
-          card_brand: cardDetails?.brand || null,
-          card_last4: cardDetails?.last4 || null,
-          card_exp_month: cardDetails?.exp_month || null,
-          card_exp_year: cardDetails?.exp_year || null,
           is_default: setAsDefault,
           is_active: true,
           metadata: {
             razorpay_customer_id: customer.id,
             // Only store non-sensitive card metadata
+            card_brand: cardDetails?.brand ?? null,
+            card_last4: cardDetails?.last4 ?? null,
+            card_exp_month: cardDetails?.exp_month ?? null,
+            card_exp_year: cardDetails?.exp_year ?? null,
             card_network: cardDetails?.network,
             card_type:    cardDetails?.type,
-            // Avoid storing full card details
           }
         })
         .select()

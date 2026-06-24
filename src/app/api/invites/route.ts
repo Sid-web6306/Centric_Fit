@@ -172,10 +172,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update
-    const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() }
-    if (validatedData.status) updateData.status = validatedData.status
-    if (validatedData.role) updateData.role = validatedData.role
-    if (validatedData.expires_at) updateData.expires_at = validatedData.expires_at
+    const updateData = {
+      updated_at: new Date().toISOString(),
+      ...(validatedData.status !== undefined && { status: validatedData.status }),
+      ...(validatedData.role !== undefined && { role: validatedData.role }),
+      ...(validatedData.expires_at !== undefined && { expires_at: validatedData.expires_at }),
+    }
 
     const { data: updated, error: updateError } = await supabase
       .from('gym_invitations')
