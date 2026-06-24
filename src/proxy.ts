@@ -545,6 +545,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - Static files with extensions
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|screenshots|demos|.*\\.(?:png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|webp|webm|mp4|sw\\.js|manifest\\.json|manifest\\.webmanifest|browserconfig\\.xml|robots\\.txt)$).*)',
+    '/((?!api|monitoring|_next/static|_next/image|favicon.ico|screenshots|demos|.*\\.(?:png|jpg|jpeg|gif|svg|ico|css|js|woff|woff2|ttf|eot|webp|webm|mp4|sw\\.js|manifest\\.json|manifest\\.webmanifest|browserconfig\\.xml|robots\\.txt)$).*)',
   ],
 }
