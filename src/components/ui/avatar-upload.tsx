@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { Camera, Upload, X, Loader2, Eye } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,6 @@ import { cn } from '@/lib/utils'
 import { toastActions } from '@/stores/toast-store'
 import { validateImageFile, generateAvatarFilename, type AvatarSize } from '@/lib/avatar-utils'
 import { useUpdateProfile } from '@/hooks/use-auth'
-import { ImageEditor } from '@/components/ui/image-editor'
 import { logger } from '@/lib/logger'
 import {
   Dialog,
@@ -18,6 +18,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+
+const ImageEditor = dynamic(
+  () => import('@/components/ui/image-editor').then((m) => ({ default: m.ImageEditor })),
+  { ssr: false }
+)
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null

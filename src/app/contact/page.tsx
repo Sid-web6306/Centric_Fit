@@ -49,7 +49,7 @@ export default function ContactPage() {
                 <Clock className="h-5 w-5 text-gray-500 mr-3" />
                 <div>
                   <p className="font-medium text-gray-900">Business Hours</p>
-                  <span className="text-gray-700">9 AM - 6 PM IST, Mon-Fri</span>
+                  <span className="text-gray-700">9 AM - 6 PM IST, Mon-Sun</span>
                 </div>
               </div>
               

@@ -1,6 +1,6 @@
 'use client'
 
-import { AreaChart, Card, Title, Text } from '@tremor/react'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { TrendingUp } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -58,19 +58,13 @@ const generateMemberGrowthData = (currentMembers: number): MemberGrowthData[] =>
   return data
 }
 
-// Get theme-based colors using Tremor's AvailableChartColorsKeys
-const getThemeColors = (theme: string | undefined) => {
+const getThemeColor = (theme: string | undefined): string => {
   switch (theme) {
-    case 'blue':
-      return ['blue']
-    case 'green':
-      return ['emerald']
-    case 'purple':
-      return ['violet']
-    case 'rose':
-      return ['pink']
-    default:
-      return ['blue'] // Default for light theme
+    case 'blue':   return '#2563eb'
+    case 'green':  return '#10b981'
+    case 'purple': return '#8b5cf6'
+    case 'rose':   return '#ec4899'
+    default:       return '#2563eb'
   }
 }
 
@@ -88,30 +82,17 @@ export const MemberGrowthChart = ({ data, isLoading = false }: MemberGrowthChart
     }
   }, [data])
 
-  // Get colors based on current theme
-  const colors = getThemeColors(theme)
+  const color = getThemeColor(theme)
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
-      <Card className="animate-pulse">
+      <div className="rounded-lg border bg-card p-6 shadow-sm animate-pulse">
         <div className="flex items-center gap-2 mb-6">
           <TrendingUp className="h-5 w-5 text-gray-400" />
           <div className="h-6 bg-gray-200 rounded w-32"></div>
         </div>
         <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
-    )
-  }
-  
-  if (isLoading) {
-    return (
-      <Card className="animate-pulse">
-        <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="h-5 w-5 text-gray-400" />
-          <div className="h-6 bg-gray-200 rounded w-32"></div>
-        </div>
-        <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
+      </div>
     )
   }
 
@@ -121,48 +102,48 @@ export const MemberGrowthChart = ({ data, isLoading = false }: MemberGrowthChart
   const growthPercentage = firstMonth > 0 ? ((lastMonth - firstMonth) / firstMonth * 100) : 0
 
   return (
-    <Card>
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <TrendingUp className={`h-5 w-5 ${theme === 'blue' ? 'text-blue-600' : theme === 'green' ? 'text-emerald-600' : theme === 'purple' ? 'text-purple-600' : theme === 'rose' ? 'text-rose-600' : 'text-blue-600'}`} />
-          <Title>Member Growth</Title>
+          <h3 className="text-sm font-medium text-card-foreground">Member Growth</h3>
         </div>
         <div className="text-right">
-          <Text className="text-sm text-gray-600">12-month growth</Text>
-          <Text className={`text-sm font-medium ${growthPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className="text-sm text-muted-foreground">12-month growth</p>
+          <p className={`text-sm font-medium ${growthPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {growthPercentage >= 0 ? '+' : ''}{growthPercentage.toFixed(1)}%
-          </Text>
+          </p>
         </div>
       </div>
-      
-      <AreaChart
-        data={chartData}
-        index="month"
-        categories={["members"]}
-        colors={colors}
-        valueFormatter={(number) => `${number} members`}
-        className="h-64"
-        showLegend={false}
-        showGridLines={true}
-        curveType="monotone"
-      />
-      
+
+      <ResponsiveContainer width="100%" height={256}>
+        <AreaChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorMembers" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.15} />
+              <stop offset="95%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} />
+          <Tooltip formatter={(value) => [`${Number(value)} members`, 'Members']} />
+          <Area type="monotone" dataKey="members" stroke={color} strokeWidth={2} fill="url(#colorMembers)" />
+        </AreaChart>
+      </ResponsiveContainer>
+
       <div className="mt-4 pt-4 border-t border-gray-100">
         <div className="flex justify-between text-sm">
           <div>
-            <Text className="text-gray-600">Total Growth</Text>
-            <Text className="font-medium text-gray-900">
-              +{lastMonth - firstMonth} members
-            </Text>
+            <p className="text-muted-foreground">Total Growth</p>
+            <p className="font-medium text-card-foreground">+{lastMonth - firstMonth} members</p>
           </div>
           <div className="text-right">
-            <Text className="text-gray-600">Avg Monthly</Text>
-            <Text className="font-medium text-gray-900">
-              +{Math.round((lastMonth - firstMonth) / 12)} members
-            </Text>
+            <p className="text-muted-foreground">Avg Monthly</p>
+            <p className="font-medium text-card-foreground">+{Math.round((lastMonth - firstMonth) / 12)} members</p>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

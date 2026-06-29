@@ -1,215 +1,45 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Suspense, useDeferredValue } from 'react'
+import { Suspense } from 'react'
 import {
   Users,
   LayoutDashboard,
   Settings,
-  Dumbbell,
   UserCog,
   BookUser,
   CalendarDays,
   BarChart3,
 } from 'lucide-react'
-import { useAuth } from '@/hooks/use-auth'
 import { useSidebarState } from '@/stores/ui-store'
 import { RequireAuth } from '@/components/auth/AuthGuard'
 import { RealtimeProvider } from '@/components/providers/realtime-provider-simple'
-import { CollapsibleNavItem } from '@/components/layout/CollapsibleNavItem'
+import { AppSidebar, type SidebarNavItem } from '@/components/layout/AppSidebar'
 import { SidebarToggle } from '@/components/layout/SidebarToggle'
-import { CollapsibleUserSection } from '@/components/layout/CollapsibleUserSection'
-import { useSidebarShortcuts } from '@/hooks/use-sidebar-shortcuts'
 import { cn } from '@/lib/utils'
-import { useGymData } from '@/hooks/use-gym-data'
-import Image from 'next/image'
+import { TrialCountdownBanner } from '@/components/trial/TrialCountdownBanner'
 
 interface ClientLayoutProps {
   children: React.ReactNode
 }
 
+const navigation: SidebarNavItem[] = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Attendance', href: '/attendance', icon: CalendarDays },
+  { name: 'Members', href: '/members', icon: Users },
+  { name: 'Roles & Invitations', href: '/team', icon: UserCog },
+  { name: 'Staff Directory', href: '/staff', icon: BookUser },
+  { name: 'Settings', href: '/settings', icon: Settings },
+]
+
 function ClientLayoutContent({ children }: ClientLayoutProps) {
   const pathname = usePathname()
-  const deferredPathname = useDeferredValue(pathname)
-  const { profile } = useAuth()
-  const {
-    sidebarCollapsed,
-    sidebarCollapsedMobile,
-    toggleMobileSidebar,
-  } = useSidebarState()
-
-  // Enable keyboard shortcuts
-  useSidebarShortcuts()
-
-  // Get gym data for logo and name
-  const { data: gymData } = useGymData(profile?.gym_id || null)
-
-  const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Attendance', href: '/attendance', icon: CalendarDays },
-    { name: 'Members', href: '/members', icon: Users },
-    { name: 'Roles & Invitations', href: '/team', icon: UserCog },
-    { name: 'Staff Directory', href: '/staff', icon: BookUser },
-    { name: 'Settings', href: '/settings', icon: Settings },
-  ]
+  const { sidebarCollapsed } = useSidebarState()
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{
-          width: sidebarCollapsed ? 64 : 256,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: 'easeOut'
-        }}
-        className={cn(
-          'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50',
-          'bg-card shadow-lg border-r border-border'
-        )}
-      >
-        {/* Sidebar Header */}
-        <div className={cn(
-          'flex items-center h-16 border-b border-border transition-all duration-300',
-          sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'
-        )}>
-          {sidebarCollapsed ? (
-            /* Desktop collapsed state - only toggle button centered */
-            <SidebarToggle />
-          ) : (
-            /* Desktop expanded state - logo + name + tagline + toggle button */
-            <>
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {gymData?.logo_url ? (
-                  <Image
-                    src={gymData.logo_url}
-                    alt={gymData.name || 'Logo'}
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-md object-contain flex-shrink-0"
-                  />
-                ) : (
-                  <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Dumbbell className="h-6 w-6 text-primary" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-card-foreground truncate">
-                    {gymData?.name || (profile?.gym_id ? 'Loading...' : 'Setup Required')}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/70">
-                    Powered by Centric Fit
-                  </p>
-                </div>
-              </div>
-              <SidebarToggle />
-            </>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <nav className="mt-5 flex-1 px-2">
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = deferredPathname === item.href
-              return (
-                <CollapsibleNavItem
-                  key={item.name}
-                  name={item.name}
-                  href={item.href}
-                  icon={item.icon}
-                  isActive={isActive}
-                  prefetch={true}
-                />
-              )
-            })}
-          </div>
-        </nav>
-
-        {/* User Section */}
-        <CollapsibleUserSection className="mt-auto" />
-      </motion.div>
-
-      {/* Mobile Sidebar */}
-      <AnimatePresence>
-        {!sidebarCollapsedMobile && (
-          <>
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg border-r border-border"
-            >
-              {/* Mobile Header */}
-              <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {gymData?.logo_url ? (
-                    <Image
-                      src={gymData.logo_url}
-                      alt={gymData.name || 'Logo'}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded-md object-contain flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Dumbbell className="h-6 w-6 text-primary" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-card-foreground truncate">
-                      {gymData?.name || 'Centric Fit'}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70">
-                      Powered by Centric Fit
-                    </p>
-                  </div>
-                </div>
-                <SidebarToggle isMobile />
-              </div>
-
-              {/* Mobile Navigation */}
-              <nav className="mt-5 px-2 flex-1">
-                <div className="space-y-1">
-                  {navigation.map((item) => {
-                    const isActive = deferredPathname === item.href
-                    return (
-                      <CollapsibleNavItem
-                        key={item.name}
-                        name={item.name}
-                        href={item.href}
-                        icon={item.icon}
-                        isActive={isActive}
-                        onClick={toggleMobileSidebar}
-                        forceExpanded={true}
-                        prefetch={true}
-                      />
-                    )
-                  })}
-                </div>
-              </nav>
-
-              {/* Mobile User Section - force expanded so details + logout are visible */}
-              <CollapsibleUserSection forceExpanded />
-            </motion.div>
-
-            {/* Mobile Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:hidden fixed inset-0 z-40 bg-black/50"
-              onClick={toggleMobileSidebar}
-            />
-          </>
-        )}
-      </AnimatePresence>
+      <AppSidebar navigation={navigation} gymNameFallback="Setup Required" />
 
       {/* Main content */}
       <div
@@ -221,6 +51,8 @@ function ClientLayoutContent({ children }: ClientLayoutProps) {
           sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
         )}
       >
+        <TrialCountdownBanner />
+
         {/* Mobile Top bar */}
         <div className="bg-card shadow-sm border-b border-border lg:hidden">
           <div className="flex items-center justify-between h-16 px-4">

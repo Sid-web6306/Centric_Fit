@@ -69,7 +69,7 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
   const [otp, setOtp] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
-  const [resendCooldown, setResendCooldown] = useState(60)
+  const [resendCooldown, setResendCooldown] = useState(60) // 60s spam-prevention cooldown (OTP itself expires in 5 min)
   const [error, setError] = useState('')
   const queryClient = useQueryClient()
 
@@ -77,7 +77,7 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
     resolver: zodResolver(emailSchema)
   })
 
-  // Cooldown timer for resend button (not code expiry - codes are valid for much longer)
+  // Cooldown timer for resend button (not code expiry - codes are valid for 5 minutes)
   React.useEffect(() => {
     if (resendCooldown > 0 && step === 'verify') {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
@@ -317,6 +317,7 @@ export const EmailUpdateDialog: React.FC<EmailUpdateDialogProps> = ({
                   disabled={isLoading}
                   autoFocus
                 />
+                <p className="text-xs text-gray-500">This code expires in 5 minutes.</p>
               </div>
 
               {error && (

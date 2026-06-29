@@ -13,8 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
+import { GoogleIcon, FacebookIcon } from "@/components/ui/brand-icons";
 import { Loader2 } from "lucide-react";
 
 import { signupWithEmail, loginWithSocialProvider } from "@/actions/auth.actions";
@@ -29,6 +28,7 @@ import { withSuspense } from "@/components/providers/suspense-provider";
 import { useInviteVerification } from "@/hooks/use-invitations";
 import { Building2, Users, AlertCircle } from "lucide-react";
 import { logger } from '@/lib/logger';
+import posthog from 'posthog-js';
 
 // Zod schema for client-side validation (passwordless)
 const SignupSchema = z.object({
@@ -51,7 +51,7 @@ const SocialButton = ({
   disabled: boolean;
   hasInvitation?: boolean;
 }) => {
-  const Icon = provider === 'google' ? FcGoogle : FaFacebook;
+  const Icon = provider === 'google' ? GoogleIcon : FacebookIcon;
   const text = hasInvitation 
     ? `Accept invitation with ${provider === 'google' ? 'Google' : 'Facebook'}`
     : `Continue with ${provider === 'google' ? 'Google' : 'Facebook'}`;
@@ -136,29 +136,35 @@ const SignUpPageComponent = () => {
   // Social login handler
   const handleSocialLogin = async (provider: 'google' | 'facebook') => {
     setSocialLoading(prev => ({ ...prev, [provider]: true }));
-    
+
     try {
+      // Track signup attempt before redirect
+      posthog.capture('signup', {
+        method: provider,
+        has_invitation: !!inviteToken
+      });
+
       // toastActions.info(
-      //   'Redirecting...', 
+      //   'Redirecting...',
       //   `Redirecting to ${provider === 'google' ? 'Google' : 'Facebook'} for authentication.`
       // );
-      
+
       // Call the bound server action
       if (provider === 'google') {
         await handleGoogleLogin();
       } else {
         await handleFacebookLogin();
       }
-      
+
       // Server action will handle redirect, so this code won't be reached
       // unless there's an error
-      
+
     } catch (error) {
       logger.error(`${provider} OAuth error:`, {error});
-      
+
       // Provide more specific error messages
       // let errorMessage = `Failed to connect with ${provider === 'google' ? 'Google' : 'Facebook'}. Please try again.`;
-      
+
       // if (error instanceof Error) {
       //   if (error.message.includes('popup_blocked')) {
       //     errorMessage = 'Pop-up was blocked. Please allow pop-ups for this site and try again.';
@@ -166,7 +172,7 @@ const SignUpPageComponent = () => {
       //     errorMessage = 'Network error. Please check your connection and try again.';
       //   }
       // }
-      
+
       // toastActions.error('Authentication Error', errorMessage);
       setSocialLoading(prev => ({ ...prev, [provider]: false }));
     }
@@ -175,41 +181,47 @@ const SignUpPageComponent = () => {
   // Handle email signup
   const onSubmit = async (data: SignupFormData) => {
     setIsSubmitting(true);
-    
+
     try {
       // Mark user as new for email signup (simplified - no longer using auth store)
       // authUIActions.setIsNewUser(true);
-      
+
       const formData = new FormData();
       formData.append('email', data.email);
-      
+
       // Include invitation token if present
       if (inviteToken) {
         formData.append('inviteToken', inviteToken);
       }
-      
+
       const result = await signupWithEmail(formData);
-      
+
       if (result?.error) {
         toastActions.error("Error", result.error);
-        
+
         // Set form errors if they exist (simplified - no longer has details)
         /*if (result.error.details) {
           if (result.error.details.email) {
             signupForm.setError('email', { message: result.error.details.email[0] });
           }
         }*/
+      } else {
+        // Track signup event
+        posthog.capture('signup', {
+          method: 'email',
+          has_invitation: !!inviteToken
+        });
       }
       // If no error, the server action will handle the redirect
-      
+
     } catch (error) {
       logger.error('Signup form error:', {error});
-      
+
       // Check if this is a Next.js redirect (not a real error)
       if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
         return // Don't show error toast for redirects
       }
-      
+
       toastActions.error("Error", "An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

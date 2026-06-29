@@ -202,7 +202,7 @@ export function useMembers(gymId: string | null, filters?: MemberFilters) {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      supabase.removeChannel(subscription)
     }
   }, [gymId, isAuthenticated, user, queryClient])
 
@@ -275,7 +275,7 @@ export function useMember(memberId: string | null) {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      supabase.removeChannel(subscription)
     }
   }, [memberId, isAuthenticated, user, queryClient])
 

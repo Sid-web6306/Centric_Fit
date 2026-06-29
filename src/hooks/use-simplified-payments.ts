@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
+import posthog from 'posthog-js'
 
 // Re-export utility functions from use-trial for backward compatibility
 export { 
@@ -261,18 +262,18 @@ export function useSimplifiedPayments() {
         if (!response.ok) {
           const errorText = await response.text()
           logger.info('API Error Response (text):', { errorText, status: response.status })
-          
+
           let errorData
           try {
             errorData = JSON.parse(errorText)
           } catch {
             errorData = { error: errorText }
           }
-          
+
           logger.info('API Error Response (parsed):', { errorData, status: response.status })
           throw new Error(errorData.error || 'Failed to create payment')
         }
-        
+
         const data = await response.json()
         logger.info('Payment successful:', {data})
         return data
@@ -282,23 +283,32 @@ export function useSimplifiedPayments() {
       }
     },
     retry: 0, // 🔒 DISABLE RETRIES - Prevent automatic retry of failed payment mutations
+    onSuccess: (data) => {
+      // Track payment initiated event
+      posthog.capture('payment_initiated', {
+        plan_id: data.subscriptionData?.newPlanId,
+        billing_cycle: data.subscriptionData?.billingCycle,
+        amount: data.amount,
+        flow: data.flow
+      })
+    },
     onError: (error: Error) => {
       logger.error('Error creating payment:', {error})
-      
+
       // Check if it's the UPI restriction error
       const errorMessage = error.message
-      logger.info('Checking for UPI restriction:', { 
-        errorMessage, 
+      logger.info('Checking for UPI restriction:', {
+        errorMessage,
         includesUPI: errorMessage.includes('subscriptions cannot be updated when payment mode is upi'),
         includesError: errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION'),
         errorMessageLength: errorMessage.length,
         errorMessageType: typeof errorMessage
       })
-      
+
       if (errorMessage.includes('subscriptions cannot be updated when payment mode is upi') ||
           errorMessage.includes('UPI_SUBSCRIPTION_RESTRICTION')) {
         logger.info('UPI subscription restriction detected, showing toast notification')
-        
+
         // Show toast notification instead of modal
         toastActions.warning(
           'UPI Subscription Restriction',
@@ -306,7 +316,7 @@ export function useSimplifiedPayments() {
         )
         return // Don't show generic error toast
       }
-      
+
       logger.info('Showing generic error toast - UPI restriction not detected')
       toastActions.error('Payment Failed', error.message)
     },

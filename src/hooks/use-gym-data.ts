@@ -108,7 +108,50 @@ export const gymKeys = {
   analytics: (id: string) => [...gymKeys.all, 'analytics', id] as const,
 }
 
-// Enhanced Gym Data Hook with real-time updates and auth handling
+// Hook that sets up a single real-time gym subscription.
+// Call this ONCE from the layout/AppSidebar — NOT from every data consumer.
+// The Supabase Realtime client reuses channels by topic name: if multiple
+// components call supabase.channel('gym-xyz') the second one receives the
+// already-subscribed instance and .on() throws.
+export function useGymRealtime(gymId: string | null) {
+  const queryClient = useQueryClient()
+  const { isAuthenticated, user } = useAuth()
+
+  useEffect(() => {
+    if (!gymId || !isAuthenticated || !user) return
+
+    const supabase = createClient()
+
+    const subscription = supabase
+      .channel(`gym-${gymId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'gyms',
+          filter: `id=eq.${gymId}`,
+        },
+        (payload) => {
+          logger.info('Gym real-time update:', payload)
+
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            queryClient.setQueryData(gymKeys.detail(gymId), payload.new as Gym)
+          } else if (payload.eventType === 'DELETE') {
+            queryClient.removeQueries({ queryKey: gymKeys.detail(gymId) })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }, [gymId, isAuthenticated, user, queryClient])
+}
+
+// Pure data hook — no realtime subscription.
+// Safe to call from any number of components simultaneously.
 export function useGymData(gymId: string | null) {
   const queryClient = useQueryClient()
   const { isAuthenticated, user } = useAuth()
@@ -159,51 +202,13 @@ export function useGymData(gymId: string | null) {
     },
   })
 
-  // Enhanced authentication state monitoring and cleanup
+  // Cancel queries on logout
   useEffect(() => {
-    // Cancel any ongoing queries when user logs out or loses authentication
     if (!isAuthenticated || !user) {
       logger.info('Gym data: Detected logout, cancelling gym queries')
       queryClient.cancelQueries({ queryKey: gymKeys.all })
-      return
     }
   }, [isAuthenticated, user, queryClient])
-
-  // Set up real-time subscription for gym updates (without toasts - mutations handle them)
-  useEffect(() => {
-    // Only create subscription if user is authenticated and has a gym
-    if (!gymId || !isAuthenticated || !user) return
-
-    const supabase = createClient()
-    
-    const subscription = supabase
-      .channel(`gym-${gymId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'gyms',
-          filter: `id=eq.${gymId}`,
-        },
-        (payload) => {
-          logger.info('Gym real-time update:', payload)
-          
-          if (payload.eventType === 'UPDATE' && payload.new) {
-            // Update cache with real-time data (no toast - mutations handle user feedback)
-            queryClient.setQueryData(gymKeys.detail(gymId), payload.new as Gym)
-          } else if (payload.eventType === 'DELETE') {
-            // Handle gym deletion (no toast - this would be a rare admin action)
-            queryClient.removeQueries({ queryKey: gymKeys.detail(gymId) })
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [gymId, isAuthenticated, user, queryClient])
 
   return query
 }

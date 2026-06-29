@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { logger } from '@/lib/logger'
 import { hashToken } from '@/lib/invite-utils'
+import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 
 
 // GET /api/invites/verify?invite=... - Verify invitation token
 export async function GET(request: NextRequest) {
+  const rateLimitResponse = await checkRateLimit(request, 'invitesPublic', getClientIP(request))
+  if (rateLimitResponse) return rateLimitResponse
+
   try {
     const { searchParams } = new URL(request.url)
     const token = searchParams.get('invite')
@@ -76,6 +80,9 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
+
+    const rateLimitResponse = await checkRateLimit(request, 'invites', user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     if (!user.email) {
       return NextResponse.json({ error: 'User email is required' }, { status: 400 })

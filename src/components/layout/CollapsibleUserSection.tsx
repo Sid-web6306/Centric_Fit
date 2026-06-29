@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { UserAvatar } from '@/components/ui/user-avatar'
@@ -49,12 +48,7 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
             
             {/* User info tooltip */}
             {showTooltips && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                whileHover={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-none"
-              >
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                 <div className="bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg text-sm border min-w-[200px]">
                   <p className="font-medium truncate">{displayName}</p>
                   {email && (
@@ -62,7 +56,7 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
                   )}
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover border-l border-b rotate-45" />
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
 
@@ -81,27 +75,18 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
             
             {/* Logout tooltip */}
             {showTooltips && (
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                whileHover={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15 }}
-                className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-none"
-              >
+              <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                 <div className="bg-popover text-popover-foreground px-2 py-1 rounded-md shadow-md text-sm font-medium whitespace-nowrap border">
                   {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-popover border-l border-b rotate-45" />
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
       ) : (
         /* Expanded State - Full Layout */
-        <motion.div
-          initial={false}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2, delay: 0.1 }}
-        >
+        <div>
           <div className="flex items-center mb-3">
             <div className="flex-shrink-0">
               <UserAvatar 
@@ -112,12 +97,7 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
                 size="md"
               />
             </div>
-            <motion.div
-              initial={false}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2, delay: 0.15 }}
-              className="ml-3 min-w-0 flex-1"
-            >
+            <div className="ml-3 min-w-0 flex-1">
               <p className="text-sm font-medium text-card-foreground truncate">
                 {displayName}
               </p>
@@ -126,14 +106,10 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
                   {email}
                 </p>
               )}
-            </motion.div>
+            </div>
           </div>
           
-          <motion.div
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: 0.2 }}
-          >
+          <div>
             <Button
               onClick={handleLogout}
               variant="outline"
@@ -144,8 +120,8 @@ export function CollapsibleUserSection({ className, forceExpanded = false }: Col
               <LogOut className="h-4 w-4 mr-2" />
               {logoutMutation.isPending ? 'Signing out...' : 'Sign out'}
             </Button>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/utils/supabase/client'
 import { logger } from '@/lib/logger'
 import { toastActions } from '@/stores/toast-store'
+import posthog from 'posthog-js'
 
 // Type definitions (keeping the useful ones)
 export interface SubscriptionPlan {
@@ -297,14 +298,21 @@ export function useTrialInitialization() {
       // Invalidate the consolidated subscription query to refresh UI
       queryClient.invalidateQueries({ queryKey: ['subscription-data'] })
       queryClient.invalidateQueries({ queryKey: ['auth'] })
-      
+
+      // Track trial started event
+      if (!data.message?.includes('already active')) {
+        posthog.capture('trial_started', {
+          subscription_id: data.subscriptionId
+        })
+      }
+
       // Show appropriate success message
       if (data.message?.includes('already active')) {
         toastActions.info('Trial Active', 'Your trial subscription is already active.')
       } else {
         toastActions.success('Trial Started!', data.message || 'Your 14-day free trial has begun.')
       }
-      
+
       logger.info('Trial initialization successful - queries invalidated')
     },
     onError: (error) => {

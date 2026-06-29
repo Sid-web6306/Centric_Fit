@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
-
-// Helper to get user's gym_id
-async function getUserGymId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('gym_id')
-    .eq('id', userId)
-    .single()
-  
-  return profile?.gym_id || null
-}
+import { withAuth } from '@/lib/api-handler'
+import { getUserGymId } from '@/lib/supabase-helpers'
 
 // GET /api/staff - List staff members for a gym
 export async function GET(request: NextRequest) {
@@ -24,12 +14,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Resolve gym ID
     let targetGymId = gymId

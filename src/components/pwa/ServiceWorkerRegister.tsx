@@ -8,7 +8,8 @@ export default function ServiceWorkerRegister() {
 
     const register = async () => {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js')
+        const swUrl = `/sw.js?v=${process.env.NEXT_PUBLIC_BUILD_HASH || 'v2'}`
+        const registration = await navigator.serviceWorker.register(swUrl)
         
 
         // Handle updates
@@ -22,7 +23,7 @@ export default function ServiceWorkerRegister() {
             })
           }
         })
-      } catch (error) {
+      } catch {
         
       }
     }

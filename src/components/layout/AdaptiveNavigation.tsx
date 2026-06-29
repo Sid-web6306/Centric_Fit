@@ -1,6 +1,7 @@
 'use client'
 
 import Link from "next/link"
+import dynamic from 'next/dynamic'
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/use-auth"
@@ -26,9 +27,14 @@ import {
   Smartphone
 } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
-import { PopupModal } from 'react-calendly'
+
 import { createClient } from '@/utils/supabase/client'
 import { toast } from 'sonner'
+
+const PopupModal = dynamic(
+  () => import('react-calendly').then((m) => ({ default: m.PopupModal })),
+  { ssr: false }
+)
 
 // Calendly popup hook
 const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL

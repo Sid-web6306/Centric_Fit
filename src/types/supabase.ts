@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       attendance_sessions: {
@@ -126,86 +101,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      chart_access_rules: {
-        Row: {
-          access_level: string
-          chart_id: string
-          created_at: string | null
-          id: string
-          plan_type: string
-          updated_at: string | null
-        }
-        Insert: {
-          access_level: string
-          chart_id: string
-          created_at?: string | null
-          id?: string
-          plan_type: string
-          updated_at?: string | null
-        }
-        Update: {
-          access_level?: string
-          chart_id?: string
-          created_at?: string | null
-          id?: string
-          plan_type?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chart_access_rules_chart_id_fkey"
-            columns: ["chart_id"]
-            isOneToOne: false
-            referencedRelation: "chart_definitions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      chart_definitions: {
-        Row: {
-          category: string
-          chart_key: string
-          component_name: string
-          created_at: string | null
-          description: string | null
-          icon_name: string | null
-          id: string
-          is_active: boolean | null
-          metadata: Json | null
-          sort_order: number | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          category: string
-          chart_key: string
-          component_name: string
-          created_at?: string | null
-          description?: string | null
-          icon_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          metadata?: Json | null
-          sort_order?: number | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          category?: string
-          chart_key?: string
-          component_name?: string
-          created_at?: string | null
-          description?: string | null
-          icon_name?: string | null
-          id?: string
-          is_active?: boolean | null
-          metadata?: Json | null
-          sort_order?: number | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       documents: {
         Row: {
@@ -540,6 +435,84 @@ export type Database = {
             columns: ["member_id"]
             isOneToOne: false
             referencedRelation: "members_with_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      member_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          gym_id: string
+          id: string
+          member_id: string
+          notes: string | null
+          payment_date: string
+          payment_method: string
+          recorded_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          gym_id: string
+          id?: string
+          member_id: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          gym_id?: string
+          id?: string
+          member_id?: string
+          notes?: string | null
+          payment_date?: string
+          payment_method?: string
+          recorded_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_payments_gym_id_fkey"
+            columns: ["gym_id"]
+            isOneToOne: false
+            referencedRelation: "gyms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "member_portal_adoption"
+            referencedColumns: ["member_id"]
+          },
+          {
+            foreignKeyName: "member_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_payments_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members_with_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_payments_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1055,39 +1028,6 @@ export type Database = {
           },
         ]
       }
-      user_chart_access: {
-        Row: {
-          chart_permissions: Json
-          created_at: string | null
-          expires_at: string
-          gym_id: string
-          id: string
-          plan_type: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          chart_permissions?: Json
-          created_at?: string | null
-          expires_at: string
-          gym_id: string
-          id?: string
-          plan_type: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          chart_permissions?: Json
-          created_at?: string | null
-          expires_at?: string
-          gym_id?: string
-          id?: string
-          plan_type?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -1340,10 +1280,15 @@ export type Database = {
         Args: { p_member_id: string }
         Returns: boolean
       }
-      cancel_subscription: {
-        Args: { p_subscription_id: string }
-        Returns: boolean
-      }
+      cancel_subscription:
+        | { Args: { p_subscription_id: string }; Returns: boolean }
+        | {
+            Args: {
+              p_cancel_at_period_end?: boolean
+              p_subscription_id: string
+            }
+            Returns: boolean
+          }
       check_gym_access: {
         Args: { p_gym_id: string; p_user_id: string }
         Returns: boolean
@@ -1626,10 +1571,6 @@ export type Database = {
           staff_user_id: string
           total_seconds: number
         }[]
-      }
-      get_user_chart_access: {
-        Args: { p_gym_id: string; p_user_id: string }
-        Returns: Json
       }
       get_user_gym_id:
         | { Args: never; Returns: string }
@@ -1994,9 +1935,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

@@ -3,13 +3,40 @@
  * Clean, minimal implementation with template support
  */
 
+import React from 'react'
+import { render } from '@react-email/render'
 import { type InvitationEmailData } from './email-templates/invitation-email'
 import { sendTemplateEmailViaMSG91 } from './msg91'
 import { logger } from './logger'
 import { serverConfig } from './config'
+import InvitationEmailComponent, {
+  type InvitationEmailProps,
+} from '../../emails/InvitationEmail'
+import WelcomeEmailComponent, {
+  type WelcomeEmailProps,
+} from '../../emails/WelcomeEmail'
 
 // Re-export the type for consumers
 export type { InvitationEmailData }
+
+/**
+ * Render InvitationEmail component to an HTML string.
+ * Use for previewing or sending raw-HTML emails.
+ */
+export async function renderInvitationHtml(
+  props: InvitationEmailProps
+): Promise<string> {
+  return render(React.createElement(InvitationEmailComponent, props))
+}
+
+/**
+ * Render WelcomeEmail component to an HTML string.
+ */
+export async function renderWelcomeHtml(
+  props: WelcomeEmailProps
+): Promise<string> {
+  return render(React.createElement(WelcomeEmailComponent, props))
+}
 
 /**
  * Email service interface

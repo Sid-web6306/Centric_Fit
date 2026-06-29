@@ -1,17 +1,10 @@
 'use client'
 
-import { 
-  DynamicCard,
-  DynamicCardContent,
-  DynamicButton,
-  DynamicBadge,
-  DynamicTimer,
-  DynamicCrown,
-  DynamicAlertTriangle,
-  DynamicCheckCircle,
-  DynamicArrowRight,
-  DynamicLink
-} from '@/lib/dynamic-imports'
+import Link from 'next/link'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Timer, Crown, AlertTriangle, CheckCircle, ArrowRight } from 'lucide-react'
 import { 
   isTrialExpiringSoon, 
   isTrialActive, 
@@ -60,7 +53,7 @@ export function TrialStatus({
     if (variant === 'badge') {
       const statusColor = getSubscriptionStatusColor(subscriptionInfo.status)
       return (
-        <DynamicBadge 
+        <Badge 
           variant="outline" 
           className={`
             ${statusColor === 'green' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' : ''}
@@ -71,9 +64,9 @@ export function TrialStatus({
             ${className}
           `}
         >
-          <DynamicCheckCircle className="w-3 h-3 mr-1" />
+          <CheckCircle className="w-3 h-3 mr-1" />
           {getSubscriptionStatusText(subscriptionInfo.status)}
-        </DynamicBadge>
+        </Badge>
       )
     }
     return null
@@ -86,9 +79,9 @@ export function TrialStatus({
   }
 
   const getStatusIcon = () => {
-    if (!isActive) return DynamicAlertTriangle
-    if (isExpiringSoon) return DynamicTimer
-    return DynamicTimer
+    if (!isActive) return AlertTriangle
+    if (isExpiringSoon) return Timer
+    return Timer
   }
 
   const getStatusText = () => {
@@ -103,7 +96,7 @@ export function TrialStatus({
 
   if (variant === 'badge') {
     return (
-      <DynamicBadge 
+      <Badge 
         variant="outline" 
         className={`
           ${color === 'red' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800' : ''}
@@ -114,7 +107,7 @@ export function TrialStatus({
       >
         <Icon className="w-3 h-3 mr-1" />
         {statusText}
-      </DynamicBadge>
+      </Badge>
     )
   }
 
@@ -134,11 +127,11 @@ export function TrialStatus({
           {statusText}
         </span>
         {showUpgradeButton && (
-          <DynamicLink href="/upgrade">
-            <DynamicButton size="sm" variant="outline" className="h-6 text-xs">
+          <Link href="/upgrade">
+            <Button size="sm" variant="outline" className="h-6 text-xs">
               Upgrade
-            </DynamicButton>
-          </DynamicLink>
+            </Button>
+          </Link>
         )}
       </div>
     )
@@ -180,17 +173,17 @@ export function TrialStatus({
             </div>
           </div>
           {showUpgradeButton && (
-            <DynamicLink href="/upgrade">
-              <DynamicButton 
+            <Link href="/upgrade">
+              <Button 
                 variant={!isActive ? 'default' : 'outline'}
                 size="sm"
                 className="gap-2"
               >
-                <DynamicCrown className="w-4 h-4" />
+                <Crown className="w-4 h-4" />
                 Upgrade Now
-                <DynamicArrowRight className="w-4 h-4" />
-              </DynamicButton>
-            </DynamicLink>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           )}
         </div>
       </div>
@@ -199,13 +192,13 @@ export function TrialStatus({
 
   // Default card variant
   return (
-    <DynamicCard className={`
+    <Card className={`
       ${color === 'red' ? 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20' : ''}
       ${color === 'orange' ? 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20' : ''}
       ${color === 'blue' ? 'border-primary/20 bg-primary/5' : ''}
       ${className}
     `}>
-      <DynamicCardContent className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-full ${
@@ -240,8 +233,8 @@ export function TrialStatus({
             </div>
           </div>
           {showUpgradeButton && (
-            <DynamicLink href="/upgrade">
-              <DynamicButton 
+            <Link href="/upgrade">
+              <Button 
                 variant={!isActive ? 'default' : 'outline'}
                 size="sm"
                 className={`gap-2 ${
@@ -250,13 +243,13 @@ export function TrialStatus({
                   'border-primary text-primary hover:bg-primary hover:text-primary-foreground'
                 }`}
               >
-                <DynamicCrown className="w-4 h-4" />
+                <Crown className="w-4 h-4" />
                 Upgrade Now
-              </DynamicButton>
-            </DynamicLink>
+              </Button>
+            </Link>
           )}
         </div>
-      </DynamicCardContent>
-    </DynamicCard>
+      </CardContent>
+    </Card>
   )
 } 

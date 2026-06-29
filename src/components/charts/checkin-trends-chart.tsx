@@ -1,6 +1,6 @@
 'use client'
 
-import { LineChart, Card, Title, Text } from '@tremor/react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Activity } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -55,19 +55,13 @@ const generateCheckinData = (): CheckinData[] => {
   return data
 }
 
-// Get theme-based colors using Tremor's AvailableChartColorsKeys
-const getThemeColors = (theme: string | undefined) => {
+const getThemeColor = (theme: string | undefined): string => {
   switch (theme) {
-    case 'blue':
-      return ['blue']
-    case 'green':
-      return ['emerald']
-    case 'purple':
-      return ['violet']
-    case 'rose':
-      return ['pink']
-    default:
-      return ['amber'] // Default for light theme
+    case 'blue':   return '#2563eb'
+    case 'green':  return '#10b981'
+    case 'purple': return '#8b5cf6'
+    case 'rose':   return '#ec4899'
+    default:       return '#f59e0b'
   }
 }
 
@@ -85,30 +79,17 @@ export const CheckinTrendsChart = ({ data, isLoading = false }: CheckinTrendsCha
     }
   }, [data])
 
-  // Get colors based on current theme
-  const colors = getThemeColors(theme)
+  const color = getThemeColor(theme)
 
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
-      <Card className="animate-pulse">
+      <div className="rounded-lg border bg-card p-6 shadow-sm animate-pulse">
         <div className="flex items-center gap-2 mb-6">
           <Activity className="h-5 w-5 text-gray-400" />
           <div className="h-6 bg-gray-200 rounded w-32"></div>
         </div>
         <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
-    )
-  }
-  
-  if (isLoading) {
-    return (
-      <Card className="animate-pulse">
-        <div className="flex items-center gap-2 mb-6">
-          <Activity className="h-5 w-5 text-gray-400" />
-          <div className="h-6 bg-gray-200 rounded w-32"></div>
-        </div>
-        <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
+      </div>
     )
   }
 
@@ -122,55 +103,46 @@ export const CheckinTrendsChart = ({ data, isLoading = false }: CheckinTrendsCha
     : 0
 
   return (
-    <Card>
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Activity className={`h-5 w-5 ${theme === 'blue' ? 'text-blue-600' : theme === 'green' ? 'text-emerald-600' : theme === 'purple' ? 'text-purple-600' : theme === 'rose' ? 'text-rose-600' : 'text-orange-600'}`} />
-          <Title>Check-in Trends</Title>
+          <h3 className="text-sm font-medium text-card-foreground">Check-in Trends</h3>
         </div>
         <div className="text-right">
-          <Text className="text-sm text-gray-600">vs yesterday</Text>
-          <Text className={`text-sm font-medium ${dailyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className="text-sm text-muted-foreground">vs yesterday</p>
+          <p className={`text-sm font-medium ${dailyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {dailyChange >= 0 ? '+' : ''}{dailyChange.toFixed(1)}%
-          </Text>
+          </p>
         </div>
       </div>
-      
-      <LineChart
-        data={chartData}
-        index="day"
-        categories={["checkins"]}
-        colors={colors}
-        valueFormatter={(number) => `${number} check-ins`}
-        className="h-64"
-        showLegend={false}
-        showGridLines={true}
-        curveType="monotone"
-        connectNulls={true}
-      />
-      
+
+      <ResponsiveContainer width="100%" height={256}>
+        <LineChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis dataKey="day" tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 12 }} />
+          <Tooltip formatter={(value) => [`${Number(value)} check-ins`, 'Check-ins']} />
+          <Line type="monotone" dataKey="checkins" stroke={color} strokeWidth={2} dot={{ fill: color, r: 4 }} connectNulls />
+        </LineChart>
+      </ResponsiveContainer>
+
       <div className="mt-4 pt-4 border-t border-gray-100">
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
-            <Text className="text-gray-600">Today</Text>
-            <Text className="font-medium text-gray-900">
-              {todayCheckins} check-ins
-            </Text>
+            <p className="text-muted-foreground">Today</p>
+            <p className="font-medium text-card-foreground">{todayCheckins} check-ins</p>
           </div>
           <div>
-            <Text className="text-gray-600">7-Day Average</Text>
-            <Text className="font-medium text-gray-900">
-              {averageCheckins} check-ins
-            </Text>
+            <p className="text-muted-foreground">7-Day Average</p>
+            <p className="font-medium text-card-foreground">{averageCheckins} check-ins</p>
           </div>
           <div>
-            <Text className="text-gray-600">Weekly Total</Text>
-            <Text className="font-medium text-gray-900">
-              {totalCheckins} check-ins
-            </Text>
+            <p className="text-muted-foreground">Weekly Total</p>
+            <p className="font-medium text-card-foreground">{totalCheckins} check-ins</p>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

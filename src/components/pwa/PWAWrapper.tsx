@@ -1,10 +1,7 @@
 'use client'
 
-import { 
-  DynamicInstallPrompt as InstallPrompt,
-  DynamicOfflineStatus as OfflineStatus,
-  // DynamicUpdatePrompt as UpdatePrompt
-} from '@/lib/dynamic-imports'
+import { InstallPrompt } from '@/components/pwa/InstallPrompt'
+import { OfflineStatus } from '@/components/pwa/OfflineStatus'
 
 export function PWAWrapper() {
   return (

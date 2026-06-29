@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
+import { withAuth } from '@/lib/api-handler'
+import { getUserGymId } from '@/lib/supabase-helpers'
 
 // Validation schemas
 const createGymSchema = z.object({
@@ -19,33 +20,12 @@ const updateGymSchema = z.object({
   logo_url: z.string().url('Invalid logo URL').optional().nullable(),
 })
 
-// Helper to resolve gym_id from user or parameter
-async function resolveGymId(request: NextRequest, user: { id: string }): Promise<string | null> {
-  const { searchParams } = new URL(request.url)
-  const gymId = searchParams.get('gym_id')
-  
-  if (gymId) return gymId
-  
-  // Get gym_id from user's profile
-  const supabase = await createClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('gym_id')
-    .eq('id', user.id)
-    .single()
-  
-  return profile?.gym_id || null
-}
-
 // GET /api/gyms - Fetch gym(s)
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     const { searchParams } = new URL(request.url)
     const gymId = searchParams.get('id')
@@ -69,7 +49,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ gym })
     } else {
       // Fetch user's gym
-      const userGymId = await resolveGymId(request, user)
+      const userGymId = (await getUserGymId(supabase, user.id)) ?? null
       if (!userGymId) {
         return NextResponse.json({ error: 'No gym association found' }, { status: 400 })
       }
@@ -97,12 +77,9 @@ export async function GET(request: NextRequest) {
 // POST /api/gyms - Create new gym
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     const body = await request.json()
     const validatedData = createGymSchema.parse(body)
@@ -160,12 +137,9 @@ export async function POST(request: NextRequest) {
 // PUT /api/gyms - Update gym
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     const { searchParams } = new URL(request.url)
     const gymId = searchParams.get('id')

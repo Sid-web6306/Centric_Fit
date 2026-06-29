@@ -25,13 +25,13 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
   const [otp, setOtp] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const [isResending, setIsResending] = useState(false)
-  const [resendCooldown, setResendCooldown] = useState(60) // 60 second cooldown before resend
+  const [resendCooldown, setResendCooldown] = useState(60) // 60s spam-prevention cooldown (OTP itself expires in 5 min)
   const [error, setError] = useState('')
   const [attempts, setAttempts] = useState(0)
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  // Cooldown timer for resend button (not code expiry - codes are valid much longer)
+  // Cooldown timer for resend button (not code expiry - codes are valid for 5 minutes)
   useEffect(() => {
     if (resendCooldown > 0) {
       const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
@@ -189,6 +189,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({
             autoFocus
             className="mb-4"
           />
+          <p className="text-xs text-gray-500 mt-1">This code expires in 5 minutes.</p>
         </div>
 
         {error && (

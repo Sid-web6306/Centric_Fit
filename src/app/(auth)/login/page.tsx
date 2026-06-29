@@ -14,8 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { FcGoogle } from "react-icons/fc"
-import { FaFacebook } from "react-icons/fa"
+import { GoogleIcon, FacebookIcon } from "@/components/ui/brand-icons"
 import { Loader2 } from "lucide-react"
 
 import { loginWithEmail, loginWithSocialProvider } from "@/actions/auth.actions"
@@ -50,7 +49,7 @@ const SocialButton = ({
   disabled: boolean
 }) => {
   const isGoogle = provider === 'google'
-  const Icon = isGoogle ? FcGoogle : FaFacebook
+  const Icon = isGoogle ? GoogleIcon : FacebookIcon
   const bgColor = isGoogle ? "bg-white hover:bg-gray-50" : "bg-[#1877F2] hover:bg-[#166eab]"
   const textColor = isGoogle ? "text-gray-900" : "text-white hover:text-white"
   const borderColor = isGoogle ? "border-gray-300" : "border-[#1877F2]"

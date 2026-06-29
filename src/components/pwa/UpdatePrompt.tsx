@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { DynamicCard, DynamicCardContent } from '@/lib/dynamic-imports'
+import { Card, CardContent } from '@/components/ui/card'
 
 function getSignature(headers: Headers): string {
   const etag = headers.get('etag')
@@ -115,8 +115,8 @@ export function UpdatePrompt({
   if (!updateAvailable || shouldSnooze) return null
 
   return (
-    <DynamicCard className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-[1000] shadow-lg border-primary bg-background">
-      <DynamicCardContent className="p-4 flex items-center justify-between gap-3">
+    <Card className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-[1000] shadow-lg border-primary bg-background">
+      <CardContent className="p-4 flex items-center justify-between gap-3">
         <div className="text-sm">
           A new version is available.
         </div>
@@ -124,8 +124,8 @@ export function UpdatePrompt({
           <Button size="sm" onClick={() => { if (latestSigRef.current) setStoredSig(latestSigRef.current); location.reload() }}>Reload</Button>
           <Button size="sm" variant="outline" onClick={() => { setSnoozeFor(snoozeMs); setUpdateAvailable(false) }}>Later</Button>
         </div>
-      </DynamicCardContent>
-    </DynamicCard>
+      </CardContent>
+    </Card>
   )
 }
 

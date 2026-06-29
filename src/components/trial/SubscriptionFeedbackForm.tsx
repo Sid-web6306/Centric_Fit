@@ -1,13 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { 
-  DynamicLabel,
-  DynamicRadioGroup,
-  DynamicRadioGroupItem,
-  DynamicTextarea,
-  DynamicStar
-} from '@/lib/dynamic-imports'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Textarea } from '@/components/ui/textarea'
+import { Star } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -87,20 +84,20 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
                 Why are you canceling your subscription?
               </FormLabel>
               <FormControl>
-                <DynamicRadioGroup
+                <RadioGroup
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                   className="space-y-2"
                 >
                   {cancellationReasons.map((reason) => (
                     <div key={reason.value} className="flex items-center space-x-2">
-                      <DynamicRadioGroupItem value={reason.value} id={reason.value} />
-                      <DynamicLabel htmlFor={reason.value} className="text-sm cursor-pointer">
+                      <RadioGroupItem value={reason.value} id={reason.value} />
+                      <Label htmlFor={reason.value} className="text-sm cursor-pointer">
                         {reason.label}
-                      </DynamicLabel>
+                      </Label>
                     </div>
                   ))}
-                </DynamicRadioGroup>
+                </RadioGroup>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -117,7 +114,7 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
                 Additional feedback (optional)
               </FormLabel>
               <FormControl>
-                <DynamicTextarea
+                <Textarea
                   placeholder="Tell us more about your experience..."
                   className="resize-none"
                   {...field}
@@ -130,9 +127,9 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
 
         {/* Rating */}
         <div className="space-y-2">
-          <DynamicLabel className="text-sm leading-none font-medium">
+          <Label className="text-sm leading-none font-medium">
             How would you rate your overall experience?
-          </DynamicLabel>
+          </Label>
           <div className="flex items-center space-x-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -143,7 +140,7 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
                 onMouseLeave={() => setHoveredRating(0)}
                 className="p-1 transition-colors"
               >
-                <DynamicStar
+                <Star
                   className={`h-5 w-5 ${
                     star <= (hoveredRating || rating)
                       ? 'fill-yellow-400 text-yellow-400'
@@ -165,9 +162,9 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
 
         {/* Would recommend */}
         <div className="space-y-2">
-          <DynamicLabel className="text-sm leading-none font-medium">
+          <Label className="text-sm leading-none font-medium">
             Would you recommend us to others?
-          </DynamicLabel>
+          </Label>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <input
@@ -178,9 +175,9 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
                 onChange={(e) => form.setValue('wouldRecommend', e.target.value === 'true')}
                 className="h-4 w-4"
               />
-              <DynamicLabel htmlFor="recommend-yes" className="text-sm cursor-pointer">
+              <Label htmlFor="recommend-yes" className="text-sm cursor-pointer">
                 Yes
-              </DynamicLabel>
+              </Label>
             </div>
             <div className="flex items-center space-x-2">
               <input
@@ -191,9 +188,9 @@ export function SubscriptionFeedbackForm({ onSubmit }: SubscriptionFeedbackFormP
                 onChange={(e) => form.setValue('wouldRecommend', e.target.value === 'true')}
                 className="h-4 w-4"
               />
-              <DynamicLabel htmlFor="recommend-no" className="text-sm cursor-pointer">
+              <Label htmlFor="recommend-no" className="text-sm cursor-pointer">
                 No
-              </DynamicLabel>
+              </Label>
             </div>
           </div>
         </div>

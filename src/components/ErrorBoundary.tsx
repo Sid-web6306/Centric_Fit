@@ -95,12 +95,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 }
 
 const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({ 
-  error, 
   resetError, 
   errorId 
 }) => {
-  const isDev = process.env.NODE_ENV === 'development'
-
   const handleGoHome = () => {
     if (typeof window !== 'undefined') {
       window.location.href = '/'
@@ -126,25 +123,6 @@ const DefaultErrorFallback: React.FC<ErrorFallbackProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isDev && error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <h4 className="text-sm font-medium text-red-800 mb-2">
-                Error Details (Development Only)
-              </h4>
-              <p className="text-xs text-red-700 font-mono">{error.message}</p>
-              {error.stack && (
-                <details className="mt-2">
-                  <summary className="text-xs text-red-600 cursor-pointer">
-                    Stack Trace
-                  </summary>
-                  <pre className="text-xs text-red-700 mt-1 whitespace-pre-wrap">
-                    {error.stack}
-                  </pre>
-                </details>
-              )}
-            </div>
-          )}
-          
           <div className="text-xs text-gray-500 text-center">
             Error ID: <code className="bg-gray-100 px-1 rounded">{errorId}</code>
           </div>

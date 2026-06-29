@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 import { getMemberErrorResponse } from '@/lib/member-error-messages'
+import { withAuth } from '@/lib/api-handler'
+import { getUserGymId } from '@/lib/supabase-helpers'
 
 // Validation schemas
 const createMemberSchema = z.object({
@@ -25,18 +26,6 @@ const updateMemberSchema = z.object({
   join_date: z.string().optional()
 })
 
-// Helper to get user's gym_id (supports both id and auth_user_id patterns)
-async function getUserGymId(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<string | null> {
-  // Try auth_user_id first (new pattern), then fall back to id (legacy pattern)
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('gym_id')
-    .or(`auth_user_id.eq.${userId},id.eq.${userId}`)
-    .single()
-  
-  return profile?.gym_id || null
-}
-
 // GET /api/members - List members or get single member by ID
 export async function GET(request: NextRequest) {
   try {
@@ -49,12 +38,9 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const summary = searchParams.get('summary') === 'true'
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Resolve gym ID
     let targetGymId = gymId
@@ -180,12 +166,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createMemberSchema.parse(body)
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Check permissions
     const canCreate = await checkUserPermission(user.id, validatedData.gym_id, 'members.create')
@@ -254,12 +237,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = updateMemberSchema.parse(body)
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Get member to verify gym ownership
     const { data: existingMember, error: fetchError } = await supabase
@@ -328,12 +308,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Member ID is required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Get member to verify gym ownership
     const { data: existingMember, error: fetchError } = await supabase

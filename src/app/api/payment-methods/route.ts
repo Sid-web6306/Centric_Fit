@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function GET() {
   try {
@@ -50,6 +51,15 @@ export async function POST(request: NextRequest) {
       setAsDefault = false,
       cardDetails // For Razorpay, card details come from frontend
     } = await request.json()
+
+    // Get authenticated user early for rate limiting
+    const supabase = await createClient()
+    const { data: { user: rlUser }, error: rlAuthError } = await supabase.auth.getUser()
+    if (rlAuthError || !rlUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const rateLimitResponse = await checkRateLimit(request, 'paymentMethods', rlUser.id)
+    if (rateLimitResponse) return rateLimitResponse
     
     // Validate card details structure if provided
     if (cardDetails) {
@@ -79,13 +89,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Payment method token is required' }, { status: 400 })
     }
 
-    // Get authenticated user
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Use the supabase client and user already obtained for rate limiting above
+    const user = rlUser
 
     // For Razorpay, payment methods are typically handled differently
     // We'll store the token and card details directly in our database

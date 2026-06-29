@@ -28,6 +28,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { toastActions } from '@/stores/toast-store'
 import React from 'react';
 import { Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { GettingStartedChecklist } from '@/components/dashboard/GettingStartedChecklist'
 
 const DashboardPage = () => {
   const searchParams = useSearchParams()
@@ -147,37 +148,12 @@ const DashboardPage = () => {
         </div>
       </DashboardHeader>
 
-      {/* Welcome Banner for New Users */}
-      {isWelcomeRedirect && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-4">
-              <div className="p-3 bg-primary/10 rounded-full">
-                <CheckCircle2 className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">🎉 Welcome to Your Gym Dashboard!</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  You&apos;re all set! Start by adding your first members, tracking attendance, and watching your business grow.
-                </p>
-                <div className="flex gap-2">
-                  <Link href="/members">
-                    <Button size="sm">
-                      <UserPlus className="h-3 w-3 mr-1" />
-                      Add First Member
-                    </Button>
-                  </Link>
-                  <Link href="/settings">
-                    <Button size="sm" variant="outline">
-                      <Settings className="h-3 w-3 mr-1" />
-                      Configure Settings
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Getting Started checklist — shown until all steps are complete */}
+      {!analyticsLoading && (
+        <GettingStartedChecklist
+          totalMembers={analytics?.totalMembers ?? 0}
+          todayCheckins={analytics?.todayCheckins ?? 0}
+        />
       )}
 
       {analyticsLoading || isRefreshing ? (

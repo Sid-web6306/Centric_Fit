@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { motion } from 'framer-motion'
 import { Loader2, Building2, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -117,11 +116,8 @@ const AcceptInviteContent = () => {
       <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary/10 rounded-full blur-3xl pointer-events-none" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-lg relative z-10"
+      <div
+        className="w-full max-w-lg relative z-10 animate-in fade-in slide-in-from-bottom-5 duration-500"
       >
         <Card className="border-border shadow-xl backdrop-blur-sm bg-card/80 overflow-hidden">
           {/* Header Banner */}
@@ -247,7 +243,7 @@ const AcceptInviteContent = () => {
             </div>
           </CardContent>
         </Card>
-      </motion.div>
+      </div>
     </div>
   )
 }

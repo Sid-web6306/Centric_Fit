@@ -2,17 +2,9 @@
 
 import { useState } from 'react'
 import { usePWA } from '@/hooks/use-pwa'
-import {
-  DynamicButton,
-  DynamicCard,
-  DynamicCardContent,
-  DynamicCardDescription,
-  DynamicCardHeader,
-  DynamicCardTitle,
-  DynamicX,
-  DynamicDownload,
-  DynamicSmartphone
-} from '@/lib/dynamic-imports'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { X, Download, Smartphone } from 'lucide-react'
 
 export function InstallPrompt() {
   const { isInstalled, showPrompt, install, dismiss, isIOS, canPrompt } = usePWA()
@@ -29,35 +21,38 @@ export function InstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-[100] animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <DynamicCard className="border-primary/20 bg-background/95 backdrop-blur-sm shadow-2xl overflow-hidden">
+    <div
+      className="fixed left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-[100] animate-in fade-in slide-in-from-bottom-4 duration-500"
+      style={{ bottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))' }}
+    >
+      <Card className="border-primary/20 bg-background/95 backdrop-blur-sm shadow-2xl overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-primary/10" />
-        <DynamicCardHeader className="pb-2">
+        <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <DynamicCardTitle className="text-lg flex items-center gap-2 font-bold tracking-tight">
+            <CardTitle className="text-lg flex items-center gap-2 font-bold tracking-tight">
               <div className="p-1.5 rounded-lg bg-primary/10">
-                <DynamicSmartphone className="h-5 w-5 text-primary" />
+                <Smartphone className="h-5 w-5 text-primary" />
               </div>
               Install Centric Fit
-            </DynamicCardTitle>
-            <DynamicButton
+            </CardTitle>
+            <Button
               variant="ghost"
               size="icon"
               onClick={dismiss}
               className="h-8 w-8 rounded-full hover:bg-muted"
             >
-              <DynamicX className="h-4 w-4" />
-            </DynamicButton>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
-          <DynamicCardDescription className="text-sm leading-relaxed mt-2">
+          <CardDescription className="text-sm leading-relaxed mt-2">
             {isIOS
               ? 'Add to home screen for a seamless mobile experience'
               : showInstructions
                 ? 'Follow these steps to manually install'
                 : 'Install our app for faster access, offline use, and a better experience.'}
-          </DynamicCardDescription>
-        </DynamicCardHeader>
-        <DynamicCardContent className="pt-2">
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-2">
           {(isIOS || showInstructions) ? (
             <div className="space-y-3 rounded-xl bg-muted/50 p-3 border border-border/50">
               {isIOS ? (
@@ -85,30 +80,30 @@ export function InstallPrompt() {
                     <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">2</div>
                     <p>Or open the <span className="font-semibold text-foreground underline decoration-primary/30">Browser Menu</span> (three dots/lines) and find &quot;Install App&quot; or &quot;Save and Share&quot; &gt; &quot;Install App&quot;.</p>
                   </div>
-                  <DynamicButton onClick={() => setShowInstructions(false)} variant="ghost" size="sm" className="w-full text-[10px] h-6">
+                  <Button onClick={() => setShowInstructions(false)} variant="ghost" size="sm" className="w-full text-[10px] h-6">
                     Back to install
-                  </DynamicButton>
+                  </Button>
                 </>
               )}
             </div>
           ) : (
             <div className="flex gap-2">
-              <DynamicButton
+              <Button
                 onClick={handleInstallClick}
                 className="flex-1 font-semibold shadow-sm transition-all hover:translate-y-[-1px] active:translate-y-[0px]"
                 size="sm"
               >
-                <DynamicDownload className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-2" />
                 {canPrompt ? 'Install App' : 'How to Install'}
-              </DynamicButton>
-              <DynamicButton
+              </Button>
+              <Button
                 onClick={dismiss}
                 variant="outline"
                 size="sm"
                 className="border-primary/20 hover:bg-primary/5 shadow-sm"
               >
                 Later
-              </DynamicButton>
+              </Button>
             </div>
           )}
           {!isIOS && !canPrompt && !showInstructions && (
@@ -116,8 +111,8 @@ export function InstallPrompt() {
               Can&apos;t find the button? Click &quot;How to Install&quot; above.
             </p>
           )}
-        </DynamicCardContent>
-      </DynamicCard>
+        </CardContent>
+      </Card>
     </div>
   )
 }

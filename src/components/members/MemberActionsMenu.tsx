@@ -17,7 +17,8 @@ import {
   CheckCircle, 
   Clock,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  IndianRupee
 } from 'lucide-react'
 import { type Member } from '@/types/member.types'
 import { MemberPortalInvite } from './MemberPortalInvite'
@@ -27,13 +28,15 @@ interface MemberActionsMenuProps {
   onEdit?: (member: Member) => void
   onDelete?: (member: Member) => void
   onSuccess?: () => void
+  onRecordPayment?: (member: Member) => void
 }
 
 export function MemberActionsMenu({ 
   member, 
   onEdit, 
   onDelete, 
-  onSuccess 
+  onSuccess,
+  onRecordPayment
 }: MemberActionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -123,6 +126,12 @@ export function MemberActionsMenu({
             Portal Access Active
           </DropdownMenuItem>
         )}
+
+        {/* Record Payment */}
+        <DropdownMenuItem onClick={() => onRecordPayment?.(member)}>
+          <IndianRupee className="h-4 w-4 mr-2" />
+          Record Payment
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Centric Fit - Fitness Management System',
     short_name: 'centricfit',
     description: 'Complete gym management solution with member tracking, analytics, and subscription management',
-    start_url: '/',
+    start_url: '/dashboard',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#000000',

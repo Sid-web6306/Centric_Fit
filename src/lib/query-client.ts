@@ -61,17 +61,7 @@ function makeQueryClient() {
         restoreScrollPosition()
       },
     }),
-    queryCache: new QueryCache({
-      onSuccess: () => {
-        restoreScrollPosition()
-      },
-      onError: () => {
-        restoreScrollPosition()
-      },
-      onSettled: () => {
-        restoreScrollPosition()
-      },
-    }),
+    queryCache: new QueryCache(),
   })
 }
 

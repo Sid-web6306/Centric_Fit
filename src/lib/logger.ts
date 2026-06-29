@@ -4,7 +4,7 @@ interface LogContext {
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
-// const isDev = process.env.NODE_ENV === 'development'
+const isDev = process.env.NODE_ENV === 'development'
 const minLevel: LogLevel = 'info'
 
 const levels: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 }
@@ -22,8 +22,12 @@ function formatContext(ctx?: LogContext): string {
 }
 
 function log(level: LogLevel, message: string, context?: LogContext) {
-  // Completely suppress all logs in the browser environment (Inspect console)
   if (typeof window !== 'undefined') {
+    // Browser: emit all levels in dev, warn/error only in prod
+    const browserMin: LogLevel = isDev ? 'debug' : 'warn'
+    if (levels[level] < levels[browserMin]) return
+    const ctx = context && Object.keys(context).length ? context : undefined
+    console[level](`${icons[level]} ${message}`, ...(ctx ? [ctx] : []))
     return
   }
 
@@ -37,10 +41,8 @@ function log(level: LogLevel, message: string, context?: LogContext) {
   const icon = icons[level]
   const logMessage = `${color}${icon} [${time}] ${message}${ctx}${reset}\n`
 
-  // Use process.stdout.write if available (better for server-only logs in some environments)
-  // otherwise fallback to console.
-  const g = globalThis as any
-  if (typeof g.process !== 'undefined' && g.process.stdout) {
+  const g = globalThis as unknown as { process?: { stdout?: { write: (s: string) => void } } }
+  if (g.process?.stdout) {
     g.process.stdout.write(logMessage)
   } else {
     console[level](logMessage.trim())

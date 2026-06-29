@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, getClientIP } from '@/lib/rate-limit'
 // import { createClient } from '@/utils/supabase/server'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { action, phone, userId } = body
@@ -9,6 +10,11 @@ export async function POST(request: Request) {
     if (!action || !phone) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
+
+    // Rate limit by phone number (primary) + IP fallback to prevent SMS cost abuse
+    const rateLimitId = phone ? `phone:${phone}` : getClientIP(request)
+    const rateLimitResponse = await checkRateLimit(request, 'communications', rateLimitId)
+    if (rateLimitResponse) return rateLimitResponse
 
     // Placeholder implementation. Integrate MSG91 or chosen OTP provider server-side.
     // For now, just return success for send action and validate for verify action in future.
@@ -28,8 +34,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-  } catch (err) {
-    
+  } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

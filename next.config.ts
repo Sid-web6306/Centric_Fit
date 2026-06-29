@@ -2,6 +2,10 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_BUILD_HASH:
+      process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) || Date.now().toString(),
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 31536000, // 1 year
@@ -92,11 +96,33 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
           },
-          // Content-Security-Policy should be tuned per deployment:
-          // {
-          //   key: 'Content-Security-Policy',
-          //   value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com; ...",
-          // },
+          // ---------------------------------------------------------------
+          // CSP in Report-Only mode — monitor for 1 week, then enforce.
+          // Switch key to 'Content-Security-Policy' to enforce.
+          // Directives cover: Supabase, Razorpay, Sentry, Vercel Analytics,
+          // Google OAuth, MSG91, and self-hosted assets.
+          // ---------------------------------------------------------------
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://cdn.razorpay.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://lh3.googleusercontent.com https://lh4.googleusercontent.com https://lh5.googleusercontent.com https://lh6.googleusercontent.com https://*.supabase.co https://*.supabase.in https://avatars.githubusercontent.com https://www.gravatar.com https://gravatar.com",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.supabase.in wss://*.supabase.in https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com https://*.ingest.sentry.io https://vitals.vercel-insights.com https://va.vercel-scripts.com https://accounts.google.com https://api.msg91.com",
+              "frame-src https://api.razorpay.com https://checkout.razorpay.com https://accounts.google.com",
+              "worker-src 'self' blob:",
+              "manifest-src 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join('; '),
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=()',
+          },
         ],
       },
     ]

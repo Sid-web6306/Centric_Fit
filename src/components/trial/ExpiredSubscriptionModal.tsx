@@ -1,18 +1,9 @@
 'use client'
 
-import { 
-  DynamicButton,
-  DynamicCard,
-  DynamicCardContent,
-  DynamicCardDescription,
-  DynamicCardHeader,
-  DynamicCardTitle,
-  DynamicBadge,
-  DynamicCrown,
-  DynamicCheckCircle,
-  DynamicUsers,
-  DynamicCreditCard
-} from '@/lib/dynamic-imports'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Crown, CheckCircle, Users, CreditCard } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatCurrency } from '@/hooks/use-trial'
 
@@ -45,7 +36,7 @@ export function ExpiredSubscriptionModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <DynamicCreditCard className="h-5 w-5 text-red-500" />
+            <CreditCard className="h-5 w-5 text-red-500" />
             Subscription Expired
           </DialogTitle>
           <DialogDescription>
@@ -55,22 +46,22 @@ export function ExpiredSubscriptionModal({
 
         <div className="space-y-6">
           {/* Current Status */}
-          <DynamicCard className="border-red-200 bg-red-50">
-            <DynamicCardHeader>
-              <DynamicCardTitle className="text-red-800">Access Restricted</DynamicCardTitle>
-              <DynamicCardDescription className="text-red-600">
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="text-red-800">Access Restricted</CardTitle>
+              <CardDescription className="text-red-600">
                 Your subscription has expired and you no longer have access to premium features.
-              </DynamicCardDescription>
-            </DynamicCardHeader>
-            <DynamicCardContent>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="flex items-center gap-2">
-                <DynamicBadge variant="destructive">Expired</DynamicBadge>
+                <Badge variant="destructive">Expired</Badge>
                 <span className="text-sm text-red-600">
                   You can still view your data but cannot add new members or access premium features.
                 </span>
               </div>
-            </DynamicCardContent>
-          </DynamicCard>
+            </CardContent>
+          </Card>
 
           {/* Available Plans */}
           {plans.length > 0 && (
@@ -78,17 +69,17 @@ export function ExpiredSubscriptionModal({
               <h3 className="text-lg font-semibold mb-4">Available Plans</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 {plans.map((plan) => (
-                  <DynamicCard key={plan.id} className="relative">
-                    <DynamicCardHeader>
-                      <DynamicCardTitle className="flex items-center gap-2">
-                        {plan.name === 'Professional' && <DynamicCrown className="h-5 w-5 text-yellow-500" />}
+                  <Card key={plan.id} className="relative">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        {plan.name === 'Professional' && <Crown className="h-5 w-5 text-yellow-500" />}
                         {plan.name}
-                      </DynamicCardTitle>
-                      <DynamicCardDescription>
+                      </CardTitle>
+                      <CardDescription>
                         {formatCurrency(plan.price_monthly_inr)}/month or {formatCurrency(plan.price_annual_inr)}/year
-                      </DynamicCardDescription>
-                    </DynamicCardHeader>
-                    <DynamicCardContent>
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
                       <div className="space-y-3">
                         {plan.features && plan.features.length > 0 && (
                           <div>
@@ -96,7 +87,7 @@ export function ExpiredSubscriptionModal({
                             <ul className="space-y-1">
                               {plan.features.map((feature: string, index: number) => (
                                 <li key={index} className="flex items-center gap-2 text-sm">
-                                  <DynamicCheckCircle className="h-4 w-4 text-green-500" />
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
                                   {feature}
                                 </li>
                               ))}
@@ -105,13 +96,13 @@ export function ExpiredSubscriptionModal({
                         )}
                         {plan.member_limit && (
                           <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <DynamicUsers className="h-4 w-4" />
+                            <Users className="h-4 w-4" />
                             Up to {plan.member_limit} members
                           </div>
                         )}
                       </div>
-                    </DynamicCardContent>
-                  </DynamicCard>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -119,21 +110,21 @@ export function ExpiredSubscriptionModal({
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <DynamicButton
+          <Button
             variant="outline"
             onClick={onCancelSubscription}
             disabled={isLoading}
             className="w-full sm:w-auto"
           >
             Cancel Account
-          </DynamicButton>
-          <DynamicButton
+          </Button>
+          <Button
             onClick={onUpdateSubscription}
             disabled={isLoading}
             className="w-full sm:w-auto"
           >
             Update Subscription
-          </DynamicButton>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

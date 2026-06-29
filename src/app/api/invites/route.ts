@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 import { checkUserPermission } from '@/actions/rbac.actions'
 import { logger } from '@/lib/logger'
 import { InvitationService, createInviteSchema } from '@/lib/invitation-service'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { withAuth } from '@/lib/api-handler'
+import { getUserGymId } from '@/lib/supabase-helpers'
 
 // Schema for update operations
 const updateInviteSchema = z.object({
@@ -26,18 +28,14 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Resolve gym ID
     let targetGymId = gym_id ?? undefined
     if (!targetGymId) {
-      const { data: profile } = await supabase.from('profiles').select('gym_id').or(`auth_user_id.eq.${user.id},id.eq.${user.id}`).single()
-      targetGymId = profile?.gym_id ?? undefined
+      targetGymId = (await getUserGymId(supabase, user.id)) ?? undefined
     }
 
     if (!targetGymId) {
@@ -108,12 +106,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createInviteSchema.parse(body)
     
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
+
+    const rateLimitResponse = await checkRateLimit(request, 'invites', user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     const service = new InvitationService(supabase, user)
     const result = await service.createInvitation(validatedData)
@@ -147,12 +145,9 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = updateInviteSchema.parse(body)
     
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     // Get invitation
     const { data: invitation, error: fetchError } = await supabase
@@ -211,12 +206,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'invite_id is required' }, { status: 400 })
     }
 
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const auth = await withAuth()
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { user, supabase } = auth
 
     const service = new InvitationService(supabase, user)
     const result = await service.revokeInvitation(invite_id)

@@ -1,5 +1,6 @@
-const CACHE_NAME = 'centric-fit-v2'
-const STATIC_CACHE = 'centric-fit-static-v2'
+const _buildHash = new URL(self.location.href).searchParams.get('v') || 'v2'
+const CACHE_NAME = `centric-fit-${_buildHash}`
+const STATIC_CACHE = `centric-fit-static-${_buildHash}`
 
 // Basic files to cache
 const STATIC_ASSETS = [

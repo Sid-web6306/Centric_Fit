@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createServiceRoleClient } from '@/utils/supabase/server'
 import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
 import type { Tables } from '@/types/supabase'
@@ -394,8 +394,11 @@ async function handleCancelSubscription(
       }
     }
 
-    // Cancel subscription in database (always end-of-cycle)
-    const { error: cancelError } = await supabase.rpc('cancel_subscription', {
+    // Cancel subscription in database (always end-of-cycle).
+    // Uses service role client because EXECUTE on cancel_subscription is
+    // revoked from the authenticated role (security fix: migration 20260625).
+    const serviceSupabase = createServiceRoleClient()
+    const { error: cancelError } = await serviceSupabase.rpc('cancel_subscription', {
       p_subscription_id: subscriptionId
     })
 

@@ -41,17 +41,11 @@ export default function Error({
                     We apologize for the inconvenience. An unexpected error has occurred.
                 </p>
 
-                {/* Error Details (only in development) */}
-                {process.env.NODE_ENV === 'development' && error.message && (
+                {error.digest && (
                     <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700">
-                        <p className="text-sm text-red-400 font-mono break-all">
-                            {error.message}
+                        <p className="text-xs text-slate-500">
+                            Error ID: {error.digest}
                         </p>
-                        {error.digest && (
-                            <p className="text-xs text-slate-500 mt-2">
-                                Error ID: {error.digest}
-                            </p>
-                        )}
                     </div>
                 )}
 

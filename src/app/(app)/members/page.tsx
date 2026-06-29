@@ -63,6 +63,7 @@ import { BulkImportDialog } from '@/components/members/BulkImportDialog'
 import { MemberActionsMenu, MemberPortalStatusBadge } from '@/components/members/MemberActionsMenu'
 import { exportMembersToCSV } from '@/lib/member-csv'
 import { toast } from 'sonner'
+import { RecordPaymentDialog } from '@/components/payments/RecordPaymentDialog'
 
 
 const MembersPage = () => {
@@ -82,6 +83,13 @@ const MembersPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bulkInviteDialogOpen, setBulkInviteDialogOpen] = useState(false)
   const [bulkImportDialogOpen, setBulkImportDialogOpen] = useState(false)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [paymentMemberId, setPaymentMemberId] = useState<string | null>(null)
+
+  const openPaymentDialog = (memberId: string) => {
+    setPaymentMemberId(memberId)
+    setPaymentDialogOpen(true)
+  }
 
   const pageSize = 10
 
@@ -443,38 +451,40 @@ const MembersPage = () => {
             <ResponsiveTableBody>
                 {membersLoading ? (
                   <ResponsiveTableSkeleton rows={5} columns={7} />
-                ) : members.length === 0 ? (
+                ) : members.length === 0 && !searchQuery && !statusFilter ? (
                   <ResponsiveTableRow>
-                    <ResponsiveTableCell colSpan={7} className="h-96">
-                      <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                        <Users className="h-20 w-20 text-muted-foreground opacity-40" />
-                        <div className="space-y-3">
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            {searchQuery || statusFilter 
-                              ? 'No members found' 
-                              : 'No members yet'}
-                          </h3>
-                          <p className="text-muted-foreground text-lg max-w-sm mx-auto">
-                            {searchQuery || statusFilter
-                              ? 'Try adjusting your search or filters'
-                              : 'Get started by adding your first member'}
+                    <ResponsiveTableCell colSpan={7} className="p-0">
+                      <div className="flex flex-col items-center justify-center py-20 text-center gap-6 px-6">
+                        <div className="rounded-full bg-muted p-6">
+                          <Users className="h-12 w-12 text-muted-foreground" />
+                        </div>
+                        <div className="space-y-2 max-w-sm">
+                          <h3 className="text-xl font-semibold">Add your first member</h3>
+                          <p className="text-muted-foreground">
+                            Your member list is empty. Start building your roster — add members manually or import a CSV.
                           </p>
                         </div>
-                        {!searchQuery && !statusFilter && (
+                        <div className="flex flex-wrap gap-3 justify-center">
                           <MemberManagementGuard action="create" fallback={
-                            <div className="text-center py-4">
-                              <AccessDenied 
-                                message="You need staff privileges or above to add members. Contact your gym manager to request access." 
-                              />
-                            </div>
+                            <AccessDenied message="Adding members requires staff privileges." />
                           }>
-                            <Button onClick={() => setAddDialogOpen(true)} size="lg" className="mt-4">
-                              <UserPlus className="h-5 w-5 mr-2" />
-                              Add Your First Member
+                            <Button onClick={() => setAddDialogOpen(true)}>
+                              <UserPlus className="h-4 w-4 mr-2" />
+                              Add Member
+                            </Button>
+                            <Button variant="outline" onClick={() => setBulkImportDialogOpen(true)}>
+                              <Upload className="h-4 w-4 mr-2" />
+                              Import CSV
                             </Button>
                           </MemberManagementGuard>
-                        )}
+                        </div>
                       </div>
+                    </ResponsiveTableCell>
+                  </ResponsiveTableRow>
+                ) : members.length === 0 ? (
+                  <ResponsiveTableRow>
+                    <ResponsiveTableCell colSpan={7} className="py-16 text-center text-muted-foreground">
+                      No members match your search or filter.
                     </ResponsiveTableCell>
                   </ResponsiveTableRow>
                 ) : (
@@ -540,6 +550,7 @@ const MembersPage = () => {
                           onEdit={(member) => openEditDialog(member.id)}
                           onDelete={(member) => openDeleteDialog(member.id)}
                           onSuccess={() => refetchMembers()}
+                          onRecordPayment={(member) => openPaymentDialog(member.id)}
                         />
                       </ResponsiveTableActionsCell>
                     </ResponsiveTableRow>
@@ -616,6 +627,20 @@ const MembersPage = () => {
         onOpenChange={setBulkImportDialogOpen}
         onSuccess={handleImportSuccess}
       />
+
+      {/* Record Payment Dialog */}
+      {gymId && paymentMemberId && (
+        <RecordPaymentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          memberId={paymentMemberId}
+          gymId={gymId}
+          memberName={(() => {
+            const m = members.find(m => m.id === paymentMemberId)
+            return m ? `${m.first_name} ${m.last_name}`.trim() : undefined
+          })()}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

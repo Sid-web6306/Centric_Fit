@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
 import { serverConfig } from '@/lib/config'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // POST /api/payments - Create or update Razorpay subscription
 export async function POST(request: NextRequest) {
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rateLimitResponse = await checkRateLimit(request, 'payments', user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     // Get user profile for metadata
     const { data: profile } = await supabase

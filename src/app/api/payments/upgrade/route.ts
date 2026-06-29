@@ -4,6 +4,7 @@ import { PaymentService } from '@/services/payment.service'
 import { logger } from '@/lib/logger'
 import { serverConfig } from '@/lib/config'
 import { validatePaymentVerification } from 'razorpay/dist/utils/razorpay-utils'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 interface UpgradePaymentRequest {
   razorpay_payment_id: string
@@ -85,6 +86,9 @@ export async function POST(request: NextRequest) {
       logger.error('Upgrade payment verification: User not authenticated', { authError })
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const rateLimitResponse = await checkRateLimit(request, 'payments', user.id)
+    if (rateLimitResponse) return rateLimitResponse
 
     // Get user's gym_id
     const { data: profile, error: profileError } = await supabase

@@ -1,12 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  DynamicCard,
-  DynamicCardContent,
-  DynamicWifiOff,
-  DynamicWifi
-} from '@/lib/dynamic-imports'
+import { Card, CardContent } from '@/components/ui/card'
+import { WifiOff, Wifi } from 'lucide-react'
 
 export function OfflineStatus() {
   const [isOnline, setIsOnline] = useState(true)
@@ -59,16 +55,16 @@ export function OfflineStatus() {
   if (!mounted || (!showOfflineMessage && isOnline)) return null
 
   return (
-    <DynamicCard className={`fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 shadow-lg transition-all duration-300 ${
+    <Card className={`fixed top-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 shadow-lg transition-all duration-300 ${
       isOnline 
         ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800' 
         : 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
     }`}>
-      <DynamicCardContent className="p-4">
+      <CardContent className="p-4">
         <div className="flex items-center gap-3">
           {isOnline ? (
             <>
-              <DynamicWifi className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <Wifi className="h-5 w-5 text-green-600 dark:text-green-400" />
               <div>
                 <p className="font-medium text-green-800 dark:text-green-200">
                   Back Online
@@ -80,7 +76,7 @@ export function OfflineStatus() {
             </>
           ) : (
             <>
-              <DynamicWifiOff className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <WifiOff className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               <div>
                 <p className="font-medium text-orange-800 dark:text-orange-200">
                   You&apos;re Offline
@@ -92,7 +88,7 @@ export function OfflineStatus() {
             </>
           )}
         </div>
-      </DynamicCardContent>
-    </DynamicCard>
+      </CardContent>
+    </Card>
   )
 } 

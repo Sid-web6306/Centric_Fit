@@ -26,6 +26,7 @@ import { usePortalData } from '@/components/providers/portal-data-provider'
 import { useOfflineQueue } from '@/hooks/use-offline-queue'
 import { format } from 'date-fns'
 import { logger } from '@/lib/logger'
+import { MembershipStatusCard } from '@/components/portal/MembershipStatusCard'
 
 export default function MemberPortalDashboard() {
   const [checkinNotes, setCheckinNotes] = useState('')
@@ -252,8 +253,12 @@ export default function MemberPortalDashboard() {
         </CardContent>
       </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Membership Status + Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-1">
+          <MembershipStatusCard profile={profileData} isLoading={profileLoading} />
+        </div>
+        <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -311,6 +316,7 @@ export default function MemberPortalDashboard() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
 
       {/* Recent Activity */}
@@ -366,30 +372,6 @@ export default function MemberPortalDashboard() {
         </CardContent>
       </Card>
 
-      {/* Navigation shortcuts for mobile */}
-      <div className="lg:hidden grid grid-cols-2 gap-4">
-        <Button
-          variant="outline"
-          className="h-16"
-          onClick={() => { window.location.href = '/portal/history' }}
-        >
-          <div className="text-center">
-            <Activity className="h-6 w-6 mx-auto mb-1" />
-            <span className="text-sm">View History</span>
-          </div>
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="h-16"
-          onClick={() => { window.location.href = '/portal/profile' }}
-        >
-          <div className="text-center">
-            <CheckCircle className="h-6 w-6 mx-auto mb-1" />
-            <span className="text-sm">Profile</span>
-          </div>
-        </Button>
-      </div>
     </div>
   )
 }

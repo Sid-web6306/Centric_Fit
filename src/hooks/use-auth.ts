@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
@@ -345,60 +346,33 @@ export function useUpdateProfile() {
 }
 
 // Post-onboarding sync for refreshing data
-// Debounce helper to prevent multiple rapid calls
-let syncDebounceTimer: ReturnType<typeof setTimeout> | null = null
 const SYNC_DEBOUNCE_MS = 500
 
 export function usePostOnboardingSync() {
   const queryClient = useQueryClient()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   return async () => {
-    // Debounce to prevent multiple rapid calls
     return new Promise<{ data: AuthData | undefined; error: Error | null }>((resolve) => {
-      if (syncDebounceTimer) {
-        clearTimeout(syncDebounceTimer)
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
       }
       
-      syncDebounceTimer = setTimeout(async () => {
+      timerRef.current = setTimeout(async () => {
         try {
-          // Invalidate queries instead of removing - this respects cache and only refetches if stale
-          // This is more efficient and prevents unnecessary API calls
           await queryClient.invalidateQueries({ queryKey: ['auth-session'] })
           await queryClient.invalidateQueries({ queryKey: ['gym'] })
           await queryClient.invalidateQueries({ queryKey: ['members'] })
           
-          // Get the updated data from cache (or it will refetch if stale)
           const authData = queryClient.getQueryData<AuthData>(['auth-session'])
-          
           resolve({ data: authData, error: null })
         } catch (error) {
           resolve({ data: undefined, error: error as Error })
         } finally {
-          syncDebounceTimer = null
+          timerRef.current = null
         }
       }, SYNC_DEBOUNCE_MS)
     })
   }
 }
 
-// Simplified auth session hook for backward compatibility
-export function useAuthSession() {
-  const { user } = useAuth()
-  return { 
-    user, 
-    sessionId: user?.id?.slice(-10), // Simple session ID from user ID
-    lastRefresh: Date.now() 
-  }
-}
-
-// Simplified auth metrics hook for backward compatibility
-export function useAuthMetrics() {
-  return {
-    refreshCount: 1,
-    lastActivity: Date.now(),
-    tabCount: 1,
-    isHealthy: true,
-    errorCount: 0,
-    sessionDuration: 300000 // 5 minutes in milliseconds
-  }
-}

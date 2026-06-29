@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Card, Title, Text, Color } from '@tremor/react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { DollarSign } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
@@ -49,20 +49,13 @@ const generateRevenueData = (currentRevenue: number): RevenueData[] => {
   return data
 }
 
-// Get theme-based colors using Tremor's AvailableChartColorsKeys
-const getThemeColors = (theme: string | undefined): Color[] => {
-  // Using Tremor's predefined AvailableChartColorsKeys
+const getThemeColors = (theme: string | undefined): [string, string] => {
   switch (theme) {
-    case 'blue':
-      return ['blue', 'cyan'] as Color[]
-    case 'green':
-      return ['emerald', 'lime'] as Color[]
-    case 'purple':
-      return ['violet', 'fuchsia'] as Color[]
-    case 'rose':
-      return ['pink', 'amber'] as Color[]
-    default:
-      return ['blue', 'cyan'] as Color[] // Default for light theme
+    case 'blue':   return ['#2563eb', '#0891b2']
+    case 'green':  return ['#10b981', '#84cc16']
+    case 'purple': return ['#8b5cf6', '#d946ef']
+    case 'rose':   return ['#ec4899', '#f59e0b']
+    default:       return ['#2563eb', '#0891b2']
   }
 }
 
@@ -80,33 +73,18 @@ export const RevenueChart = ({ data, isLoading = false }: RevenueChartProps) => 
     }
   }, [data])
 
-  // Get colors based on current theme
-  const colors = getThemeColors(theme)
-  
-  // Debug logging for colors
-  
+  const [color1, color2] = getThemeColors(theme)
 
-  if (!isClient) {
+
+  if (!isClient || isLoading) {
     return (
-      <Card className="animate-pulse">
+      <div className="rounded-lg border bg-card p-6 shadow-sm animate-pulse">
         <div className="flex items-center gap-2 mb-6">
           <DollarSign className="h-5 w-5 text-gray-400" />
           <div className="h-6 bg-gray-200 rounded w-32"></div>
         </div>
         <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
-    )
-  }
-  
-  if (isLoading) {
-    return (
-      <Card className="animate-pulse">
-        <div className="flex items-center gap-2 mb-6">
-          <DollarSign className="h-5 w-5 text-gray-400" />
-          <div className="h-6 bg-gray-200 rounded w-32"></div>
-        </div>
-        <div className="h-64 bg-gray-100 rounded"></div>
-      </Card>
+      </div>
     )
   }
 
@@ -121,57 +99,48 @@ export const RevenueChart = ({ data, isLoading = false }: RevenueChartProps) => 
   const averageRevenue = Math.round(totalRevenue / chartData.length)
 
   return (
-    <Card>
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <DollarSign className={`h-5 w-5 ${theme === 'blue' ? 'text-blue-600' : theme === 'green' ? 'text-emerald-600' : theme === 'purple' ? 'text-purple-600' : theme === 'rose' ? 'text-rose-600' : 'text-emerald-600'}`} />
-          <Title>Monthly Revenue</Title>
+          <h3 className="text-sm font-medium text-card-foreground">Monthly Revenue</h3>
         </div>
         <div className="text-right">
-          <Text className="text-sm text-gray-600">vs last month</Text>
-          <Text className={`text-sm font-medium ${monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className="text-sm text-muted-foreground">vs last month</p>
+          <p className={`text-sm font-medium ${monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {monthlyGrowth >= 0 ? '+' : ''}{monthlyGrowth.toFixed(1)}%
-          </Text>
+          </p>
         </div>
       </div>
-      
-      <BarChart
-        data={chartData}
-        index="month"
-        categories={["revenue", "target"]}
-        colors={colors}
-        valueFormatter={(number) => `$${number.toLocaleString()}`}
-        className="h-64"
-        showLegend={true}
-        showGridLines={true}
-        showXAxis={true}
-        showYAxis={true}
-        yAxisWidth={48}
-        enableLegendSlider={false}
-      />
-      
+
+      <ResponsiveContainer width="100%" height={256}>
+        <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+          <YAxis width={48} tick={{ fontSize: 12 }} tickFormatter={(v: number) => `$${v.toLocaleString()}`} />
+          <Tooltip formatter={(value) => [`$${Number(value).toLocaleString()}`, '']} />
+          <Legend />
+          <Bar dataKey="revenue" fill={color1} radius={[4, 4, 0, 0]} name="Revenue" />
+          <Bar dataKey="target" fill={color2} radius={[4, 4, 0, 0]} name="Target" />
+        </BarChart>
+      </ResponsiveContainer>
+
       <div className="mt-4 pt-4 border-t border-gray-100">
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
-            <Text className="text-gray-600">Current Month</Text>
-            <Text className="font-medium text-gray-900">
-              ${currentMonth.revenue.toLocaleString()}
-            </Text>
+            <p className="text-muted-foreground">Current Month</p>
+            <p className="font-medium text-card-foreground">${currentMonth.revenue.toLocaleString()}</p>
           </div>
           <div>
-            <Text className="text-gray-600">Target</Text>
-            <Text className="font-medium text-gray-900">
-              ${currentMonth.target.toLocaleString()}
-            </Text>
+            <p className="text-muted-foreground">Target</p>
+            <p className="font-medium text-card-foreground">${currentMonth.target.toLocaleString()}</p>
           </div>
           <div>
-            <Text className="text-gray-600">6-Month Avg</Text>
-            <Text className="font-medium text-gray-900">
-              ${averageRevenue.toLocaleString()}
-            </Text>
+            <p className="text-muted-foreground">6-Month Avg</p>
+            <p className="font-medium text-card-foreground">${averageRevenue.toLocaleString()}</p>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   )
 }

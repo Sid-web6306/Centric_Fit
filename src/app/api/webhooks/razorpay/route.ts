@@ -6,8 +6,17 @@ import { logger, performanceTracker } from '@/lib/logger';
 import { serverConfig } from '@/lib/config';
 // Import Razorpay's official webhook validation utility
 import { validateWebhookSignature } from 'razorpay/dist/utils/razorpay-utils';
+import { PostHog } from 'posthog-node';
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+
+// Initialize PostHog client for server-side events
+const posthog = new PostHog(
+  process.env.NEXT_PUBLIC_POSTHOG_KEY || '',
+  {
+    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+  }
+);
 
 // Razorpay webhook event types
 interface RazorpayPaymentEntity {
@@ -235,18 +244,38 @@ export async function POST(req: NextRequest) {
 }
 
 async function handlePaymentCaptured(
-  event: RazorpayWebhookEvent, 
-  supabase: SupabaseClient, 
+  event: RazorpayWebhookEvent,
+  supabase: SupabaseClient,
   processingStart: number
 ): Promise<void> {
   const payment = event.payload.payment!.entity;
-  
-  logger.info('🎯 Payment captured', { 
+
+  logger.info('🎯 Payment captured', {
     paymentId: payment.id,
     amount: payment.amount,
     currency: payment.currency,
     method: payment.method
   });
+
+  // Track payment success event in PostHog
+  try {
+    posthog.capture({
+      distinctId: payment.notes?.userId || payment.email || 'unknown',
+      event: 'payment_success',
+      properties: {
+        payment_id: payment.id,
+        amount: payment.amount,
+        currency: payment.currency,
+        method: payment.method,
+        subscription_id: payment.notes?.subscriptionId,
+        plan_id: payment.notes?.planId
+      }
+    });
+  } catch (posthogError) {
+    logger.warn('Failed to send payment_success event to PostHog', {
+      error: posthogError instanceof Error ? posthogError.message : String(posthogError)
+    });
+  }
 
   // If this payment is related to a subscription, update the subscription status
   if (payment.notes?.subscriptionId) {
@@ -259,7 +288,7 @@ async function handlePaymentCaptured(
       .eq('razorpay_subscription_id', payment.notes.subscriptionId);
 
     if (error) {
-      logger.error('❌ Error updating subscription after payment capture', { 
+      logger.error('❌ Error updating subscription after payment capture', {
         error: error.message,
         paymentId: payment.id,
         subscriptionId: payment.notes.subscriptionId

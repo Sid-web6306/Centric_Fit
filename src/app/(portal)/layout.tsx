@@ -1,48 +1,33 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Suspense, useDeferredValue, useEffect } from 'react'
-import {
-  Home,
-  History,
-  User,
-  Dumbbell,
-} from 'lucide-react'
+import { Suspense, useEffect } from 'react'
+import { Home, History, User } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useSidebarState } from '@/stores/ui-store'
 import { LoadingSpinner } from '@/components/layout/LoadingSpinner'
-import { CollapsibleNavItem } from '@/components/layout/CollapsibleNavItem'
 import { SidebarToggle } from '@/components/layout/SidebarToggle'
-import { CollapsibleUserSection } from '@/components/layout/CollapsibleUserSection'
-import { useSidebarShortcuts } from '@/hooks/use-sidebar-shortcuts'
 import { cn } from '@/lib/utils'
-import { PWAWrapper } from '@/components/pwa/PWAWrapper'
 import { RealtimeProvider } from '@/components/providers/realtime-provider-simple'
 import { PortalDataProvider } from '@/components/providers/portal-data-provider'
-import { useGymData } from '@/hooks/use-gym-data'
-import Image from 'next/image'
+import { AppSidebar, type SidebarNavItem } from '@/components/layout/AppSidebar'
+import { PortalBottomNav } from '@/components/portal/PortalBottomNav'
 
 interface PortalLayoutProps {
   children: React.ReactNode
 }
 
+const navigation: SidebarNavItem[] = [
+  { name: 'Dashboard', href: '/portal', icon: Home },
+  { name: 'History', href: '/portal/history', icon: History },
+  { name: 'Profile', href: '/portal/profile', icon: User },
+]
+
 function PortalLayoutContent({ children }: PortalLayoutProps) {
   const pathname = usePathname()
-  const deferredPathname = useDeferredValue(pathname)
   const router = useRouter()
-  const { user, isLoading: authLoading, profile } = useAuth()
-  const {
-    sidebarCollapsed,
-    sidebarCollapsedMobile,
-    toggleMobileSidebar,
-  } = useSidebarState()
-
-  // Enable keyboard shortcuts
-  useSidebarShortcuts()
-
-  // Get gym data for logo and name
-  const { data: gymData } = useGymData(profile?.gym_id || null)
+  const { user, isLoading: authLoading } = useAuth()
+  const { sidebarCollapsed } = useSidebarState()
 
   // Handle redirect for unauthenticated users
   useEffect(() => {
@@ -50,12 +35,6 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
       router.push('/login')
     }
   }, [user, authLoading, router])
-
-  const navigation = [
-    { name: 'Dashboard', href: '/portal', icon: Home },
-    { name: 'History', href: '/portal/history', icon: History },
-    { name: 'Profile', href: '/portal/profile', icon: User },
-  ]
 
   // Show loading while auth is initializing
   if (authLoading) {
@@ -77,157 +56,7 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{
-          width: sidebarCollapsed ? 64 : 256,
-        }}
-        transition={{
-          duration: 0.3,
-          ease: 'easeOut'
-        }}
-        className={cn(
-          'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:z-50',
-          'bg-card shadow-lg border-r border-border'
-        )}
-      >
-        {/* Sidebar Header */}
-        <div className={cn(
-          'flex items-center h-16 border-b border-border transition-all duration-300',
-          sidebarCollapsed ? 'justify-center px-2' : 'justify-between px-4'
-        )}>
-          {sidebarCollapsed ? (
-            <SidebarToggle />
-          ) : (
-            <>
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                {gymData?.logo_url ? (
-                  <Image
-                    src={gymData.logo_url}
-                    alt={gymData.name || 'Logo'}
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-md object-contain flex-shrink-0"
-                  />
-                ) : (
-                  <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Dumbbell className="h-6 w-6 text-primary" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-card-foreground truncate">
-                    {gymData?.name || 'Member Portal'}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/70">
-                    Powered by Centric Fit
-                  </p>
-                </div>
-              </div>
-              <SidebarToggle />
-            </>
-          )}
-        </div>
-
-        {/* Navigation */}
-        <nav className="mt-5 flex-1 px-2">
-          <div className="space-y-1">
-            {navigation.map((item) => {
-              const isActive = deferredPathname === item.href
-              return (
-                <CollapsibleNavItem
-                  key={item.name}
-                  name={item.name}
-                  href={item.href}
-                  icon={item.icon}
-                  isActive={isActive}
-                  prefetch={true}
-                />
-              )
-            })}
-          </div>
-        </nav>
-
-        {/* User Section */}
-        <CollapsibleUserSection className="mt-auto" />
-      </motion.div>
-
-      {/* Mobile Sidebar */}
-      <AnimatePresence>
-        {!sidebarCollapsedMobile && (
-          <>
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg border-r border-border"
-            >
-              {/* Mobile Header */}
-              <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {gymData?.logo_url ? (
-                    <Image
-                      src={gymData.logo_url}
-                      alt={gymData.name || 'Logo'}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded-md object-contain flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Dumbbell className="h-6 w-6 text-primary" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-card-foreground truncate">
-                      {gymData?.name || 'Member Portal'}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground/70">
-                      Powered by Centric Fit
-                    </p>
-                  </div>
-                </div>
-                <SidebarToggle isMobile />
-              </div>
-
-              {/* Mobile Navigation */}
-              <nav className="mt-5 px-2 flex-1">
-                <div className="space-y-1">
-                  {navigation.map((item) => {
-                    const isActive = deferredPathname === item.href
-                    return (
-                      <CollapsibleNavItem
-                        key={item.name}
-                        name={item.name}
-                        href={item.href}
-                        icon={item.icon}
-                        isActive={isActive}
-                        onClick={toggleMobileSidebar}
-                        forceExpanded={true}
-                        prefetch={true}
-                      />
-                    )
-                  })}
-                </div>
-              </nav>
-
-              {/* Mobile User Section */}
-              <CollapsibleUserSection forceExpanded />
-            </motion.div>
-
-            {/* Mobile Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="lg:hidden fixed inset-0 z-40 bg-black/50"
-              onClick={toggleMobileSidebar}
-            />
-          </>
-        )}
-      </AnimatePresence>
+      <AppSidebar navigation={navigation} gymNameFallback="Member Portal" />
 
       {/* Main content */}
       <div
@@ -249,12 +78,14 @@ function PortalLayoutContent({ children }: PortalLayoutProps) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto pb-20 lg:pb-0">
           <Suspense fallback={<div className="p-6 text-muted-foreground">Loading...</div>}>
             {children}
           </Suspense>
         </main>
       </div>
+
+      <PortalBottomNav />
     </div>
   )
 }
@@ -263,7 +94,6 @@ export default function PortalLayout({ children }: PortalLayoutProps) {
   return (
     <RealtimeProvider>
       <PortalDataProvider key="portal-data-provider">
-        <PWAWrapper />
         <PortalLayoutContent>
           {children}
         </PortalLayoutContent>

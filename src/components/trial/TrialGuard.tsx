@@ -1,21 +1,10 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { 
-  DynamicCard,
-  DynamicCardContent,
-  DynamicCardDescription,
-  DynamicCardHeader,
-  DynamicCardTitle,
-  DynamicButton,
-  DynamicCrown,
-  DynamicUsers,
-  DynamicLock,
-  DynamicAlertTriangle,
-  DynamicArrowRight,
-  DynamicZap,
-  DynamicLink
-} from '@/lib/dynamic-imports'
+import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Crown, Users, Lock, AlertTriangle, ArrowRight, Zap } from 'lucide-react'
 import { 
   hasActiveSubscription, 
   isTrialActive 
@@ -68,17 +57,17 @@ export function TrialGuard({
 
   if (!trialInfo) {
     return (
-      <DynamicCard className="border-red-200 bg-red-50">
-        <DynamicCardContent className="p-6">
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="p-6">
           <div className="flex items-center gap-3">
-            <DynamicAlertTriangle className="h-6 w-6 text-red-500" />
+            <AlertTriangle className="h-6 w-6 text-red-500" />
             <div>
               <p className="font-medium text-red-800">Unable to verify access</p>
               <p className="text-sm text-red-600">Please refresh the page or contact support.</p>
             </div>
           </div>
-        </DynamicCardContent>
-      </DynamicCard>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -104,7 +93,7 @@ export function TrialGuard({
       return {
         title: 'Trial Expired',
         description: 'Your free trial has ended. Upgrade to continue using this feature.',
-        icon: DynamicAlertTriangle,
+        icon: AlertTriangle,
         color: 'red',
         urgency: 'high'
       }
@@ -114,7 +103,7 @@ export function TrialGuard({
       return {
         title: `${requiredPlan} Plan Required`,
         description: `This feature is only available on the ${requiredPlan} plan or higher.`,
-        icon: DynamicCrown,
+        icon: Crown,
         color: 'purple',
         urgency: 'medium'
       }
@@ -124,7 +113,7 @@ export function TrialGuard({
       return {
         title: 'Member Limit Reached',
         description: `Free trial is limited to ${memberLimit} members. Upgrade to add more.`,
-        icon: DynamicUsers,
+        icon: Users,
         color: 'orange',
         urgency: 'medium'
       }
@@ -133,7 +122,7 @@ export function TrialGuard({
     return {
       title: 'Premium Feature',
       description: 'This feature requires an active subscription.',
-      icon: DynamicLock,
+      icon: Lock,
       color: 'gray',
       urgency: 'low'
     }
@@ -143,13 +132,13 @@ export function TrialGuard({
   const Icon = blockInfo.icon
 
   return (
-    <DynamicCard className={`
+    <Card className={`
       ${blockInfo.color === 'red' ? 'border-red-200 bg-red-50' : ''}
       ${blockInfo.color === 'purple' ? 'border-purple-200 bg-purple-50' : ''}
       ${blockInfo.color === 'orange' ? 'border-orange-200 bg-orange-50' : ''}
       ${blockInfo.color === 'gray' ? 'border-gray-200 bg-gray-50' : ''}
     `}>
-      <DynamicCardHeader className="text-center">
+      <CardHeader className="text-center">
         <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
           blockInfo.color === 'red' ? 'bg-red-100' : 
           blockInfo.color === 'purple' ? 'bg-purple-100' : 
@@ -163,24 +152,24 @@ export function TrialGuard({
             'text-gray-600'
           }`} />
         </div>
-        <DynamicCardTitle className={`${
+        <CardTitle className={`${
           blockInfo.color === 'red' ? 'text-red-900' : 
           blockInfo.color === 'purple' ? 'text-purple-900' : 
           blockInfo.color === 'orange' ? 'text-orange-900' : 
           'text-gray-900'
         }`}>
           {blockInfo.title}
-        </DynamicCardTitle>
-        <DynamicCardDescription className={`${
+        </CardTitle>
+        <CardDescription className={`${
           blockInfo.color === 'red' ? 'text-red-700' : 
           blockInfo.color === 'purple' ? 'text-purple-700' : 
           blockInfo.color === 'orange' ? 'text-orange-700' : 
           'text-gray-700'
         }`}>
           {description || blockInfo.description}
-        </DynamicCardDescription>
-      </DynamicCardHeader>
-      <DynamicCardContent className="text-center space-y-4">
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-center space-y-4">
         <div className="space-y-2">
           <h4 className="font-medium">&ldquo;{feature}&rdquo; Feature</h4>
           <p className="text-sm text-muted-foreground">
@@ -190,25 +179,25 @@ export function TrialGuard({
 
         {showUpgrade && (
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <DynamicLink href="/upgrade">
-              <DynamicButton 
+            <Link href="/upgrade">
+              <Button 
                 className={`gap-2 ${
                   blockInfo.urgency === 'high' ? 'bg-red-600 hover:bg-red-700' : 
                   blockInfo.urgency === 'medium' ? 'bg-purple-600 hover:bg-purple-700' : 
                   'bg-primary hover:bg-primary/90'
                 }`}
               >
-                <DynamicCrown className="w-4 h-4" />
+                <Crown className="w-4 h-4" />
                 {blockInfo.urgency === 'high' ? 'Renew Subscription' : 'Upgrade Now'}
-                <DynamicArrowRight className="w-4 h-4" />
-              </DynamicButton>
-            </DynamicLink>
-            <DynamicLink href="/settings?tab=subscription">
-              <DynamicButton variant="outline" size="sm">
-                <DynamicZap className="w-4 h-4 mr-2" />
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/settings?tab=subscription">
+              <Button variant="outline" size="sm">
+                <Zap className="w-4 h-4 mr-2" />
                 View Plans
-              </DynamicButton>
-            </DynamicLink>
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -223,7 +212,7 @@ export function TrialGuard({
             )}
           </p>
         </div>
-      </DynamicCardContent>
-    </DynamicCard>
+      </CardContent>
+    </Card>
   )
 } 

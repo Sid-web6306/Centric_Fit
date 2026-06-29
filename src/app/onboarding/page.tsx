@@ -14,6 +14,7 @@ import { Stepper, Step } from '@/components/ui/stepper'
 import { PersonalDetailsStep } from '@/components/onboarding/PersonalDetailsStep'
 import { GymNameStep } from '@/components/onboarding/GymNameStep'
 import { createClient } from '@/utils/supabase/client'
+import posthog from 'posthog-js'
 
 type OnboardingStep = 1 | 2
 
@@ -163,6 +164,12 @@ const OnboardingContent = () => {
         logger.error('Trial initialization error:', { trialError })
         // Don't fail the onboarding
       }
+
+      // Track onboarding completion
+      posthog.capture('onboarding_complete', {
+        gym_name: gym,
+        trial_initialized: !trialError
+      })
 
       toastActions.success('Success!', 'Your fitness center has been set up successfully')
 

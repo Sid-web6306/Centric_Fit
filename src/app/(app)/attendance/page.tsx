@@ -471,8 +471,18 @@ const AttendanceList = memo(function AttendanceList({
       <TableBody>
         {!rows || rows.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={showRole ? 6 : 5} className="text-center py-8 text-muted-foreground">
-              No attendance records found.
+            <TableCell colSpan={showRole ? 6 : 5} className="p-0">
+              <div className="flex flex-col items-center justify-center py-16 gap-4 text-center px-6">
+                <div className="rounded-full bg-muted p-5">
+                  <LogIn className="h-10 w-10 text-muted-foreground" />
+                </div>
+                <div className="space-y-1 max-w-xs">
+                  <p className="font-medium text-base">No check-ins yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Attendance records will appear here once members start checking in.
+                  </p>
+                </div>
+              </div>
             </TableCell>
           </TableRow>
         ) : (

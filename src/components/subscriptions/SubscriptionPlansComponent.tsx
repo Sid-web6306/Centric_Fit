@@ -1,21 +1,10 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import {
-  DynamicCard,
-  DynamicCardContent,
-  DynamicCardDescription,
-  DynamicCardHeader,
-  DynamicCardTitle,
-  DynamicButton,
-  DynamicBadge,
-  DynamicUsers,
-  DynamicStar,
-  DynamicZap,
-  DynamicCheck,
-  DynamicTimer,
-  DynamicCheckCircle
-} from '@/lib/dynamic-imports'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Users, Star, Zap, Check, Timer, CheckCircle } from 'lucide-react'
 import { useSimplifiedPaymentSystem } from '@/hooks/use-simplified-payments'
 import { OdometerNumber } from '@/components/ui/animated-number'
 import { isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
@@ -373,10 +362,10 @@ export function SubscriptionPlansComponent({
   // Get plan icon based on tier
   const getPlanIcon = (tierLevel: number) => {
     switch (tierLevel) {
-      case 1: return DynamicUsers
-      case 2: return DynamicStar
-      case 3: return DynamicZap
-      default: return DynamicUsers
+      case 1: return Users
+      case 2: return Star
+      case 3: return Zap
+      default: return Users
     }
   }
 
@@ -436,10 +425,10 @@ export function SubscriptionPlansComponent({
       {/* Trial Status Section - Priority: Show trial status first */}
       {showTrialStatus && (
         <div className="flex justify-center">
-          <DynamicCard className="max-w-md border-2 border-primary/50 bg-gradient-to-r from-card to-primary/5 shadow-lg">
-            <DynamicCardContent className="p-6">
+          <Card className="max-w-md border-2 border-primary/50 bg-gradient-to-r from-card to-primary/5 shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center justify-center gap-3 text-primary">
-                <DynamicTimer className="h-5 w-5" />
+                <Timer className="h-5 w-5" />
                 <span className="font-medium">
                   {trialInfo.days_remaining} days left in your trial
                 </span>
@@ -449,18 +438,18 @@ export function SubscriptionPlansComponent({
                   Choose a plan to continue after your trial ends
                 </p>
               </div>
-            </DynamicCardContent>
-          </DynamicCard>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Current Subscription Status - Show if user has active subscription */}
       {!showTrialStatus && hasSubscription && currentSubscription && (
         <div className="flex justify-center">
-          <DynamicCard className="max-w-md border-2 border-primary shadow-xl shadow-primary/20 bg-gradient-to-r from-card to-primary/5">
-            <DynamicCardContent className="p-6">
+          <Card className="max-w-md border-2 border-primary shadow-xl shadow-primary/20 bg-gradient-to-r from-card to-primary/5">
+            <CardContent className="p-6">
               <div className="flex items-center justify-center gap-3 text-primary">
-                <DynamicCheckCircle className="h-5 w-5" />
+                <CheckCircle className="h-5 w-5" />
                 <span className="font-medium">
                   Current Plan: {currentSubscription.subscription_plans.display_name}
                 </span>
@@ -470,18 +459,18 @@ export function SubscriptionPlansComponent({
                   {currentSubscription.billing_cycle === 'monthly' ? 'Monthly' : 'Annual'} billing • Next billing: {new Date(currentSubscription.current_period_end).toLocaleDateString('en-IN')}
                 </p>
               </div>
-            </DynamicCardContent>
-          </DynamicCard>
+            </CardContent>
+          </Card>
         </div>
       )}
 
       {/* Scheduled Change Status Section */}
       {hasScheduledChange && (
         <div className="flex justify-center">
-          <DynamicCard className="max-w-md border-2 border-orange-500/50 bg-gradient-to-r from-card to-orange-50 shadow-lg">
-            <DynamicCardContent className="p-6">
+          <Card className="max-w-md border-2 border-orange-500/50 bg-gradient-to-r from-card to-orange-50 shadow-lg">
+            <CardContent className="p-6">
               <div className="flex items-center justify-center gap-3 text-orange-600">
-                <DynamicTimer className="h-5 w-5" />
+                <Timer className="h-5 w-5" />
                 <span className="font-medium">
                   Downgrade Scheduled
                 </span>
@@ -494,8 +483,8 @@ export function SubscriptionPlansComponent({
                   Plan changes are locked until the scheduled change takes effect
                 </p>
               </div>
-            </DynamicCardContent>
-          </DynamicCard>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -540,7 +529,7 @@ export function SubscriptionPlansComponent({
           </div>
 
           {/* Enhanced save badge positioned outside the toggle */}
-          <DynamicBadge
+          <Badge
             variant="secondary"
             className={`absolute -top-4 -right-1 z-50 bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/40 text-xs px-2 py-1 whitespace-nowrap shadow-lg backdrop-blur transition-all duration-500 ease-in-out ${billingCycle === 'annual'
               ? 'opacity-100 transform translate-y-0 scale-100'
@@ -548,7 +537,7 @@ export function SubscriptionPlansComponent({
               }`}
           >
             Save 17%
-          </DynamicBadge>
+          </Badge>
         </div>
       </div>
 
@@ -572,7 +561,7 @@ export function SubscriptionPlansComponent({
           const planColor = getPlanColor(plan.tier_level)
 
           return (
-            <DynamicCard
+            <Card
               key={plan.plan_type}
               className={`relative transition-all ${variant === 'premium' ? 'duration-600' : 'duration-300'
                 } ease-in-out hover:shadow-2xl hover:scale-105 backdrop-blur ${isCurrentPlanAndBilling
@@ -584,20 +573,20 @@ export function SubscriptionPlansComponent({
             >
               {isCurrentPlanAndBilling && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-50">
-                  <DynamicBadge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
+                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
                     Current Plan
-                  </DynamicBadge>
+                  </Badge>
                 </div>
               )}
               {!isCurrentPlan && isPopular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-50">
-                  <DynamicBadge className="bg-gradient-to-r from-primary/90 to-primary/70 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
+                  <Badge className="bg-gradient-to-r from-primary/90 to-primary/70 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
                     Most Popular
-                  </DynamicBadge>
+                  </Badge>
                 </div>
               )}
 
-              <DynamicCardHeader className="text-center pb-4 pt-8">
+              <CardHeader className="text-center pb-4 pt-8">
                 <div className="flex items-center justify-center gap-3 mb-2">
                   <div className={`p-2 rounded-full ${planColor === 'blue' ? 'bg-primary/10' :
                     planColor === 'yellow' ? 'bg-primary/15' :
@@ -608,9 +597,9 @@ export function SubscriptionPlansComponent({
                         'text-primary'
                       }`} />
                   </div>
-                  <DynamicCardTitle className="text-xl">
+                  <CardTitle className="text-xl">
                     {plan.plan_type.charAt(0).toUpperCase() + plan.plan_type.slice(1)}
-                  </DynamicCardTitle>
+                  </CardTitle>
                 </div>
 
                 <div className="space-y-2">
@@ -636,25 +625,25 @@ export function SubscriptionPlansComponent({
                   </div>
                 </div>
 
-                <DynamicCardDescription className="text-base mt-2">
+                <CardDescription className="text-base mt-2">
                   {plan.member_limit
                     ? `Up to ${plan.member_limit} members`
                     : 'Unlimited members'
                   }
-                </DynamicCardDescription>
-              </DynamicCardHeader>
+                </CardDescription>
+              </CardHeader>
 
-              <DynamicCardContent className="space-y-6 pt-0">
+              <CardContent className="space-y-6 pt-0">
                 <div className="space-y-3">
                   {plan.features.map((feature: string) => (
                     <div key={feature} className="flex items-center gap-3">
-                      <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                       <span className="text-sm">{feature}</span>
                     </div>
                   ))}
                 </div>
 
-                <DynamicButton
+                <Button
                   onClick={() => handlePlanSelect(plan.id)}
                   disabled={isPaymentInProgress || isLoading || isCurrentPlanAndBilling || hasScheduledChange}
                   className={`w-full h-12 font-medium transition-all ${variant === 'premium' ? 'duration-500' : 'duration-300'
@@ -675,23 +664,23 @@ export function SubscriptionPlansComponent({
                     </div>
                   ) : isCurrentPlanAndBilling ? (
                     <div className="flex items-center gap-2">
-                      <DynamicCheckCircle className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4" />
                       Current Plan
                     </div>
                   ) : hasScheduledChange ? (
                     <div className="flex items-center gap-2">
-                      <DynamicTimer className="h-4 w-4" />
+                      <Timer className="h-4 w-4" />
                       Change Scheduled
                     </div>
                   ) : (
                     <div className="flex items-center gap-2">
-                      <DynamicZap className="h-4 w-4" />
+                      <Zap className="h-4 w-4" />
                       Get Started
                     </div>
                   )}
-                </DynamicButton>
-              </DynamicCardContent>
-            </DynamicCard>
+                </Button>
+              </CardContent>
+            </Card>
           )
         })}
       </div>

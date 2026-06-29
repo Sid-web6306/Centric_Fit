@@ -2,26 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { 
-  DynamicCard,
-  DynamicCardContent,
-  DynamicCardDescription,
-  DynamicCardHeader,
-  DynamicCardTitle,
-  DynamicButton,
-  DynamicBadge,
-  DynamicUsers,
-  DynamicStar,
-  DynamicZap,
-  DynamicCheck,
-  DynamicArrowUpRight,
-  DynamicCreditCard,
-  DynamicCalendar,
-  DynamicTimer,
-  DynamicCheckCircle,
-  DynamicAlertTriangle,
-  DynamicX
-} from '@/lib/dynamic-imports'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Users, Star, Zap, Check, ArrowUpRight, CreditCard, Calendar, Timer, CheckCircle, AlertTriangle, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useSimplifiedPaymentSystem, useTrialStatus, isTrialActive, hasActiveSubscription } from '@/hooks/use-simplified-payments'
 import { SubscriptionPlan } from '@/hooks/use-trial'
@@ -44,10 +28,10 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
   // Get plan icon based on tier
   const getPlanIcon = (tierLevel: number) => {
     switch (tierLevel) {
-      case 1: return DynamicUsers
-      case 2: return DynamicStar  
-      case 3: return DynamicZap
-      default: return DynamicUsers
+      case 1: return Users
+      case 2: return Star  
+      case 3: return Zap
+      default: return Users
     }
   }
 
@@ -119,21 +103,21 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
   if (showTrialStatus) {
     return (
       <div className={`space-y-6 pt-6 ${className}`}>
-        <DynamicCard className="border-2 border-primary/50 shadow-lg bg-gradient-to-b from-card to-primary/5">
+        <Card className="border-2 border-primary/50 shadow-lg bg-gradient-to-b from-card to-primary/5">
           <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <DynamicBadge className="bg-gradient-to-r from-primary/90 to-primary/70 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
+            <Badge className="bg-gradient-to-r from-primary/90 to-primary/70 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
               Free Trial
-            </DynamicBadge>
+            </Badge>
           </div>
           
-          <DynamicCardHeader className="text-center pb-4 pt-8">
+          <CardHeader className="text-center pb-4 pt-8">
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className="p-2 rounded-full bg-primary/15">
-                <DynamicTimer className="h-5 w-5 text-primary" />
+                <Timer className="h-5 w-5 text-primary" />
               </div>
-              <DynamicCardTitle className="text-xl">
+              <CardTitle className="text-xl">
                 Trial Period Active
-              </DynamicCardTitle>
+              </CardTitle>
             </div>
             
             <div className="space-y-2">
@@ -147,12 +131,12 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               </div>
             </div>
             
-            <DynamicCardDescription className="text-base mt-2">
+            <CardDescription className="text-base mt-2">
               Choose a plan to continue after your trial ends
-            </DynamicCardDescription>
-          </DynamicCardHeader>
+            </CardDescription>
+          </CardHeader>
           
-          <DynamicCardContent className="space-y-6 pt-0">
+          <CardContent className="space-y-6 pt-0">
             {/* Trial Benefits */}
             <div className="space-y-3">
               <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
@@ -160,19 +144,19 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-sm">Full access to all features</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-sm">Up to 50 members</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-sm">Basic analytics and reporting</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                   <span className="text-sm">Email support</span>
                 </div>
               </div>
@@ -180,17 +164,17 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
             
             {/* Action Button */}
             <div className="flex justify-center pt-4">
-              <DynamicButton 
+              <Button 
                 onClick={handleUpgradeClick}
                 className="cursor-pointer bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 border-0"
                 size="lg"
               >
-                <DynamicArrowUpRight className="h-4 w-4 mr-2" />
+                <ArrowUpRight className="h-4 w-4 mr-2" />
                 Choose Your Plan
-              </DynamicButton>
+              </Button>
             </div>
-          </DynamicCardContent>
-        </DynamicCard>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -205,19 +189,19 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
     if (!currentPlan) {
       return (
         <div className={`${className}`}>
-          <DynamicCard>
-            <DynamicCardContent className="py-8 text-center">
+          <Card>
+            <CardContent className="py-8 text-center">
               <p className="text-muted-foreground">Unable to load plan details</p>
-              <DynamicButton 
+              <Button 
                 onClick={handleUpgradeClick}
                 variant="outline"
                 className="mt-4 cursor-pointer"
               >
-                <DynamicArrowUpRight className="h-4 w-4 mr-2" />
+                <ArrowUpRight className="h-4 w-4 mr-2" />
                 View Plans
-              </DynamicButton>
-            </DynamicCardContent>
-          </DynamicCard>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )
     }
@@ -230,14 +214,14 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
     return (
       <div className={`space-y-6 pt-6 ${className}`}>
         {/* Current Plan Card */}
-        <DynamicCard className="border-2 border-primary shadow-xl shadow-primary/20 bg-gradient-to-b from-card to-primary/5">
+        <Card className="border-2 border-primary shadow-xl shadow-primary/20 bg-gradient-to-b from-card to-primary/5">
           <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-50">
-            <DynamicBadge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
+            <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg border-0">
               Current Plan
-            </DynamicBadge>
+            </Badge>
           </div>
           
-          <DynamicCardHeader className="text-center pb-4 pt-8">
+          <CardHeader className="text-center pb-4 pt-8">
             <div className="flex items-center justify-center gap-3 mb-2">
               <div className={`p-2 rounded-full ${
                 planColor === 'blue' ? 'bg-primary/10' : 
@@ -246,9 +230,9 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               }`}>
                 <PlanIcon className="h-5 w-5 text-primary" />
               </div>
-              <DynamicCardTitle className="text-xl">
+              <CardTitle className="text-xl">
                 {currentPlan.plan_type.charAt(0).toUpperCase() + currentPlan.plan_type.slice(1)} Plan
-              </DynamicCardTitle>
+              </CardTitle>
             </div>
             
             <div className="space-y-2">
@@ -262,30 +246,30 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               </div>
             </div>
             
-            <DynamicCardDescription className="text-base mt-2">
+            <CardDescription className="text-base mt-2">
               {currentPlan.member_limit 
                 ? `Up to ${currentPlan.member_limit} members` 
                 : 'Unlimited members'
               }
-            </DynamicCardDescription>
-          </DynamicCardHeader>
+            </CardDescription>
+          </CardHeader>
           
-          <DynamicCardContent className="space-y-6 pt-0">
+          <CardContent className="space-y-6 pt-0">
             {/* Subscription Status */}
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-card/80 rounded-lg border border-border/50">
                 <div className="flex items-center gap-2">
-                  <DynamicCheckCircle className={`h-4 w-4 ${isActive ? 'text-green-500' : 'text-yellow-500'}`} />
+                  <CheckCircle className={`h-4 w-4 ${isActive ? 'text-green-500' : 'text-yellow-500'}`} />
                   <span className="text-sm font-medium">Status</span>
                 </div>
-                <DynamicBadge variant={isActive ? 'default' : 'secondary'}>
+                <Badge variant={isActive ? 'default' : 'secondary'}>
                   {currentSubscription.status}
-                </DynamicBadge>
+                </Badge>
               </div>
               
               <div className="flex items-center justify-between p-3 bg-card/80 rounded-lg border border-border/50">
                 <div className="flex items-center gap-2">
-                  <DynamicCalendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Next billing</span>
                 </div>
                 <span className="text-sm text-muted-foreground">
@@ -306,7 +290,7 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               <div className="space-y-2">
                 {currentPlan.features.map((feature: string) => (
                   <div key={feature} className="flex items-center gap-3">
-                    <DynamicCheck className="h-4 w-4 text-green-500 flex-shrink-0" />
+                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm">{feature}</span>
                   </div>
                 ))}
@@ -329,7 +313,7 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
                     </p>
                   </div>
                   <div className="ml-3">
-                    <DynamicTimer className="h-4 w-4 text-orange-600" />
+                    <Timer className="h-4 w-4 text-orange-600" />
                   </div>
                 </div>
               </div>
@@ -337,23 +321,23 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
             
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <DynamicButton 
+              <Button 
                 onClick={handleUpgradeClick}
                 variant="outline"
                 className="flex-1 cursor-pointer hover:bg-primary/5 hover:border-primary/50"
               >
-                <DynamicArrowUpRight className="h-4 w-4 mr-2" />
+                <ArrowUpRight className="h-4 w-4 mr-2" />
                 Upgrade Plan
-              </DynamicButton>
+              </Button>
               
-              <DynamicButton 
+              <Button 
                 onClick={() => setShowCancelModal(true)}
                 variant="outline"
                 className="flex-1 cursor-pointer hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors duration-200"
               >
-                <DynamicX className="h-4 w-4 mr-2" />
+                <X className="h-4 w-4 mr-2" />
                 Cancel Subscription
-              </DynamicButton>
+              </Button>
             </div>
 
             {/* Cancellation Confirmation Modal */}
@@ -361,7 +345,7 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
               <DialogContent className="max-w-md">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <DynamicAlertTriangle className="h-5 w-5 text-orange-600" />
+                    <AlertTriangle className="h-5 w-5 text-orange-600" />
                     Cancel Subscription
                   </DialogTitle>
                   <DialogDescription>
@@ -444,27 +428,27 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
                 </div>
 
                 <DialogFooter className="flex-col sm:flex-row gap-3 pt-4">
-                  <DynamicButton
+                  <Button
                     onClick={() => setShowCancelModal(false)}
                     variant="outline"
                     className="flex-1"
                     disabled={isCancelling}
                   >
                     Keep Subscription
-                  </DynamicButton>
-                  <DynamicButton
+                  </Button>
+                  <Button
                     onClick={handleCancelSubscription}
                     variant="destructive"
                     className="flex-1"
                     disabled={isCancelling}
                   >
                     {isCancelling ? 'Cancelling...' : 'Cancel Subscription'}
-                  </DynamicButton>
+                  </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-          </DynamicCardContent>
-        </DynamicCard>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -472,24 +456,24 @@ export function CurrentSubscriptionDisplay({ className = "" }) {
   // No subscription or trial - show call to action
   return (
     <div className={`${className}`}>
-      <DynamicCard className="border-dashed border-2 border-muted-foreground/25">
-        <DynamicCardContent className="flex flex-col items-center justify-center py-12 text-center">
+      <Card className="border-dashed border-2 border-muted-foreground/25">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <div className="p-4 bg-muted/50 rounded-full mb-4">
-            <DynamicCreditCard className="h-8 w-8 text-muted-foreground" />
+            <CreditCard className="h-8 w-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold mb-2">No Active Subscription</h3>
           <p className="text-muted-foreground mb-6 max-w-md">
             You don&apos;t have an active subscription. Choose a plan to get started with all the features.
           </p>
-          <DynamicButton 
+          <Button 
             onClick={handleUpgradeClick}
             className="cursor-pointer bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 border-0"
           >
-            <DynamicArrowUpRight className="h-4 w-4 mr-2" />
+            <ArrowUpRight className="h-4 w-4 mr-2" />
             Choose a Plan
-          </DynamicButton>
-        </DynamicCardContent>
-      </DynamicCard>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }
